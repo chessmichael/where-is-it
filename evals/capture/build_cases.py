@@ -443,6 +443,87 @@ GROUPS = [
        setup=["the power tools are on the workbench in the garage, that's the drill, the circular saw and the sander"], tags=["already-known-group"]),
 ]
 
+
+# ── Set I: telling same-named things apart ────────────────────────────────
+# The house already holds two things with the same name. Then the person asks
+# about "the red tote", or changes it, without saying which.
+#   lookup: credit for naming BOTH places, or for asking which one and then
+#           giving the right place (`after`) once the simulated person answers.
+#   change: must ask (unless the words already pick one out); afterwards the
+#           right one changed, the other is untouched, and the count is right.
+
+def seed(*placements):
+    """placements: (item name, path) pairs → a seed house."""
+    locs, items = [], []
+    for name, path in placements:
+        if path not in locs:
+            locs.append(path)
+        items.append({"name": name, "path": path})
+    return {"locations": locs, "aliases": {}, "items": items}
+
+TOTE_GARAGE = ["Garage", "Metal shelving", "Bottom shelf", "Red tote"]
+TOTE_BASEMENT = ["Basement", "Storage shelves", "Red tote"]
+TOTES = seed(("holiday lights", TOTE_GARAGE), ("camping stuff", TOTE_BASEMENT))
+FLASH_KITCHEN = ["Kitchen", "Junk drawer"]
+FLASH_GARAGE = ["Garage", "Workbench"]
+FLASHLIGHTS = seed(("flashlight", FLASH_KITCHEN), ("flashlight", FLASH_GARAGE))
+CHARGER_OFFICE = ["Office", "Desk"]
+CHARGER_LIVING = ["Living room", "Side table"]
+CHARGERS = seed(("laptop charger", CHARGER_OFFICE), ("laptop charger", CHARGER_LIVING))
+BIN_TOP = ["Garage", "Metal shelving", "Top shelf", "Blue bin"]
+BIN_BOTTOM = ["Garage", "Metal shelving", "Bottom shelf", "Blue bin"]
+BINS = seed(("extension cords", BIN_TOP), ("zip ties", BIN_BOTTOM))
+KEYS = seed(("spare house key", ["Kitchen", "Junk drawer"]), ("spare car key", ["Office", "Desk", "Top drawer"]))
+
+def dup_lookup(house, question, both, after, knows, tags=()):
+    return {"seed_inline": house, "mode": "lookup", "said": question, "ask": "either", "knows": knows,
+            "expect": {"answer_mentions_each": both, "after_answer_mentions": after}, "tags": list(tags)}
+
+def dup_change(house, said, ask, items, counts, knows=None, new_locations=None, tags=()):
+    expect = {"items": items, "item_counts": counts}
+    if new_locations is not None:
+        expect["new_locations"] = new_locations
+    return {"seed_inline": house, "mode": "change", "said": said, "ask": ask, "knows": knows, "expect": expect, "tags": list(tags)}
+
+DUPLICATES = [
+ dup_lookup(TOTES, "where's the red tote", [["garage"], ["basement"]], ["garage", "bottom shelf|holiday"],
+            "the one with the holiday lights", tags=["totes"]),
+ dup_change(TOTES, "I moved the red tote up to the attic", "must",
+            [item("holiday lights", ["Attic", "Red tote?"]), item("camping stuff", TOTE_BASEMENT)], {"holiday lights": 1, "camping stuff": 1},
+            knows="the one with the holiday lights, from the garage", tags=["totes", "ambiguous"]),
+ dup_change(TOTES, "I moved the red tote with the holiday lights up to the attic", "no",
+            [item("holiday lights", ["Attic", "Red tote?"]), item("camping stuff", TOTE_BASEMENT)], {"holiday lights": 1, "camping stuff": 1},
+            tags=["totes", "control"]),
+ dup_lookup(FLASHLIGHTS, "where's the flashlight", [["junk drawer|kitchen"], ["workbench|garage"]], ["workbench|garage"],
+            "the one from the garage", tags=["flashlights"]),
+ dup_change(FLASHLIGHTS, "I put the flashlight on my nightstand", "must",
+            [item("flashlight", ["Bedroom?", "Nightstand"]), item("flashlight", FLASH_GARAGE)], {"flashlight": 2},
+            knows="the one that was in the kitchen junk drawer", tags=["flashlights", "ambiguous"]),
+ dup_change(FLASHLIGHTS, "I moved the garage flashlight to my nightstand", "no",
+            [item("flashlight", ["Bedroom?", "Nightstand"]), item("flashlight", FLASH_KITCHEN)], {"flashlight": 2},
+            tags=["flashlights", "control"]),
+ dup_change(FLASHLIGHTS, "there's another flashlight in the glovebox of the car", "no",
+            [item("flashlight", ["Car", "Glovebox|Glove box|Glove compartment"]), item("flashlight", FLASH_KITCHEN), item("flashlight", FLASH_GARAGE)], {"flashlight": 3},
+            tags=["flashlights", "control", "new-one"]),
+ dup_change(FLASHLIGHTS, "found the flashlight, it was in the couch cushions", "must",
+            [item("flashlight", ["Living room?", "Couch|Sofa"]), item("flashlight", FLASH_GARAGE)], {"flashlight": 2},
+            knows="the kitchen one", tags=["flashlights", "ambiguous"]),
+ dup_lookup(CHARGERS, "where's my laptop charger", [["desk|office"], ["side table|living room"]], ["desk|office"],
+            "my work one, in the office", tags=["chargers"]),
+ dup_change(CHARGERS, "I packed the laptop charger in my backpack", "must",
+            [item("laptop charger", ["Backpack"]), item("laptop charger", CHARGER_OFFICE)], {"laptop charger": 2},
+            knows="the one from the living room", tags=["chargers", "ambiguous"]),
+ dup_lookup(BINS, "what's in the blue bin", [["extension cords"], ["zip ties"]], ["extension cords"],
+            "the one on the top shelf", tags=["bins", "same-room"]),
+ dup_change(BINS, "I added the duct tape to the blue bin", "must",
+            [item("duct tape", BIN_BOTTOM)], {"duct tape": 1}, knows="the one on the bottom shelf, with the zip ties", new_locations=0,
+            tags=["bins", "same-room", "ambiguous"]),
+ dup_change(BINS, "I added the duct tape to the blue bin with the zip ties", "no",
+            [item("duct tape", BIN_BOTTOM)], {"duct tape": 1}, new_locations=0, tags=["bins", "same-room", "control"]),
+ dup_lookup(KEYS, "where's the spare key", [["junk drawer|kitchen"], ["desk|office"]], ["junk drawer|kitchen"],
+            "the house key", tags=["keys", "partial-name"]),
+]
+
 def build():
     cases = []
     for i, (said, tags, items) in enumerate(EMPTY, 1):
@@ -464,6 +545,8 @@ def build():
         cases.append({"id": f"G{i:02d}", "set": "journey", **c, "tags": ["lookup-after-changes"] + c["tags"]})
     for i, c in enumerate(GROUPS, 1):
         cases.append({"id": f"H{i:02d}", "set": "groups", **c, "tags": ["group-items"] + c["tags"]})
+    for i, c in enumerate(DUPLICATES, 1):
+        cases.append({"id": f"I{i:02d}", "set": "duplicates", **c, "tags": ["duplicates", c["mode"]] + c["tags"]})
     with open(os.path.join(HERE, "cases.json"), "w") as f:
         json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases}, f, indent=2)
         f.write("\n")
@@ -498,8 +581,9 @@ def markdown(cases):
            f"**{sum(c['set'] == 'shelving' for c in cases)}** telling identical shelving units apart (set C), and "
            f"**{sum(c['set'] == 'stack' for c in cases)}** reordering box stacks (set D), "
            f"**{sum(c['set'] == 'pantry' for c in cases)}** pantry shelves (set E), **{sum(c['set'] == 'lookup' for c in cases)}** simple lookups (set F), "
-           f"**{sum(c['set'] == 'journey' for c in cases)}** lookups after a series of changes (set G), and "
-           f"**{sum(c['set'] == 'groups' for c in cases)}** asking what a group of things is (set H).", "",
+           f"**{sum(c['set'] == 'journey' for c in cases)}** lookups after a series of changes (set G), "
+           f"**{sum(c['set'] == 'groups' for c in cases)}** asking what a group of things is (set H), and "
+           f"**{sum(c['set'] == 'duplicates' for c in cases)}** telling same-named things apart (set I).", "",
            "**Questions from the agent:** in every set, if the agent asks something, a simulated person answers using only what the case says they know. "
            "Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.",
            "Generated from `build_cases.py` — edit there, then rerun it.", "",
@@ -535,6 +619,7 @@ def markdown(cases):
     out += lookup_markdown([c for c in cases if c["set"] == "lookup"])
     out += journey_markdown([c for c in cases if c["set"] == "journey"])
     out += groups_markdown([c for c in cases if c["set"] == "groups"])
+    out += duplicates_markdown([c for c in cases if c["set"] == "duplicates"])
     return "\n".join(out)
 
 def mentions(groups):
@@ -592,6 +677,24 @@ def groups_markdown(cases):
         said = "".join(f"*(earlier, tidied:* “{esc(x)}”*)*<br>" for x in c["setup"]) + f"“{esc(c['said'])}”"
         exp = "<br>".join(esc(fmt_item(i)) for i in c["expect"]["items"])
         out.append(f"| {c['id']} | {said} | {ASK_LABEL[c['ask']]} | {esc(c['knows'] or '—')} | {exp} | {', '.join(c['tags'][1:])} |")
+    return out + [""]
+
+def duplicates_markdown(cases):
+    out = ["## Set I — telling same-named things apart", "",
+           "The house already holds two things with the same name. *Lookups* get credit for naming both places, or for asking which one "
+           "and then giving the right place. *Changes* must ask (unless the words already pick one out); afterwards the right one changed, "
+           "the other is untouched, and the count is right.", "",
+           "| # | Already in the house | What's said | Asking | The person knows | Expected | Tags |", "|---|---|---|---|---|---|---|"]
+    for c in cases:
+        house = "<br>".join(f"{esc(i['name'])} → {esc(fmt_path(i['path']))}" for i in c["seed_inline"]["items"])
+        e = c["expect"]
+        if c["mode"] == "lookup":
+            exp = "reply names both: " + " and ".join(mentions(g) for g in e["answer_mentions_each"]) + f"<br>— or asks, then names {mentions(e['after_answer_mentions'])}"
+        else:
+            exp = "<br>".join(esc(fmt_item(i)) for i in e["items"]) + "<br>count: " + ", ".join(f"{k} × {v}" for k, v in e["item_counts"].items())
+            if "new_locations" in e:
+                exp += f"<br>new places: {e['new_locations']}"
+        out.append(f"| {c['id']} | {house} | “{esc(c['said'])}” | {ASK_LABEL[c['ask']]} | {esc(c.get('knows') or '—')} | {esc(exp) if False else exp} | {', '.join(c['tags'][1:])} |")
     return out + [""]
 
 ASK_LABEL = {"must": "**Must ask**", "no": "Shouldn't need to ask", "either": "Either is fine"}

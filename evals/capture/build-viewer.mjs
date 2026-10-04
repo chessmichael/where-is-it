@@ -39,6 +39,7 @@ const SET_NAMES = {
   lookup: 'F · Simple lookups',
   journey: 'G · Lookups after changes',
   groups: 'H · Groups of things',
+  duplicates: 'I · Same-named things',
 }
 const METRIC_LABEL = Object.fromEntries(state.metrics.map((m) => [m.id, m.label ?? m.id]))
 
@@ -156,6 +157,8 @@ function renderExpected(c) {
   for (const [a, b] of e.different_unit ?? []) parts.push(`${esc(a)} and ${esc(b)} on <i>different</i> units`)
   if (e.stack) parts.push(`stack top → bottom: ${e.stack.map((s) => `<b>${esc(s)}</b>`).join(' → ')}`)
   if (e.items_keep_their_box) parts.push('every item stays in its own box')
+  if (e.answer_mentions_each) parts.push(`reply names both: ${e.answer_mentions_each.map((g) => g.map((m) => `“${esc(alts(m))}”`).join(' + ')).join(' <i>and</i> ')} — or asks which, then names ${e.after_answer_mentions.map((m) => `“${esc(alts(m))}”`).join(' + ')}`)
+  if (e.item_counts) parts.push(`count: ${Object.entries(e.item_counts).map(([k, v]) => `${esc(k)} × ${esc(v)}`).join(', ')}`)
   if (e.answer_mentions) parts.push(`reply mentions ${e.answer_mentions.map((m) => `“${esc(alts(m))}”`).join(' + ')}`)
   if (e.answer_not_mentions?.length) parts.push(`reply does <i>not</i> mention ${e.answer_not_mentions.map((m) => `“${esc(alts(m))}”`).join(', ')}`)
   const ask = { must: 'must ask a clarifying question', no: "shouldn't need to ask", either: 'asking is optional' }[c.ask]
@@ -166,6 +169,7 @@ function renderExpected(c) {
 
 function renderLines(c) {
   const lines = []
+  if (c.set === 'duplicates') for (const it of c.seed_inline?.items ?? []) lines.push(['already has', `${it.name} → ${it.path.join(' › ')}`])
   for (const s of c.setup ?? []) lines.push(['earlier', s])
   for (const s of c.steps ?? []) lines.push(s === '<tidy>' ? ['', '🧹 tidy-up'] : ['', s])
   if (c.said) lines.push(['says', c.said])

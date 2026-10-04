@@ -5342,6 +5342,909 @@
         "group-items",
         "already-known-group"
       ]
+    },
+    {
+      "id": "I01",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Red tote"
+          ],
+          [
+            "Basement",
+            "Storage shelves",
+            "Red tote"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "holiday lights",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Red tote"
+            ]
+          },
+          {
+            "name": "camping stuff",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Red tote"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "where's the red tote",
+      "ask": "either",
+      "knows": "the one with the holiday lights",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "garage"
+          ],
+          [
+            "basement"
+          ]
+        ],
+        "after_answer_mentions": [
+          "garage",
+          "bottom shelf|holiday"
+        ]
+      },
+      "tags": [
+        "duplicates",
+        "lookup",
+        "totes"
+      ]
+    },
+    {
+      "id": "I02",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Red tote"
+          ],
+          [
+            "Basement",
+            "Storage shelves",
+            "Red tote"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "holiday lights",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Red tote"
+            ]
+          },
+          {
+            "name": "camping stuff",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Red tote"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I moved the red tote up to the attic",
+      "ask": "must",
+      "knows": "the one with the holiday lights, from the garage",
+      "expect": {
+        "items": [
+          {
+            "name": "holiday lights",
+            "path": [
+              "Attic",
+              "Red tote?"
+            ]
+          },
+          {
+            "name": "camping stuff",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Red tote"
+            ]
+          }
+        ],
+        "item_counts": {
+          "holiday lights": 1,
+          "camping stuff": 1
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "totes",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "I03",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Red tote"
+          ],
+          [
+            "Basement",
+            "Storage shelves",
+            "Red tote"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "holiday lights",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Red tote"
+            ]
+          },
+          {
+            "name": "camping stuff",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Red tote"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I moved the red tote with the holiday lights up to the attic",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "holiday lights",
+            "path": [
+              "Attic",
+              "Red tote?"
+            ]
+          },
+          {
+            "name": "camping stuff",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Red tote"
+            ]
+          }
+        ],
+        "item_counts": {
+          "holiday lights": 1,
+          "camping stuff": 1
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "totes",
+        "control"
+      ]
+    },
+    {
+      "id": "I04",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "where's the flashlight",
+      "ask": "either",
+      "knows": "the one from the garage",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "junk drawer|kitchen"
+          ],
+          [
+            "workbench|garage"
+          ]
+        ],
+        "after_answer_mentions": [
+          "workbench|garage"
+        ]
+      },
+      "tags": [
+        "duplicates",
+        "lookup",
+        "flashlights"
+      ]
+    },
+    {
+      "id": "I05",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I put the flashlight on my nightstand",
+      "ask": "must",
+      "knows": "the one that was in the kitchen junk drawer",
+      "expect": {
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Bedroom?",
+              "Nightstand"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ],
+        "item_counts": {
+          "flashlight": 2
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "flashlights",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "I06",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I moved the garage flashlight to my nightstand",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Bedroom?",
+              "Nightstand"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ],
+        "item_counts": {
+          "flashlight": 2
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "flashlights",
+        "control"
+      ]
+    },
+    {
+      "id": "I07",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "there's another flashlight in the glovebox of the car",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Car",
+              "Glovebox|Glove box|Glove compartment"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ],
+        "item_counts": {
+          "flashlight": 3
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "flashlights",
+        "control",
+        "new-one"
+      ]
+    },
+    {
+      "id": "I08",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "found the flashlight, it was in the couch cushions",
+      "ask": "must",
+      "knows": "the kitchen one",
+      "expect": {
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Living room?",
+              "Couch|Sofa"
+            ]
+          },
+          {
+            "name": "flashlight",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ],
+        "item_counts": {
+          "flashlight": 2
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "flashlights",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "I09",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Desk"
+          ],
+          [
+            "Living room",
+            "Side table"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "laptop charger",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          },
+          {
+            "name": "laptop charger",
+            "path": [
+              "Living room",
+              "Side table"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "where's my laptop charger",
+      "ask": "either",
+      "knows": "my work one, in the office",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "desk|office"
+          ],
+          [
+            "side table|living room"
+          ]
+        ],
+        "after_answer_mentions": [
+          "desk|office"
+        ]
+      },
+      "tags": [
+        "duplicates",
+        "lookup",
+        "chargers"
+      ]
+    },
+    {
+      "id": "I10",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Desk"
+          ],
+          [
+            "Living room",
+            "Side table"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "laptop charger",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          },
+          {
+            "name": "laptop charger",
+            "path": [
+              "Living room",
+              "Side table"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I packed the laptop charger in my backpack",
+      "ask": "must",
+      "knows": "the one from the living room",
+      "expect": {
+        "items": [
+          {
+            "name": "laptop charger",
+            "path": [
+              "Backpack"
+            ]
+          },
+          {
+            "name": "laptop charger",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          }
+        ],
+        "item_counts": {
+          "laptop charger": 2
+        }
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "chargers",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "I11",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Top shelf",
+            "Blue bin"
+          ],
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Blue bin"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "extension cords",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          },
+          {
+            "name": "zip ties",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Blue bin"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "what's in the blue bin",
+      "ask": "either",
+      "knows": "the one on the top shelf",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "extension cords"
+          ],
+          [
+            "zip ties"
+          ]
+        ],
+        "after_answer_mentions": [
+          "extension cords"
+        ]
+      },
+      "tags": [
+        "duplicates",
+        "lookup",
+        "bins",
+        "same-room"
+      ]
+    },
+    {
+      "id": "I12",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Top shelf",
+            "Blue bin"
+          ],
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Blue bin"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "extension cords",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          },
+          {
+            "name": "zip ties",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Blue bin"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I added the duct tape to the blue bin",
+      "ask": "must",
+      "knows": "the one on the bottom shelf, with the zip ties",
+      "expect": {
+        "items": [
+          {
+            "name": "duct tape",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "item_counts": {
+          "duct tape": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "bins",
+        "same-room",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "I13",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Top shelf",
+            "Blue bin"
+          ],
+          [
+            "Garage",
+            "Metal shelving",
+            "Bottom shelf",
+            "Blue bin"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "extension cords",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          },
+          {
+            "name": "zip ties",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Blue bin"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I added the duct tape to the blue bin with the zip ties",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "duct tape",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "item_counts": {
+          "duct tape": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "duplicates",
+        "change",
+        "bins",
+        "same-room",
+        "control"
+      ]
+    },
+    {
+      "id": "I14",
+      "set": "duplicates",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Office",
+            "Desk",
+            "Top drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "spare house key",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "spare car key",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "where's the spare key",
+      "ask": "either",
+      "knows": "the house key",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "junk drawer|kitchen"
+          ],
+          [
+            "desk|office"
+          ]
+        ],
+        "after_answer_mentions": [
+          "junk drawer|kitchen"
+        ]
+      },
+      "tags": [
+        "duplicates",
+        "lookup",
+        "keys",
+        "partial-name"
+      ]
     }
   ]
 }

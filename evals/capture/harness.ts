@@ -34,7 +34,8 @@ interface SeedHouse {
 }
 export interface Case {
   id: string
-  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups'
+  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups' | 'duplicates'
+  mode?: 'lookup' | 'change'
   tags: string[]
   said?: string
   seed?: string | null
@@ -119,6 +120,17 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       await session.tidy()
       checks = c.set === 'shelving' ? gradeShelving(db, c.expect) : gradeStack(db, c.expect, boxesBefore)
       checks.ask(c.ask!, asked)
+      break
+    }
+    case 'duplicates': {
+      const asked = await session.say(c.said!)
+      if (c.mode === 'lookup') {
+        checks = gradeDuplicateLookup(session.lastReply, c.expect, asked)
+      } else {
+        await session.tidy()
+        checks = gradeItems(db, c.expect, session.observations, locationsAtStart)
+        checks.ask(c.ask!, asked)
+      }
       break
     }
     case 'lookup':
@@ -318,7 +330,10 @@ function pathMatches(expected: string[], actual: string[]): boolean {
   let next = 0 // index into `required` we're looking for
   for (const seg of actual) if (next < required.length && sameName(required[next], seg)) next++
   const allInOrder = next === required.length
-  const leafMatches = sameName(required[required.length - 1], actual[actual.length - 1])
+  const leaf = actual[actual.length - 1]
+  const lastExpected = expected[expected.length - 1]
+  // The innermost place must be the last required level — or an optional level after it ("Attic › Red tote?").
+  const leafMatches = sameName(required[required.length - 1], leaf) || (lastExpected.endsWith('?') && sameName(lastExpected.slice(0, -1), leaf))
   const extraLevels = actual.length - required.length
   return allInOrder && leafMatches && extraLevels <= 1 + optionalCount
 }
@@ -375,6 +390,10 @@ export function gradeItems(db: HouseDb, expect: Record<string, any>, observation
     }
     const match = candidates.find((it) => itemSatisfies(db, it, want).length === 0)
     if (!match) problems.push(`"${candidates[0].name}": ${itemSatisfies(db, candidates[0], want).join(', ')}`)
+  }
+  for (const [name, count] of Object.entries((expect.item_counts ?? {}) as Record<string, number>)) {
+    const found = db.items.all().filter((it) => it.status !== 'gone' && sameName(name, it.name)).length
+    if (found !== count) problems.push(`${found} item(s) named "${name}", expected ${count}`)
   }
   if (typeof expect.new_locations === 'number') {
     const added = db.locations.all().length - locationsBefore
@@ -517,5 +536,16 @@ export function gradeReply(reply: string, expect: Record<string, any>): Checks {
   ]
   for (const p of problems) checks.fail(p)
   checks.set('reply', problems.length === 0, problems.length ? problems.join('; ') : 'reply gave the right place')
+  return checks
+}
+
+/**
+ * Set I lookups: "where's the red tote?" with two red totes. Credit for naming
+ * both places, or for asking which one and then naming the right place.
+ */
+export function gradeDuplicateLookup(reply: string, expect: Record<string, any>, asked: boolean): Checks {
+  const mentions = asked ? expect.after_answer_mentions : (expect.answer_mentions_each as string[][]).flat()
+  const checks = gradeReply(reply, { answer_mentions: mentions, answer_not_mentions: [] })
+  checks.set('asking', true, asked ? 'asked which one (fine)' : 'answered with both (fine)')
   return checks
 }

@@ -1,18 +1,58 @@
 {
   "schema": "hillclimb/v2",
   "metrics": [
-    { "id": "pass", "label": "Pass", "kind": "binary" },
-    { "id": "database", "label": "DB correct", "kind": "binary" },
-    { "id": "observations", "label": "Observations", "kind": "binary" },
-    { "id": "asking", "label": "Asked right", "kind": "binary" },
-    { "id": "reply", "label": "Reply correct", "kind": "binary" }
+    {
+      "id": "pass",
+      "label": "Pass",
+      "kind": "binary"
+    },
+    {
+      "id": "database",
+      "label": "DB correct",
+      "kind": "binary"
+    },
+    {
+      "id": "observations",
+      "label": "Observations",
+      "kind": "binary"
+    },
+    {
+      "id": "asking",
+      "label": "Asked right",
+      "kind": "binary"
+    },
+    {
+      "id": "reply",
+      "label": "Reply correct",
+      "kind": "binary"
+    }
   ],
   "perf_fields": [
-    { "id": "latency_s", "label": "Seconds", "unit": "s" },
-    { "id": "agent_calls", "label": "Model calls" },
-    { "id": "questions_asked", "label": "Questions" },
-    { "id": "in_tokens", "label": "In tokens" },
-    { "id": "out_tokens", "label": "Out tokens" }
+    {
+      "id": "latency_s",
+      "label": "Seconds",
+      "unit": "s"
+    },
+    {
+      "id": "agent_calls",
+      "label": "Model calls"
+    },
+    {
+      "id": "questions_asked",
+      "label": "Questions"
+    },
+    {
+      "id": "in_tokens",
+      "label": "In tokens"
+    },
+    {
+      "id": "out_tokens",
+      "label": "Out tokens"
+    }
   ],
-  "harness_paths": ["evals/capture/harness.ts", "evals/capture/cases.json"]
+  "harness_paths": [
+    "evals/capture/harness.ts",
+    "evals/capture/cases.json"
+  ],
+  "harness_sha": "dc0f54e0d15cdcfd7ee2272290e5aac42146be14e7ee074235c0b47877db9bd0"
 }

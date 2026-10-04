@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 import type { Observation } from '../../server/agent/observations'
 import type { HouseDb } from '../../server/db/house'
 import { memoryDb } from '../../server/test/helpers'
-import { gradeItems, gradeReply, gradeShelving, gradeStack, itemHomes, seedHouse, type Case, type CaseFile } from './harness'
+import { gradeDuplicateLookup, gradeItems, gradeReply, gradeShelving, gradeStack, itemHomes, seedHouse, type Case, type CaseFile } from './harness'
 
 const file: CaseFile = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'cases.json'), 'utf8'))
 const first = (alts: string) => alts.split('|')[0].replace(/\?$/, '')
@@ -106,10 +106,28 @@ function replyCase(c: Case): Outcome {
   return { oracle: gradeReply(`It's in the ${right}.`, c.expect).result().grade.reply, wrong: gradeReply('It’s out on the porch.', c.expect).result().grade.reply }
 }
 
+function duplicatesCase(c: Case): Outcome {
+  if (c.mode === 'lookup') {
+    const both = (c.expect.answer_mentions_each as string[][]).flat().map(first).join(' and the ')
+    const after = (c.expect.after_answer_mentions as string[]).map(first).join(', ')
+    const oracleBoth = gradeDuplicateLookup(`There are two: one in the ${both}.`, c.expect, false).result().grade.reply
+    const oracleAsked = gradeDuplicateLookup(`That one is in the ${after}.`, c.expect, true).result().grade.reply
+    const wrong = gradeDuplicateLookup('It’s out on the porch.', c.expect, false).result().grade.reply
+    return { oracle: oracleBoth === 1 && oracleAsked === 1 ? 1 : 0, wrong }
+  }
+  // Change: the correct end state is exactly the expected items; the wrong one is the house left as it was.
+  const good = memoryDb().db
+  for (const it of c.expect.items) good.items.save(null, { name: first(it.name), location_id: good.locations.ensurePath(concretePath(it.path).map((name: string) => ({ name }))) })
+  const untouched = fresh(c)
+  const oracle = gradeItems(good, { ...c.expect, new_locations: undefined }, [], 0).result().grade.database
+  const wrong = gradeItems(untouched.db, c.expect, [], untouched.before).result().grade.database
+  return { oracle, wrong }
+}
+
 let bad = 0
 for (const c of file.cases) {
   const outcome =
-    c.set === 'shelving' ? shelvingCase(c) : c.set === 'stack' ? stackCase(c) : c.set === 'lookup' || c.set === 'journey' ? replyCase(c) : itemsCase(c)
+    c.set === 'duplicates' ? duplicatesCase(c) : c.set === 'shelving' ? shelvingCase(c) : c.set === 'stack' ? stackCase(c) : c.set === 'lookup' || c.set === 'journey' ? replyCase(c) : itemsCase(c)
   const ok = outcome.oracle === 1 && outcome.wrong === 0
   if (!ok) {
     bad++
