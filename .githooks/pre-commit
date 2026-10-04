@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuse commits that edit or remove lines from the eval ledger (it may only grow).
+if git diff --cached --name-only | grep -qx 'evals/capture/ledger.jsonl'; then
+  PATH="/opt/homebrew/bin:$PATH" node evals/capture/verify-ledger.mjs --staged || exit 1
+fi
