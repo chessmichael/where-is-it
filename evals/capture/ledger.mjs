@@ -91,10 +91,22 @@ export function saveDiff(variant, state, startedAt) {
   return { file: join(FLOW, variant, name), sha256: sha256(body) }
 }
 
-/** Commit exactly these paths (and nothing else that happens to be staged). */
+/**
+ * Commit exactly these paths (and nothing else that happens to be staged).
+ * Runs going in parallel may finish together; git allows one commit at a
+ * time, so wait and retry while another commit holds the lock.
+ */
 export function commitPaths(paths, message) {
   const existing = paths.filter((p) => existsSync(p))
-  git('add', '--', ...existing)
-  git('commit', '--quiet', '-m', message, '--', ...existing)
-  return git('rev-parse', '--short', 'HEAD')
+  for (let attempt = 0; ; attempt++) {
+    try {
+      git('add', '--', ...existing)
+      git('commit', '--quiet', '-m', message, '--', ...existing)
+      return git('rev-parse', '--short', 'HEAD')
+    } catch (e) {
+      const locked = /index\.lock|another git process/i.test(String(e?.stderr ?? e?.message ?? e))
+      if (!locked || attempt >= 20) throw e
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500 + Math.random() * 1000) // ~1s, jittered
+    }
+  }
 }
