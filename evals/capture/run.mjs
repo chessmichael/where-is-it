@@ -8,6 +8,8 @@
 //   --rerun <ids|set:D|all>      supersede these cases' existing rows (archived, noted in the ledger)
 //                                and run them again; "set:D" means every case in set D
 //   --reason "…"                 why rows are being re-run (goes in the ledger)
+//   --suite capability|regression  run only that suite (see suites.json / make_suites.py)
+//   --reps N                     repeats per case (existing reps are reused; only missing ones run)
 //
 // Afterwards: appends approval/run lines to evals/capture/ledger.jsonl, saves any uncommitted
 // diff beside the results, commits the ledger and the small result files, builds an inspector
@@ -24,9 +26,10 @@ const model = flag('--model') ?? 'gpt-5.5'
 const codeCommit = flag('--code')
 const rerun = flag('--rerun')
 const reason = flag('--reason') ?? 'grader or harness fix'
+const suite = flag('--suite')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason'].includes(extra[i])) { i++; continue }
+  if (['--model', '--code', '--rerun', '--reason', '--suite'].includes(extra[i])) { i++; continue }
   passThrough.push(extra[i])
 }
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim()
@@ -35,6 +38,20 @@ const code = codeState()
 const shaBefore = harnessSha()
 const env = { ...process.env, EVAL_DB_DIR: join(FLOW, variant, 'dbs') }
 const archived = []
+
+// ── suites: record a new or changed split once in the ledger; --suite narrows the run ──
+const suitesText = existsSync('evals/capture/suites.json') ? readFileSync('evals/capture/suites.json', 'utf8') : null
+if (suitesText) {
+  const suites = JSON.parse(suitesText)
+  const lastDefined = readFileSync(LEDGER, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((e) => e.event === 'suites_defined').at(-1)
+  if (lastDefined?.suites_sha256 !== sha256(suitesText)) {
+    append({ event: 'suites_defined', at: startedAt, by: who(), suites_sha256: sha256(suitesText), rule: suites.rule, regression: suites.regression.length, capability: suites.capability.length, by_set: suites.by_set, computed_from: suites.computed_from })
+  }
+  if (suite) {
+    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability`)
+    env.EVAL_ONLY = suites[suite].join(',')
+  }
+} else if (suite) throw new Error('no evals/capture/suites.json yet — run make_suites.py')
 
 // ── --rerun: move the chosen rows out (kept in archive/, recorded in the ledger) ──
 if (rerun) {
@@ -57,7 +74,7 @@ if (rerun) {
     archived.push(dest)
     append({ event: 'superseded', at: startedAt, by: who(), variant, file, case_ids: [...new Set(out.map((l) => JSON.parse(l).prompt_id))], rows: out.length, reason, archived_to: dest, archived_sha256: sha256(out.join('\n') + '\n') })
   }
-  env.EVAL_ONLY = [...ids].join(',')
+  env.EVAL_ONLY = env.EVAL_ONLY ? env.EVAL_ONLY.split(',').filter((id) => ids.has(id)).join(',') : [...ids].join(',')
 }
 
 // ── --code: build the harness against that commit's agent code ──
@@ -102,11 +119,13 @@ append({
   harness_sha: shaAfter,
   runner_exit: run.status,
   ...(rerun ? { rerun: env.EVAL_ONLY.split(','), reason } : {}),
+  ...(suite ? { suite } : {}),
+  ...(flag('--reps') ? { reps: Number(flag('--reps')) } : {}),
   ...after,
 })
 const committed = commitPaths(
-  [LEDGER, join(FLOW, '_state.json'), join(FLOW, variant, 'results.jsonl'), join(FLOW, variant, 'errors.jsonl'), ...archived, ...(diff ? [diff.file] : [])],
-  `eval run: capture/${variant} ${after.passed}/${after.cases} passed on ${after.models.join(', ') || model}${rerun ? ` (re-ran ${env.EVAL_ONLY.split(',').length} case(s))` : ''}\n\nAgent code: ${agentCommit.slice(0, 12)}${codeCommit ? ` (harness from ${code.commit.slice(0, 12)})` : code.dirty ? ' + uncommitted diff (saved with the results)' : ''}\nHarness: ${String(shaAfter).slice(0, 12)}${rerun ? `\nRe-run because: ${reason}` : ''}`,
+  [LEDGER, 'evals/capture/suites.json', join(FLOW, '_state.json'), join(FLOW, variant, 'results.jsonl'), join(FLOW, variant, 'errors.jsonl'), ...archived, ...(diff ? [diff.file] : [])],
+  `eval run: capture/${variant}${suite ? ` [${suite}]` : ''} ${after.passed}/${after.cases} passed on ${after.models.join(', ') || model}${rerun ? ` (re-ran ${env.EVAL_ONLY.split(',').length} case(s))` : ''}\n\nAgent code: ${agentCommit.slice(0, 12)}${codeCommit ? ` (harness from ${code.commit.slice(0, 12)})` : code.dirty ? ' + uncommitted diff (saved with the results)' : ''}\nHarness: ${String(shaAfter).slice(0, 12)}${rerun ? `\nRe-run because: ${reason}` : ''}`,
 )
 console.error(`ledger: recorded run and committed as ${committed}`)
 spawnSync(process.execPath, ['scripts/.build/inspect.mjs', '--eval', variant, '--all'], { stdio: 'inherit' })

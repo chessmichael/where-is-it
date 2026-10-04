@@ -7,6 +7,13 @@ Generated from `build_cases.py` — edit there, then rerun it.
 
 **Reading the expected column:** paths run room-first. `a / b` means either name is fine. A level ending in `?` is optional.
 
+## Suites
+
+Split on 2026-10-04 from the results so far (regression = passed in every version that ran it, seen in >= 2 versions; capability = everything else). See `suites.json` / `make_suites.py`.
+
+- **Capability (44)** — still tells versions apart; run on every change, with repeats. **A**: A19, A24, A29, A30, A34, A45; **C**: C02, C03, C05, C09; **D**: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12; **G**: G08, G09, G10, G12; **H**: H01, H02, H03, H04, H05, H06, H07, H12; **I**: I03, I05, I06, I14; **J**: J01, J02, J03, J04, J06, J07
+- **Regression (169)** — every version passes; run before deploying to catch breakage.
+
 ## Set A — empty house
 
 Said to an empty house; afterwards the database should hold these items at these places (each level created).

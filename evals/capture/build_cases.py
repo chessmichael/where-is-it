@@ -627,6 +627,7 @@ def markdown(cases):
            "Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.",
            "Generated from `build_cases.py` — edit there, then rerun it.", "",
            "**Reading the expected column:** paths run room-first. `a / b` means either name is fine. A level ending in `?` is optional.", "",
+           *suites_markdown(),
            "## Set A — empty house", "",
            "Said to an empty house; afterwards the database should hold these items at these places (each level created).", "",
            "| # | What's said | Expected in the database | Tags |", "|---|---|---|---|"]
@@ -664,6 +665,21 @@ def markdown(cases):
               "The agent should resolve position words against current positions, and ask when a name and a position could both apply, or no positions are known. "
               "Positions in the starting house are shown in brackets.")
     return "\n".join(out)
+
+def suites_markdown():
+    path = os.path.join(HERE, "suites.json")
+    if not os.path.exists(path):
+        return []
+    su = json.load(open(path))
+    def ids(name):
+        by = {}
+        for i in su[name]:
+            by.setdefault(i[0], []).append(i)
+        return "; ".join(f"**{k}**: {', '.join(v)}" for k, v in sorted(by.items()))
+    return ["## Suites", "",
+            f"Split on {su['generated_at'][:10]} from the results so far ({su['rule']}). See `suites.json` / `make_suites.py`.", "",
+            f"- **Capability ({len(su['capability'])})** — still tells versions apart; run on every change, with repeats. {ids('capability')}",
+            f"- **Regression ({len(su['regression'])})** — every version passes; run before deploying to catch breakage.", ""]
 
 def mentions(groups):
     return " + ".join("“" + " / ".join(g.split("|")) + "”" for g in groups)

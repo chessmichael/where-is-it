@@ -63,9 +63,21 @@ export function summarize(variant) {
     personOut += r.judge_usage?.output_tokens ?? 0
   }
   const passed = rows.filter((r) => r.grade?.pass === 1).length
+  // Per suite (rep-level pass rate), when the split exists.
+  let bySuite
+  if (existsSync('evals/capture/suites.json')) {
+    const suites = JSON.parse(readFileSync('evals/capture/suites.json', 'utf8'))
+    bySuite = {}
+    for (const name of ['capability', 'regression']) {
+      const ids = new Set(suites[name])
+      const inSuite = rows.filter((r) => ids.has(r.prompt_id))
+      bySuite[name] = { passed: inSuite.filter((r) => r.grade?.pass === 1).length, runs: inSuite.length, cases_covered: new Set(inSuite.map((r) => r.prompt_id)).size, cases_in_suite: ids.size }
+    }
+  }
   return {
     cases: rows.length,
     passed,
+    ...(bySuite ? { by_suite: bySuite } : {}),
     errored_attempts: errors,
     by_set: bySet,
     models: [...new Set(rows.map((r) => r.model).filter(Boolean))],

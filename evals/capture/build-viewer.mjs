@@ -190,27 +190,46 @@ function badge(metric, value, why) {
   return `<span class="badge ${value === 1 ? 'ok' : 'bad'}" title="${esc(why ?? '')}">${value === 1 ? '✓' : '✗'} ${esc(METRIC_LABEL[metric] ?? metric)}</span>`
 }
 
+const suites = existsSync(join(ROOT, 'evals', 'capture', 'suites.json')) ? JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'suites.json'), 'utf8')) : null
+const suiteOf = (id) => (suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : null)
+
+// One card per case; repeats (reps) are grouped, with the pass count across them.
+const byCase = new Map()
+for (const r of rows) byCase.set(r.prompt_id, [...(byCase.get(r.prompt_id) ?? []), r])
 const cards = []
 const bySet = new Map()
-for (const r of rows.sort((a, b) => a.prompt_id.localeCompare(b.prompt_id))) {
-  const c = casesById.get(r.prompt_id) ?? { id: r.prompt_id, set: r.tags?.[0] }
-  const pass = r.grade?.pass === 1
+for (const id of [...byCase.keys()].sort()) {
+  const reps = byCase.get(id).sort((a, b) => a.rep - b.rep)
+  const r = reps[0]
+  const c = casesById.get(id) ?? { id, set: r.tags?.[0] }
+  const passes = reps.filter((x) => x.grade?.pass === 1).length
+  const pass = passes === reps.length
   const s = bySet.get(c.set) ?? { pass: 0, n: 0 }
-  s.n++
-  if (pass) s.pass++
+  s.n += reps.length
+  s.pass += passes
   bySet.set(c.set, s)
-  const tracePath = join(FLOW, variant, 'traces', `${r.prompt_id}_rep${r.rep}.json`)
-  const transcript = existsSync(tracePath) ? JSON.parse(readFileSync(tracePath, 'utf8')) : []
-  const reasons = Object.entries(r.explanation ?? {})
-    .filter(([k]) => k !== 'pass' && r.grade?.[k] !== null && r.grade?.[k] !== undefined)
-    .map(([k, v]) => `<li class="${r.grade[k] === 1 ? 'ok' : 'bad'}"><b>${esc(METRIC_LABEL[k] ?? k)}:</b> ${esc(v)}</li>`)
+  const suite = suiteOf(id)
+  const shown = reps.find((x) => x.grade?.pass !== 1) ?? r // show a failing rep's details when there is one
+  const reasons = Object.entries(shown.explanation ?? {})
+    .filter(([k]) => k !== 'pass' && shown.grade?.[k] !== null && shown.grade?.[k] !== undefined)
+    .map(([k, v]) => `<li class="${shown.grade[k] === 1 ? 'ok' : 'bad'}"><b>${esc(METRIC_LABEL[k] ?? k)}:</b> ${esc(v)}</li>`)
+    .join('')
+  const convos = reps
+    .map((x) => {
+      const tracePath = join(FLOW, variant, 'traces', `${id}_rep${x.rep}.json`)
+      const transcript = existsSync(tracePath) ? JSON.parse(readFileSync(tracePath, 'utf8')) : []
+      const label = reps.length > 1 ? `Repeat ${x.rep + 1} — ${x.grade?.pass === 1 ? 'passed' : 'failed'}` : 'Show the conversation and what each agent did'
+      return `<details class="convo"><summary>${esc(label)}</summary><div class="transcript">${renderTranscript(transcript)}</div>
+    <p class="rawlink">Raw transcript file: <code>${esc(`${variant}/traces/${id}_rep${x.rep}.json`)}</code></p></details>`
+    })
     .join('')
   cards.push(`
-<section class="card ${pass ? 'pass' : 'fail'}" id="${esc(r.prompt_id)}" data-set="${esc(c.set)}" data-pass="${pass ? 1 : 0}">
+<section class="card ${pass ? 'pass' : 'fail'}" id="${esc(id)}" data-set="${esc(c.set)}" data-pass="${pass ? 1 : 0}" data-suite="${esc(suite ?? '')}">
   <header>
-    <span class="result ${pass ? 'ok' : 'bad'}">${pass ? 'PASS' : 'FAIL'}</span>
-    <span class="cid">${esc(r.prompt_id)}</span>
+    <span class="result ${pass ? 'ok' : 'bad'}">${pass ? 'PASS' : 'FAIL'}${reps.length > 1 ? ` ${passes}/${reps.length}` : ''}</span>
+    <span class="cid">${esc(id)}</span>
     <span class="set">${esc(SET_NAMES[c.set] ?? c.set)}</span>
+    ${suite ? `<span class="tag suite-${esc(suite)}">${esc(suite)}</span>` : ''}
     <span class="tags">${(c.tags ?? []).slice(1).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</span>
     <span class="perf">${esc(Math.round(r.latency_s ?? 0))}s · ${esc(r.agent_calls ?? '?')} model calls · ${esc(r.questions_asked ?? 0)} question(s)</span>
   </header>
@@ -218,18 +237,15 @@ for (const r of rows.sort((a, b) => a.prompt_id.localeCompare(b.prompt_id))) {
     <div><h4>What happens</h4><ul class="lines">${renderLines(c)}</ul></div>
     <div><h4>Expected</h4><ul class="expected">${renderExpected(c)}</ul></div>
   </div>
-  <div class="grades">${['database', 'reply', 'observations', 'asking'].map((m) => badge(m, r.grade?.[m], r.explanation?.[m])).join(' ')}</div>
+  <div class="grades">${['database', 'reply', 'observations', 'asking'].map((m) => badge(m, shown.grade?.[m], shown.explanation?.[m])).join(' ')}</div>
   <ul class="reasons">${reasons}</ul>
-  ${existsSync(join(FLOW, variant, 'dbs', `${r.prompt_id}.inspect.html`)) ? `<p class="inspect-link"><a href="${esc(`${variant}/dbs/${r.prompt_id}.inspect.html`)}">Inspect this case's final database →</a></p>` : ''}
-  <details class="convo"><summary>Show the conversation and what each agent did</summary>
-    <div class="transcript">${renderTranscript(transcript)}</div>
-    <p class="rawlink">Raw transcript file: <code>${esc(`${variant}/traces/${r.prompt_id}_rep${r.rep}.json`)}</code></p>
-  </details>
+  ${existsSync(join(FLOW, variant, 'dbs', `${id}.inspect.html`)) ? `<p class="inspect-link"><a href="${esc(`${variant}/dbs/${id}.inspect.html`)}">Inspect this case's final database →</a></p>` : ''}
+  ${convos}
 </section>`)
 }
 
-const total = rows.length
-const passed = rows.filter((r) => r.grade?.pass === 1).length
+const total = byCase.size
+const passed = [...byCase.values()].filter((reps) => reps.every((x) => x.grade?.pass === 1)).length
 const model = rows[0]?.model ?? 'unknown'
 const summaryRows = Object.keys(SET_NAMES)
   .filter((k) => bySet.has(k))
@@ -301,18 +317,20 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 .house pre{background:transparent;border-style:dashed}
 .divider{text-align:center;color:var(--muted);font-size:13px;margin:6px 0}
 .rawlink{font-size:12px;color:var(--muted)}
-.inspect-link{margin:6px 0 0;font-size:14px}.inspect-link a{color:inherit}
+.inspect-link{margin:6px 0 0;font-size:14px}
+.tag.suite-capability{background:#fef3c7;color:#92400e;border-color:transparent}.tag.suite-regression{background:#e0e7ff;color:#3730a3;border-color:transparent}.inspect-link a{color:inherit}
 </style></head>
 <body><main>
 <h1>Capture eval — case by case</h1>
 <p class="sub">${esc(variant)} · model ${esc(model)} · ${total} case(s)${errors.length ? ` · ${errors.length} errored attempt(s) not counted` : ''} · built ${esc(new Date().toLocaleString())}<br>
 Each case runs the app's real agents against a throwaway house, then checks the database or the spoken reply. Higher is better. The official summary table is <code>report.html</code> in the same folder.</p>
 <div class="summary">
-  <div class="big">${passed}/${total}<small>cases passed</small></div>
+  <div class="big">${passed}/${total}<small>cases passed${rows.length > total ? ' (every repeat)' : ''}</small></div>
   <table>${summaryRows}</table>
 </div>
 <div class="filters" id="filters">
   <button data-f="all" class="on">All</button><button data-f="fail">Failures</button><button data-f="pass">Passes</button>
+  ${suites ? '<button data-f="suite:capability">Capability suite</button><button data-f="suite:regression">Regression suite</button>' : ''}
   ${Object.keys(SET_NAMES).filter((k) => bySet.has(k)).map((k) => `<button data-f="set:${esc(k)}">${esc(SET_NAMES[k])}</button>`).join('')}
 </div>
 ${cards.join('\n')}
@@ -323,7 +341,7 @@ document.getElementById('filters').addEventListener('click', function (e) {
   document.querySelectorAll('#filters button').forEach(function (x) { x.classList.toggle('on', x === b) });
   var f = b.getAttribute('data-f');
   document.querySelectorAll('.card').forEach(function (c) {
-    var show = f === 'all' || (f === 'fail' && c.dataset.pass === '0') || (f === 'pass' && c.dataset.pass === '1') || (f.indexOf('set:') === 0 && c.dataset.set === f.slice(4));
+    var show = f === 'all' || (f === 'fail' && c.dataset.pass === '0') || (f === 'pass' && c.dataset.pass === '1') || (f.indexOf('set:') === 0 && c.dataset.set === f.slice(4)) || (f.indexOf('suite:') === 0 && c.dataset.suite === f.slice(6));
     c.style.display = show ? '' : 'none';
   });
 });
