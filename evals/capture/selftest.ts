@@ -76,12 +76,16 @@ function shelvingCase(c: Case): Outcome {
 
 function stackCase(c: Case): Outcome {
   const order: string[] = c.expect.stack
-  const words = order.length === 3 ? ['Top', 'Middle', 'Bottom'] : order.length === 2 ? ['Top', 'Bottom'] : ['Top', 'Second', 'Third', 'Bottom']
+  // Phrased the way agents actually write positions, including "Nth from the top".
+  const words = order.length === 3 ? ['top of the stack', 'middle of the stack', 'bottom of the stack'] : order.length === 2 ? ['top of the stack', 'bottom of the stack'] : ['top of the stack', '2nd from the top', '3rd from the top', 'bottom of the stack']
   const build = (marked: boolean, swapContents: boolean) => {
     const { db } = memoryDb()
     const ids = order.map((name, i) => {
-      const box = db.locations.ensurePath([{ name: 'Closet' }, { name: `Box ${String.fromCharCode(65 + i)}` }])
-      if (marked) db.locations.update(box, { description: `${words[i].toLowerCase()} of the stack` })
+      // Boxes named after their contents and also filed as items — what the v2 agent does.
+      const closet = db.locations.ensurePath([{ name: 'Closet' }])
+      const box = db.locations.ensurePath([{ name: 'Closet' }, { name: `Box of ${name}` }])
+      db.items.save(null, { name: `Box of ${name}`, location_id: closet, place_id: box })
+      if (marked) db.locations.update(box, { position: words[i] })
       return db.items.save(null, { name, location_id: box })
     })
     const before = itemHomes(db)

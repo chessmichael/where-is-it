@@ -377,8 +377,17 @@ function itemPath(db: HouseDb, item: Item): string[] {
   return item.location_note ? [item.location_note] : []
 }
 
+/**
+ * Items matching an expected name, best first: exact name before a looser match
+ * ("Old photos" before "Box of old photos"), and plain items before items that
+ * are also places (the box itself).
+ */
 function findItem(db: HouseDb, name: string): Item[] {
-  return db.items.all().filter((it) => sameName(name, it.name) || db.items.aliases(it.id).some((a) => sameName(name, a)))
+  const exact = (it: Item) => name.split('|').some((alt) => tokens(alt).join(' ') === tokens(it.name).join(' '))
+  return db.items
+    .all()
+    .filter((it) => sameName(name, it.name) || db.items.aliases(it.id).some((a) => sameName(name, a)))
+    .sort((a, b) => Number(exact(b)) - Number(exact(a)) || Number(a.place_id !== null) - Number(b.place_id !== null))
 }
 
 // ── Grading ────────────────────────────────────────────────────────────────
@@ -525,16 +534,21 @@ export function itemHomes(db: HouseDb): Map<string, string | null> {
  * reads as the top — a stale marker is a real problem for a person reading it.
  */
 function stackRank(db: HouseDb, box: Location, size: number): number | null {
-  const text = markerText(db, box)
+  // The position field is authoritative when set; otherwise fall back to name, aliases and description.
+  const text = box.position ? box.position.toLowerCase() : markerText(db, box)
+  const ordinal = '(\\d+|first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)'
+  const toNumber = (w: string) => ({ first: 1, '1st': 1, second: 2, '2nd': 2, third: 3, '3rd': 3, fourth: 4, '4th': 4, fifth: 5, '5th': 5 } as Record<string, number>)[w] ?? Number.parseInt(w, 10)
+  const fromTop = text.match(new RegExp(`\\b${ordinal}\\s+(?:from|to)\\s+(?:the\\s+)?top\\b`))
+  if (fromTop) return toNumber(fromTop[1])
+  const fromBottom = text.match(new RegExp(`\\b${ordinal}\\s+(?:from|to)\\s+(?:the\\s+)?bottom\\b`))
+  if (fromBottom) return size + 1 - toNumber(fromBottom[1])
   const rules: [RegExp, number][] = [
-    [/\b(second|2nd) (from|to) (the )?bottom\b/, size - 1],
-    [/\b(third|3rd) (from|to) (the )?bottom\b/, size - 2],
     [/\btop\b/, 1],
     [/\b(bottom|last)\b/, size],
+    [/\bmiddle\b/, size === 3 ? 2 : NaN],
     [/\b(second|2nd)\b/, 2],
     [/\b(third|3rd)\b/, 3],
     [/\b(fourth|4th)\b/, 4],
-    [/\bmiddle\b/, size === 3 ? 2 : NaN],
   ]
   for (const [pattern, rank] of rules) if (pattern.test(text) && Number.isFinite(rank)) return rank
   return null
