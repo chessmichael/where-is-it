@@ -1,8 +1,29 @@
-// One-time import of data saved in this browser by the old, local-only
-// version (localStorage key whi.house.v1). Each room becomes one spoken-style
-// description that goes through the agent like anything else the person says.
+// One-time import of data saved by the old, local-only versions of the app:
+//   whi.items.v1  first version: a flat list of { name, location }
+//   whi.house.v1  second version: a tree of places plus items
+// The old address (where-is-it-OLD.pages.dev) now forwards here and passes
+// that data along in the link's #fragment (never sent to a server); it's put
+// into this browser's storage and offered for import. Each room (or batch of
+// items) becomes one spoken-style description that goes through the agent
+// like anything else the person says.
 
 const KEY = 'whi.house.v1'
+const FLAT_KEY = 'whi.items.v1'
+
+/** Take data handed over from the old address (#import=…) into this browser's storage. */
+export function acceptHandoff(): void {
+  const hash = window.location.hash
+  if (!hash.startsWith('#import=')) return
+  try {
+    const json = decodeURIComponent(escape(atob(decodeURIComponent(hash.slice('#import='.length)))))
+    const data = JSON.parse(json) as { house?: string | null; items?: string | null }
+    if (data.house && !localStorage.getItem(KEY)) localStorage.setItem(KEY, data.house)
+    if (data.items && !localStorage.getItem(FLAT_KEY)) localStorage.setItem(FLAT_KEY, data.items)
+  } catch {
+    // A damaged link just means nothing to import.
+  }
+  history.replaceState(null, '', window.location.pathname + window.location.search)
+}
 
 interface OldNode {
   id: string
@@ -20,6 +41,25 @@ interface OldItem {
 }
 
 export function legacyUtterances(): string[] {
+  return [...houseUtterances(), ...flatUtterances()]
+}
+
+/** First version: "the keys are on the hook by the door", ten facts per utterance. */
+function flatUtterances(): string[] {
+  let items: { name: string; location: string }[]
+  try {
+    items = JSON.parse(localStorage.getItem(FLAT_KEY) ?? '[]')
+    if (!Array.isArray(items)) return []
+  } catch {
+    return []
+  }
+  const facts = items.filter((it) => it?.name && it?.location).map((it) => `the ${it.name} is ${it.location}`)
+  const out: string[] = []
+  for (let i = 0; i < facts.length; i += 10) out.push(`${facts.slice(i, i + 10).join('; ')}.`)
+  return out
+}
+
+function houseUtterances(): string[] {
   let model: { nodes: OldNode[]; items: OldItem[] }
   try {
     model = JSON.parse(localStorage.getItem(KEY) ?? 'null')
@@ -48,6 +88,9 @@ export function legacyUtterances(): string[] {
 }
 
 export function clearLegacy(): void {
-  localStorage.setItem(`${KEY}.imported`, localStorage.getItem(KEY) ?? '')
-  localStorage.removeItem(KEY)
+  for (const key of [KEY, FLAT_KEY]) {
+    const value = localStorage.getItem(key)
+    if (value) localStorage.setItem(`${key}.imported`, value)
+    localStorage.removeItem(key)
+  }
 }

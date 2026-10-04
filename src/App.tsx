@@ -313,7 +313,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             {pendingOffline > 0 && <p className="hint">{pendingOffline} waiting to send (offline)</p>}
             {legacy.length > 0 && (
               <button className="ghost setup-cta" onClick={importLegacy} disabled={status === 'thinking'}>
-                Import {legacy.length} {legacy.length === 1 ? 'room' : 'rooms'} saved on this phone by the old version →
+                Bring in what you saved in the old version of the app →
               </button>
             )}
             {error && <p className="error">{error}</p>}
