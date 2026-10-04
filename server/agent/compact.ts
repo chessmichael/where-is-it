@@ -1,194 +1,221 @@
-import { ITEM_STATUSES, LOCATION_KINDS, type HouseDb, type InboxEntry, type PathStep } from '../db/repo'
+import { ITEM_STATUSES, LOCATION_KINDS, type Detail, type HouseDb, type InboxEntry, type PathStep } from '../db/house'
 import type { LLMProvider, Msg } from '../llm/types'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { RELATIONS } from './observations'
 import { COMPACT_SYSTEM } from './prompts'
+import { integer, listOf, nullable, object, oneOf, text, textList, textOrNull, textWith } from './schema'
 
-// Folds pending inbox entries (layer 1) into the relational model (layer 2).
-// Each tool call is its own SQLite transaction; entries are only marked
-// compacted when the agent calls `finish`, so an interrupted run leaves them
-// pending and the next run picks them up (upserts match existing rows).
+// The tidy-up agent: folds pending inbox entries (layer 1) into the house
+// tables (layer 2).
+//
+// Safety: each tool call is its own transaction, and entries are only marked
+// "compacted" when the agent calls `finish`. If a run is interrupted, the
+// entries stay pending and the next run picks them up; because the tools
+// match existing rows, re-filing something doesn't create duplicates.
 
-interface Ctx {
+interface RunState {
   db: HouseDb
-  pendingIds: Set<string>
+  pendingIds: Set<string> // the entries this run was given
   finished: { ids: string[]; summary: string } | null
-  questions: string[]
+  questionsAsked: string[]
 }
 
-const str = { type: 'string' }
-const nul = (s: Record<string, unknown>) => ({ anyOf: [s, { type: 'null' }] })
-const obj = (properties: Record<string, unknown>) => ({
-  type: 'object',
-  additionalProperties: false,
-  properties,
-  required: Object.keys(properties),
-})
-const pathSchema = {
-  type: 'array',
-  description: 'Room first, then inward. Existing nodes are matched by name/alias at each level; missing ones are created.',
-  items: obj({
-    name: str,
-    kind: nul({ type: 'string', enum: [...LOCATION_KINDS] }),
-    preposition: nul(str),
-  }),
-}
-const s = (v: unknown) => (v === null || v === undefined ? null : String(v))
+// A location path as the agent writes it: [{name: "Garage"}, {name: "Top shelf", kind: "shelf"}, ...]
+const locationPath = listOf(
+  object({ name: text, kind: nullable(oneOf(LOCATION_KINDS)), preposition: nullable(text) }),
+  'Room first, then inward. Existing nodes are matched by name/alias at each level; missing ones are created.',
+)
 
-const tools: AgentTool<Ctx>[] = [
-  {
-    def: {
-      name: 'upsert_location',
-      description: 'Ensure a location path exists (creating missing levels) and optionally set the leaf\'s description and aliases. Returns its id.',
-      parameters: obj({ path: pathSchema, description: nul(str), aliases: { type: 'array', items: str } }),
-    },
-    run: (i, { db }) =>
-      db.tx(() => {
-        const id = db.ensurePath(i.path as PathStep[])
-        db.updateLocation(id, { description: s(i.description), aliases: i.aliases as string[] })
-        return { id, path: db.locationPath(id) }
-      }),
+// ── Tools ──────────────────────────────────────────────────────────────────
+
+const upsertLocation: AgentTool<RunState> = {
+  def: {
+    name: 'upsert_location',
+    description: "Ensure a location path exists (creating missing levels) and optionally set the leaf's description and aliases. Returns its id.",
+    parameters: object({ path: locationPath, description: nullable(text), aliases: listOf(text) }),
   },
-  {
-    def: {
-      name: 'update_location',
-      description: 'Rename or re-describe an existing location by id. Null fields are left unchanged.',
-      parameters: obj({
-        location_id: str,
-        name: nul(str),
-        kind: nul({ type: 'string', enum: [...LOCATION_KINDS] }),
-        preposition: nul(str),
-        description: nul(str),
-        aliases: { type: 'array', items: str },
-      }),
-    },
-    run: (i, { db }) =>
-      db.tx(() => {
-        db.updateLocation(String(i.location_id), {
-          name: s(i.name), kind: s(i.kind), preposition: s(i.preposition), description: s(i.description), aliases: i.aliases as string[],
-        })
-        return { ok: true, path: db.locationPath(String(i.location_id)) }
-      }),
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      const id = db.locations.ensurePath(input.path as PathStep[])
+      db.locations.update(id, { description: textOrNull(input.description), aliases: textList(input.aliases) })
+      return { id, path: db.locations.path(id) }
+    }),
+}
+
+const updateLocation: AgentTool<RunState> = {
+  def: {
+    name: 'update_location',
+    description: 'Rename or re-describe an existing location by id. Null fields are left unchanged.',
+    parameters: object({
+      location_id: text,
+      name: nullable(text),
+      kind: nullable(oneOf(LOCATION_KINDS)),
+      preposition: nullable(text),
+      description: nullable(text),
+      aliases: listOf(text),
+    }),
   },
-  {
-    def: {
-      name: 'upsert_item',
-      description:
-        'Create (item_id null) or update an item. Location: give location_path (preferred, created as needed) or location_id, or location_note for places outside the house tree; all null keeps the current location. Null fields are left unchanged. Moves and status changes are logged to item history automatically.',
-      parameters: obj({
-        item_id: nul(str),
-        name: str,
-        category: nul(str),
-        description: nul(str),
-        quantity: nul({ type: 'integer' }),
-        location_path: nul(pathSchema),
-        location_id: nul(str),
-        location_note: nul(str),
-        status: nul({ type: 'string', enum: [...ITEM_STATUSES] }),
-        lent_to: nul(str),
-        aliases: { type: 'array', items: str },
-        details: { type: 'array', items: obj({ key: str, value: str }) },
-        inbox_id: nul({ ...str, description: 'The inbox entry this change comes from.' }),
-      }),
-    },
-    run: (i, { db }) =>
-      db.tx(() => {
-        let locationId = s(i.location_id)
-        if (locationId && !db.getLocation(locationId)) throw new Error(`no location ${locationId}`)
-        if (i.location_path) locationId = db.ensurePath(i.location_path as PathStep[])
-        const id = db.upsertItem({
-          item_id: s(i.item_id),
-          name: String(i.name),
-          category: s(i.category),
-          description: s(i.description),
-          quantity: (i.quantity as number | null) ?? null,
-          location_id: locationId,
-          location_note: s(i.location_note),
-          status: s(i.status),
-          lent_to: s(i.lent_to),
-          aliases: i.aliases as string[],
-          details: i.details as { key: string; value: string }[],
-          inbox_id: s(i.inbox_id),
-        })
-        return db.describeItem(db.getItem(id)!)
-      }),
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      const id = String(input.location_id)
+      db.locations.update(id, {
+        name: textOrNull(input.name),
+        kind: textOrNull(input.kind),
+        preposition: textOrNull(input.preposition),
+        description: textOrNull(input.description),
+        aliases: textList(input.aliases),
+      })
+      return { ok: true, path: db.locations.path(id) }
+    }),
+}
+
+const upsertItem: AgentTool<RunState> = {
+  def: {
+    name: 'upsert_item',
+    description:
+      'Create (item_id null) or update an item. Location: give location_path (preferred, created as needed) or location_id, or location_note for places outside the house tree; all null keeps the current location. Null fields are left unchanged. Moves and status changes are logged to item history automatically.',
+    parameters: object({
+      item_id: nullable(text),
+      name: text,
+      category: nullable(text),
+      description: nullable(text),
+      quantity: nullable(integer),
+      location_path: nullable(locationPath),
+      location_id: nullable(text),
+      location_note: nullable(text),
+      status: nullable(oneOf(ITEM_STATUSES)),
+      lent_to: nullable(text),
+      aliases: listOf(text),
+      details: listOf(object({ key: text, value: text })),
+      inbox_id: nullable(textWith('The inbox entry this change comes from.')),
+    }),
   },
-  {
-    def: {
-      name: 'relate',
-      description: 'Record a relationship between two existing items, e.g. charger part_of laptop.',
-      parameters: obj({ subject_item_id: str, relation: { type: 'string', enum: [...RELATIONS] }, object_item_id: str, note: nul(str) }),
-    },
-    run: (i, { db }) => db.tx(() => (db.relate(String(i.subject_item_id), String(i.relation), String(i.object_item_id), s(i.note)), { ok: true })),
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      // Where is it? A path (created as needed) wins over an id.
+      let locationId = textOrNull(input.location_id)
+      if (locationId && !db.locations.get(locationId)) throw new Error(`no location ${locationId}`)
+      if (input.location_path) locationId = db.locations.ensurePath(input.location_path as PathStep[])
+
+      const id = db.items.save(textOrNull(input.item_id), {
+        name: String(input.name),
+        category: textOrNull(input.category),
+        description: textOrNull(input.description),
+        quantity: (input.quantity as number | null) ?? null,
+        location_id: locationId,
+        location_note: textOrNull(input.location_note),
+        status: textOrNull(input.status),
+        lent_to: textOrNull(input.lent_to),
+        aliases: textList(input.aliases),
+        details: (input.details as Detail[]) ?? [],
+        inbox_id: textOrNull(input.inbox_id),
+      })
+      return db.describeItem(db.items.get(id)!)
+    }),
+}
+
+const relate: AgentTool<RunState> = {
+  def: {
+    name: 'relate',
+    description: 'Record a relationship between two existing items, e.g. charger part_of laptop.',
+    parameters: object({ subject_item_id: text, relation: oneOf(RELATIONS), object_item_id: text, note: nullable(text) }),
   },
-  {
-    def: {
-      name: 'merge_items',
-      description: 'Two item rows are the same thing: fold remove_id into keep_id (aliases, details, history and relationships move over).',
-      parameters: obj({ keep_id: str, remove_id: str }),
-    },
-    run: (i, { db }) => db.tx(() => (db.mergeItems(String(i.keep_id), String(i.remove_id)), { ok: true })),
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      db.items.relate(String(input.subject_item_id), String(input.relation), String(input.object_item_id), textOrNull(input.note))
+      return { ok: true }
+    }),
+}
+
+const mergeItems: AgentTool<RunState> = {
+  def: {
+    name: 'merge_items',
+    description: 'Two item rows are the same thing: fold remove_id into keep_id (aliases, details, history and relationships move over).',
+    parameters: object({ keep_id: text, remove_id: text }),
   },
-  {
-    def: {
-      name: 'merge_locations',
-      description: 'Two locations are the same place: fold remove_id into keep_id (children, items and aliases move over).',
-      parameters: obj({ keep_id: str, remove_id: str }),
-    },
-    run: (i, { db }) => db.tx(() => (db.mergeLocations(String(i.keep_id), String(i.remove_id)), { ok: true })),
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      db.items.merge(String(input.keep_id), String(input.remove_id))
+      return { ok: true }
+    }),
+}
+
+const mergeLocations: AgentTool<RunState> = {
+  def: {
+    name: 'merge_locations',
+    description: 'Two locations are the same place: fold remove_id into keep_id (children, items and aliases move over).',
+    parameters: object({ keep_id: text, remove_id: text }),
   },
-  {
-    def: {
-      name: 'get_item',
-      description: 'Full record for an item, including its move history.',
-      parameters: obj({ item_id: str }),
-    },
-    run: ({ item_id }, { db }) => {
-      const it = db.getItem(String(item_id))
-      if (!it) throw new Error(`no item ${item_id}`)
-      return { ...db.describeItem(it), history: db.history(it.id) }
-    },
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      db.locations.merge(String(input.keep_id), String(input.remove_id))
+      return { ok: true }
+    }),
+}
+
+const getItem: AgentTool<RunState> = {
+  def: {
+    name: 'get_item',
+    description: 'Full record for an item, including its move history.',
+    parameters: object({ item_id: text }),
   },
-  {
-    def: {
-      name: 'search_house',
-      description: 'Fuzzy-search existing items and locations by name.',
-      parameters: obj({ query: str }),
-    },
-    run: ({ query }, { db }) => {
-      const r = db.search(String(query))
-      return { items: r.items, locations: r.locations }
-    },
+  run: (input, { db }) => {
+    const item = db.items.get(String(input.item_id))
+    if (!item) throw new Error(`no item ${input.item_id}`)
+    return { ...db.describeItem(item), history: db.items.history(item.id) }
   },
-  {
-    def: {
-      name: 'ask_user',
-      description: "Raise a question for the person when entries can't be filed safely. Those entries stay pending until answered.",
-      parameters: obj({ question: str, options: { type: 'array', items: str }, inbox_ids: { type: 'array', items: str } }),
-    },
-    run: (i, ctx) =>
-      ctx.db.tx(() => {
-        const ids = (i.inbox_ids as string[]).filter((id) => ctx.pendingIds.has(id))
-        const q = ctx.db.addQuestion({ conversation: null, inbox_ids: ids, question: String(i.question), options: (i.options as string[]).slice(0, 4) })
-        for (const id of ids) ctx.db.updateInbox(id, { status: 'needs_clarification', note: `waiting on ${q.id}` })
-        ctx.questions.push(q.id)
-        return { asked: q.id }
-      }),
+}
+
+const searchHouse: AgentTool<RunState> = {
+  def: {
+    name: 'search_house',
+    description: 'Fuzzy-search existing items and locations by name.',
+    parameters: object({ query: text }),
   },
-  {
-    def: {
-      name: 'finish',
-      description: 'End the run. List every pending entry you fully filed (or that held nothing to store).',
-      parameters: obj({ compacted_inbox_ids: { type: 'array', items: str }, summary: str }),
-    },
-    endsTurn: true,
-    run: (i, ctx) => {
-      const ids = (i.compacted_inbox_ids as string[]).filter((id) => ctx.pendingIds.has(id))
-      ctx.finished = { ids, summary: String(i.summary) }
-      return { compacted: ids.length }
-    },
+  run: (input, { db }) => {
+    const results = db.search(String(input.query))
+    return { items: results.items, locations: results.locations }
   },
-]
+}
+
+const askUser: AgentTool<RunState> = {
+  def: {
+    name: 'ask_user',
+    description: "Raise a question for the person when entries can't be filed safely. Those entries stay pending until answered.",
+    parameters: object({ question: text, options: listOf(text), inbox_ids: listOf(text) }),
+  },
+  run: (input, state) =>
+    state.db.sql.tx(() => {
+      const heldBack = textList(input.inbox_ids).filter((id) => state.pendingIds.has(id))
+      const question = state.db.questions.ask({
+        conversation: null,
+        inbox_ids: heldBack,
+        question: String(input.question),
+        options: textList(input.options).slice(0, 4),
+      })
+      for (const id of heldBack) state.db.inbox.update(id, { status: 'needs_clarification', note: `waiting on ${question.id}` })
+      state.questionsAsked.push(question.id)
+      return { asked: question.id }
+    }),
+}
+
+const finish: AgentTool<RunState> = {
+  def: {
+    name: 'finish',
+    description: 'End the run. List every pending entry you fully filed (or that held nothing to store).',
+    parameters: object({ compacted_inbox_ids: listOf(text), summary: text }),
+  },
+  endsTurn: true,
+  run: (input, state) => {
+    const filed = textList(input.compacted_inbox_ids).filter((id) => state.pendingIds.has(id))
+    state.finished = { ids: filed, summary: String(input.summary) }
+    return { compacted: filed.length }
+  },
+}
+
+const TOOLS = [upsertLocation, updateLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, askUser, finish]
+
+// ── The run ────────────────────────────────────────────────────────────────
 
 export interface CompactResult {
   compacted: string[]
@@ -200,42 +227,47 @@ export interface CompactResult {
 }
 
 export async function compact(llm: LLMProvider, db: HouseDb, entries: InboxEntry[]): Promise<CompactResult> {
-  const ctx: Ctx = { db, pendingIds: new Set(entries.map((e) => e.id)), finished: null, questions: [] }
-  const answered = db
-    .all<{ id: string; question: string; answer: string | null; inbox_ids: string }>(
-      `SELECT id, question, answer, inbox_ids FROM questions WHERE status = 'answered' ORDER BY at DESC LIMIT 20`,
-    )
-  const input = [
-    `<house_map>\n${db.outline(true)}\n</house_map>`,
-    answered.length ? `<answered_questions>\n${answered.map((q) => `${q.id} (${q.inbox_ids}): ${q.question} → ${q.answer}`).join('\n')}\n</answered_questions>` : '',
-    `<pending_entries>\n${entries
-      .map((e) => JSON.stringify({ id: e.id, at: e.at, said: e.said, observations: e.observations, agent_reply: e.agent_reply, status: e.status }))
-      .join('\n')}\n</pending_entries>`,
-  ]
-    .filter(Boolean)
-    .join('\n\n')
+  const state: RunState = { db, pendingIds: new Set(entries.map((e) => e.id)), finished: null, questionsAsked: [] }
 
-  const res = await runLoop({
+  const result = await runLoop({
     llm,
     system: COMPACT_SYSTEM,
-    messages: [{ role: 'user', content: input }],
-    tools,
-    ctx,
+    messages: [{ role: 'user', content: describeWork(db, entries) }],
+    tools: TOOLS,
+    ctx: state,
     effort: 'medium',
     maxSteps: 30,
   })
 
-  const t = new Date().toISOString()
-  const compacted = ctx.finished?.ids ?? []
-  db.tx(() => {
-    for (const id of compacted) db.updateInbox(id, { status: 'compacted', compacted_at: t, note: null })
+  // Only entries the agent explicitly finished are marked compacted.
+  const filed = state.finished?.ids ?? []
+  const filedAt = new Date().toISOString()
+  db.sql.tx(() => {
+    for (const id of filed) db.inbox.update(id, { status: 'compacted', compacted_at: filedAt, note: null })
   })
+
   return {
-    compacted,
-    questions: ctx.questions,
-    summary: ctx.finished?.summary ?? `Run ended without finishing (${res.stop}); entries left pending.`,
-    steps: res.steps,
-    messages: res.messages,
-    stop: res.stop,
+    compacted: filed,
+    questions: state.questionsAsked,
+    summary: state.finished?.summary ?? `Run ended without finishing (${result.stop}); entries left pending.`,
+    steps: result.steps,
+    messages: result.messages,
+    stop: result.stop,
   }
+}
+
+/** The agent's input: the current house, recent answers to questions, and the entries to file. */
+function describeWork(db: HouseDb, entries: InboxEntry[]): string {
+  const houseMap = `<house_map>\n${db.outline(true)}\n</house_map>`
+
+  const answered = db.questions.recentlyAnswered()
+  const answers = answered.length
+    ? `<answered_questions>\n${answered.map((q) => `${q.id} (${JSON.stringify(q.inbox_ids)}): ${q.question} → ${q.answer}`).join('\n')}\n</answered_questions>`
+    : ''
+
+  const pending = entries
+    .map((e) => JSON.stringify({ id: e.id, at: e.at, said: e.said, observations: e.observations, agent_reply: e.agent_reply, status: e.status }))
+    .join('\n')
+
+  return [houseMap, answers, `<pending_entries>\n${pending}\n</pending_entries>`].filter(Boolean).join('\n\n')
 }

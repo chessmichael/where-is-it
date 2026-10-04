@@ -1,99 +1,103 @@
-import type { HouseDb, InboxEntry, Question } from '../db/repo'
+import type { HouseDb, InboxEntry, Question } from '../db/house'
 import type { LLMProvider, Msg } from '../llm/types'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { OBSERVATION_SCHEMA, type Observation } from './observations'
 import { CONVERSE_SYSTEM } from './prompts'
+import { listOf, nullable, object, oneOf, text, textList, textOrNull, textWith } from './schema'
 
-// One conversational turn: utterance → (search / record / ask) → spoken reply.
-// The utterance is already in the inbox when this runs.
+// The conversation agent: one turn of utterance → (search / record / ask) →
+// spoken reply. The utterance is already saved in the inbox when this runs;
+// this decides what it means.
 
-interface Ctx {
+interface TurnState {
   db: HouseDb
-  entry: InboxEntry
-  observations: Observation[]
-  asked: Question | null
+  entry: InboxEntry // the utterance being handled
+  observations: Observation[] // what record_observations captured
+  asked: Question | null // set if the agent asked a clarifying question
 }
 
-const obj = (properties: Record<string, unknown>) => ({
-  type: 'object',
-  additionalProperties: false,
-  properties,
-  required: Object.keys(properties),
-})
+// ── Tools ──────────────────────────────────────────────────────────────────
 
-const tools: AgentTool<Ctx>[] = [
-  {
-    def: {
-      name: 'search_house',
-      description:
-        'Fuzzy-search the house for an item or place. Returns filed items with their full location path, recent not-yet-filed observations that mention it, and matching locations.',
-      parameters: obj({ query: { type: 'string', description: 'What to look for, e.g. "passport" or "christmas lights".' } }),
-    },
-    run: ({ query }, { db }) => db.search(String(query)),
+const searchHouse: AgentTool<TurnState> = {
+  def: {
+    name: 'search_house',
+    description:
+      'Fuzzy-search the house for an item or place. Returns filed items with their full location path, recent not-yet-filed observations that mention it, and matching locations.',
+    parameters: object({ query: textWith('What to look for, e.g. "passport" or "christmas lights".') }),
   },
-  {
-    def: {
-      name: 'get_location',
-      description: 'Everything stored in a place and its sub-places. Accepts a location id, a path like "Garage › Metal shelving", or a name.',
-      parameters: obj({ location: { type: 'string' } }),
-    },
-    run: ({ location }, { db }) => {
-      const loc = db.resolveLocation(String(location))
-      if (!loc) throw new Error(`no location matching "${location}"`)
-      return db.locationContents(loc.id)
-    },
+  run: (input, { db }) => db.search(String(input.query)),
+}
+
+const getLocation: AgentTool<TurnState> = {
+  def: {
+    name: 'get_location',
+    description: 'Everything stored in a place and its sub-places. Accepts a location id, a path like "Garage › Metal shelving", or a name.',
+    parameters: object({ location: text }),
   },
-  {
-    def: {
-      name: 'record_observations',
-      description:
-        "Attach structured observations to the current inbox entry, following the field guide in your instructions (one fact per observation, null for fields that don't apply). Call once per turn with everything the utterance establishes; calling again replaces this turn's earlier observations.",
-      parameters: obj({ observations: { type: 'array', items: OBSERVATION_SCHEMA } }),
-    },
-    run: ({ observations }, ctx) => {
-      ctx.observations = observations as Observation[]
-      return { recorded: ctx.observations.length, inbox_id: ctx.entry.id }
-    },
+  run: (input, { db }) => {
+    const location = db.locations.resolve(String(input.location))
+    if (!location) throw new Error(`no location matching "${input.location}"`)
+    return db.locations.contents(location.id)
   },
-  {
-    def: {
-      name: 'resolve_question',
-      description: 'Mark one of the open questions as answered (or dismissed if the person says it no longer matters).',
-      parameters: obj({
-        question_id: { type: 'string' },
-        status: { type: 'string', enum: ['answered', 'dismissed'] },
-        answer: { anyOf: [{ type: 'string' }, { type: 'null' }], description: 'The answer in your own words.' },
-      }),
-    },
-    run: ({ question_id, status, answer }, { db, entry }) => {
-      const q = db.getQuestion(String(question_id))
-      if (!q || q.status !== 'open') throw new Error(`no open question ${question_id}`)
-      db.resolveQuestion(q.id, status as 'answered' | 'dismissed', (answer as string | null) ?? entry.said, entry.id)
-      return { ok: true }
-    },
+}
+
+const recordObservations: AgentTool<TurnState> = {
+  def: {
+    name: 'record_observations',
+    description:
+      "Attach structured observations to the current inbox entry, following the field guide in your instructions (one fact per observation, null for fields that don't apply). Call once per turn with everything the utterance establishes; calling again replaces this turn's earlier observations.",
+    parameters: object({ observations: listOf(OBSERVATION_SCHEMA) }),
   },
-  {
-    def: {
-      name: 'ask_user',
-      description:
-        'Ask the person one clarifying question. Ends your turn; the question is read aloud and their next utterance comes back to you. Record anything already certain before asking.',
-      parameters: obj({
-        question: { type: 'string', description: 'Short, spoken-style question.' },
-        options: { type: 'array', items: { type: 'string' }, description: '0-4 short suggested answers.' },
-      }),
-    },
-    endsTurn: true,
-    run: ({ question, options }, ctx) => {
-      ctx.asked = ctx.db.addQuestion({
-        conversation: ctx.entry.conversation,
-        inbox_ids: [ctx.entry.id],
-        question: String(question),
-        options: ((options as string[]) ?? []).slice(0, 4),
-      })
-      return { asked: ctx.asked.id }
-    },
+  run: (input, turn) => {
+    turn.observations = input.observations as Observation[]
+    return { recorded: turn.observations.length, inbox_id: turn.entry.id }
   },
-]
+}
+
+const resolveQuestion: AgentTool<TurnState> = {
+  def: {
+    name: 'resolve_question',
+    description: 'Mark one of the open questions as answered (or dismissed if the person says it no longer matters).',
+    parameters: object({
+      question_id: text,
+      status: oneOf(['answered', 'dismissed']),
+      answer: { ...nullable(text), description: 'The answer in your own words.' },
+    }),
+  },
+  run: (input, { db, entry }) => {
+    const question = db.questions.get(String(input.question_id))
+    if (!question || question.status !== 'open') throw new Error(`no open question ${input.question_id}`)
+    const status = input.status as 'answered' | 'dismissed'
+    db.questions.resolve(question.id, status, textOrNull(input.answer) ?? entry.said, entry.id)
+    return { ok: true }
+  },
+}
+
+const askUser: AgentTool<TurnState> = {
+  def: {
+    name: 'ask_user',
+    description:
+      'Ask the person one clarifying question. Ends your turn; the question is read aloud and their next utterance comes back to you. Record anything already certain before asking.',
+    parameters: object({
+      question: textWith('Short, spoken-style question.'),
+      options: listOf(text, '0-4 short suggested answers.'),
+    }),
+  },
+  endsTurn: true,
+  run: (input, turn) => {
+    turn.asked = turn.db.questions.ask({
+      conversation: turn.entry.conversation,
+      inbox_ids: [turn.entry.id],
+      question: String(input.question),
+      options: textList(input.options).slice(0, 4),
+    })
+    return { asked: turn.asked.id }
+  },
+}
+
+const TOOLS = [searchHouse, getLocation, recordObservations, resolveQuestion, askUser]
+
+// ── The turn ───────────────────────────────────────────────────────────────
 
 export interface ConverseResult {
   reply: string
@@ -105,43 +109,59 @@ export interface ConverseResult {
 }
 
 export async function converse(llm: LLMProvider, db: HouseDb, entry: InboxEntry): Promise<ConverseResult> {
-  const ctx: Ctx = { db, entry, observations: [], asked: null }
-  const res = await runLoop({
+  const turn: TurnState = { db, entry, observations: [], asked: null }
+
+  const result = await runLoop({
     llm,
     system: CONVERSE_SYSTEM,
-    messages: [{ role: 'user', content: turnContext(db, entry) }],
-    tools,
-    ctx,
+    messages: [{ role: 'user', content: describeTurn(db, entry) }],
+    tools: TOOLS,
+    ctx: turn,
     effort: 'low',
     maxSteps: 8,
   })
-  let reply = res.text.trim()
-  if (ctx.asked) reply = ctx.asked.question
-  if (!reply) {
-    reply =
-      res.stop === 'refusal'
-        ? "Sorry, I can't help with that one."
-        : ctx.observations.length
-          ? 'Got it.'
-          : "Sorry, I didn't catch that — could you say it again?"
+
+  return {
+    reply: chooseReply(result.text, result.stop, turn),
+    question: turn.asked,
+    observations: turn.observations,
+    steps: result.steps,
+    messages: result.messages,
+    stop: result.stop,
   }
-  return { reply, question: ctx.asked, observations: ctx.observations, steps: res.steps, messages: res.messages, stop: res.stop }
 }
 
-// Volatile context for this turn: map, open questions, recent exchanges.
-function turnContext(db: HouseDb, entry: InboxEntry): string {
-  const history = db.conversationHistory(entry.conversation, entry.id)
-  const open = db.openQuestions()
-  const parts = [
-    `<house_map>\n${db.outline(false)}\n</house_map>`,
-    open.length
-      ? `<open_questions>\n${open.map((q) => `${q.id}: ${q.question}${q.options.length ? ` (options: ${q.options.join(' / ')})` : ''}`).join('\n')}\n</open_questions>`
-      : '',
-    history.length
-      ? `<conversation_so_far>\n${history.map((h) => `[${h.id}] person: ${h.said}\nyou: ${h.agent_reply ?? ''}`).join('\n')}\n</conversation_so_far>`
-      : '',
-    `<now>${entry.at}</now>`,
-    `[${entry.id}] person: ${entry.said}`,
-  ]
-  return parts.filter(Boolean).join('\n\n')
+/** What to say back: the question if one was asked, else the model's text, else a sensible fallback. */
+function chooseReply(modelText: string, stop: string, turn: TurnState): string {
+  if (turn.asked) return turn.asked.question
+  if (modelText.trim()) return modelText.trim()
+  if (stop === 'refusal') return "Sorry, I can't help with that one."
+  if (turn.observations.length) return 'Got it.'
+  return "Sorry, I didn't catch that — could you say it again?"
+}
+
+/**
+ * The agent's input for this turn. Kept out of the system prompt (which never
+ * changes, so providers can cache it):
+ *   - the house map (places only; items are found with search_house)
+ *   - questions still waiting for an answer
+ *   - the last few exchanges of this conversation
+ *   - the utterance itself, tagged with its inbox id
+ */
+function describeTurn(db: HouseDb, entry: InboxEntry): string {
+  const houseMap = `<house_map>\n${db.outline(false)}\n</house_map>`
+
+  const open = db.questions.open()
+  const openQuestions = open.length
+    ? `<open_questions>\n${open.map((q) => `${q.id}: ${q.question}${q.options.length ? ` (options: ${q.options.join(' / ')})` : ''}`).join('\n')}\n</open_questions>`
+    : ''
+
+  const earlier = db.inbox.recentInConversation(entry.conversation, entry.id)
+  const conversationSoFar = earlier.length
+    ? `<conversation_so_far>\n${earlier.map((e) => `[${e.id}] person: ${e.said}\nyou: ${e.agent_reply ?? ''}`).join('\n')}\n</conversation_so_far>`
+    : ''
+
+  return [houseMap, openQuestions, conversationSoFar, `<now>${entry.at}</now>`, `[${entry.id}] person: ${entry.said}`]
+    .filter(Boolean)
+    .join('\n\n')
 }

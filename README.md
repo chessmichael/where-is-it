@@ -89,23 +89,31 @@ Then deploy with `npm run deploy`. On the phone, open the URL in Safari and use 
 
 ```
 server/
-  index.ts          Worker entry: routing, auth, file downloads
+  index.ts          Worker entry: sends /api/* to the route table, everything else to the PWA
+  http.ts           response helpers + the route shape
+  routes/auth.ts    sign-in routes (passkeys, access password, logout)
+  routes/house.ts   a signed-in person's house: converse, house view, tidy-up, file downloads
   auth.ts           access password check, session cookies
   auth-do.ts        account directory + passkey (WebAuthn) registration and sign-in
   house-do.ts       per-account Durable Object: inbox capture, agents, compaction scheduling
   db/schema.ts      the SQLite schema (both layers), documented inline
-  db/repo.ts        typed reads/writes; the only code that touches SQL
+  db/house.ts       HouseDb: db.inbox / db.questions / db.locations / db.items, plus search and the house map
+  db/inbox.ts       layer 1: what was said, and the agent's questions
+  db/locations.ts   layer 2: the tree of places (room → storage → container)
+  db/items.ts       layer 2: things, their details, relationships and move history
+  db/sql.ts         thin typed wrapper over SQLite; the only code that runs SQL
   db/export.ts      inbox.jsonl / house.md / house.json / house.sql
-  agent/prompts.ts  system prompts (the speech → data decision matrix lives here)
+  agent/prompts.ts  system prompts (the speech → data decision guide lives here)
   agent/converse.ts conversation agent + its tools
-  agent/compact.ts  compaction agent + its tools
+  agent/compact.ts  tidy-up agent + its tools
+  agent/schema.ts   helpers for writing tool input schemas
   agent/loop.ts     provider-neutral tool-use loop that produces traces
   llm/              provider interface + Anthropic and OpenAI-compatible adapters
   trace.ts          conversation/compaction traces (stored per turn, served as files)
 src/
   App.tsx           mic loop, conversation transcript, clarifying-question chips
-  components/       SignIn, HouseTree, Files, Settings
-  lib/passkeys.ts   browser side of passkey sign-up / sign-in
+  components/       SignIn, Captured (what was recorded), HouseTree, Files, Settings
   lib/api.ts        API client + offline outbox
-  lib/speech.ts     Web Speech API (recognition + synthesis)
+  lib/passkeys.ts   browser side of passkey sign-up / sign-in
+  lib/speech.ts     Web Speech API: pause-tolerant dictation + spoken replies
 ```

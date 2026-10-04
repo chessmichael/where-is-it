@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite'
-import { HouseDb } from '../db/repo'
+import { HouseDb } from '../db/house'
 import type { ChatRequest, ChatResponse, LLMProvider, ToolCall } from '../llm/types'
 
 // Minimal stand-in for a Durable Object's SqlStorage on top of node:sqlite.

@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers'
 import type { Account } from './auth'
 import { compact } from './agent/compact'
 import { converse } from './agent/converse'
-import { HouseDb } from './db/repo'
+import { HouseDb } from './db/house'
 import { houseTree, renderExport, type ExportName } from './db/export'
 import { createProvider } from './llm'
 import { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } from './trace'
@@ -25,14 +25,14 @@ export class HouseDO extends DurableObject<Env> {
   }
 
   private remember(account: Account): void {
-    if (this.db.getMeta('account_uid') !== account.uid) this.db.setMeta('account_uid', account.uid)
-    this.db.setMeta('account_name', account.name)
+    if (this.db.sql.getMeta('account_uid') !== account.uid) this.db.sql.setMeta('account_uid', account.uid)
+    this.db.sql.setMeta('account_name', account.name)
   }
 
   async converse(account: Account, conversationId: string, text: string) {
     this.remember(account)
     // Capture first: the utterance is durable before any model call.
-    const entry = this.db.addInbox(conversationId, text)
+    const entry = this.db.inbox.add(conversationId, text)
     const llm = createProvider(this.env)
     const started = Date.now()
     try {
@@ -42,7 +42,7 @@ export class HouseDO extends DurableObject<Env> {
         : res.observations.length
           ? 'pending_compaction'
           : 'nothing_to_store'
-      this.db.updateInbox(entry.id, { observations: res.observations, agent_reply: res.reply, status })
+      this.db.inbox.update(entry.id, { observations: res.observations, agent_reply: res.reply, status })
       appendConversationTrace(
         this.db,
         conversationId,
@@ -71,7 +71,7 @@ export class HouseDO extends DurableObject<Env> {
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       // Keep the raw utterance; compaction can still interpret `said` later.
-      this.db.updateInbox(entry.id, { status: 'error', note: message.slice(0, 500) })
+      this.db.inbox.update(entry.id, { status: 'error', note: message.slice(0, 500) })
       appendConversationTrace(this.db, conversationId, { provider: llm.provider, model: llm.model }, {
         inbox_id: entry.id, at: entry.at, said: text, error: message, ms: Date.now() - started,
       })
@@ -88,11 +88,11 @@ export class HouseDO extends DurableObject<Env> {
   }
 
   async house() {
-    return { ...houseTree(this.db), status: this.db.countByStatus(), questions: this.db.openQuestions() }
+    return { ...houseTree(this.db), status: this.db.inbox.countByStatus(), questions: this.db.questions.open() }
   }
 
   async dismissQuestion(id: string) {
-    this.db.resolveQuestion(id, 'dismissed', null, null)
+    this.db.questions.resolve(id, 'dismissed', null, null)
     return { ok: true }
   }
 
@@ -118,7 +118,7 @@ export class HouseDO extends DurableObject<Env> {
   }
 
   private fileable() {
-    return [...this.db.listInbox({ status: 'pending_compaction' }), ...this.db.listInbox({ status: 'error' })].sort((a, b) =>
+    return [...this.db.inbox.list('pending_compaction'), ...this.db.inbox.list('error')].sort((a, b) =>
       a.id.localeCompare(b.id),
     )
   }
@@ -162,9 +162,9 @@ export class HouseDO extends DurableObject<Env> {
       runs.push({ compacted: res.compacted.length, questions: res.questions, summary: res.summary, trace })
       if (res.compacted.length === 0) break // no progress; don't spin
     }
-    this.db.setMeta('last_compacted_at', new Date().toISOString())
+    this.db.sql.setMeta('last_compacted_at', new Date().toISOString())
     // Anything left (blocked or out of budget) gets another look later.
     if (this.fileable().length) await this.ctx.storage.setAlarm(Date.now() + COMPACT_EVENTUALLY_MS)
-    return { runs, status: this.db.countByStatus() }
+    return { runs, status: this.db.inbox.countByStatus() }
   }
 }

@@ -1,4 +1,4 @@
-import type { HouseDb } from './db/repo'
+import type { HouseDb } from './db/house'
 
 // Conversation and compaction traces, kept in the account's own database and
 // served as readable JSON files:
@@ -23,7 +23,7 @@ export const TRACE_INDEX = 'CREATE INDEX IF NOT EXISTS traces_file ON traces (fi
 const safe = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120)
 
 export function appendConversationTrace(db: HouseDb, conversationId: string, header: Record<string, unknown>, turn: Record<string, unknown>): void {
-  db.run(
+  db.sql.run(
     `INSERT INTO traces (file, kind, at, header, body) VALUES (?, 'conversation', ?, ?, ?)`,
     `${safe(conversationId)}.json`, new Date().toISOString(), JSON.stringify({ conversation: conversationId, ...header }), JSON.stringify(turn),
   )
@@ -31,12 +31,12 @@ export function appendConversationTrace(db: HouseDb, conversationId: string, hea
 
 export function writeCompactionTrace(db: HouseDb, doc: Record<string, unknown>): string {
   const file = `compaction-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
-  db.run(`INSERT INTO traces (file, kind, at, body) VALUES (?, 'compaction', ?, ?)`, file, new Date().toISOString(), JSON.stringify(doc))
+  db.sql.run(`INSERT INTO traces (file, kind, at, body) VALUES (?, 'compaction', ?, ?)`, file, new Date().toISOString(), JSON.stringify(doc))
   return file
 }
 
 export function listTraces(db: HouseDb): { name: string; size: number; uploaded: string }[] {
-  return db
+  return db.sql
     .all<{ name: string; size: number; uploaded: string }>(
       'SELECT file AS name, SUM(LENGTH(body)) AS size, MAX(at) AS uploaded FROM traces GROUP BY file ORDER BY uploaded DESC',
     )
@@ -44,7 +44,7 @@ export function listTraces(db: HouseDb): { name: string; size: number; uploaded:
 }
 
 export function getTrace(db: HouseDb, name: string): string | null {
-  const rows = db.all<{ kind: string; at: string; header: string | null; body: string }>(
+  const rows = db.sql.all<{ kind: string; at: string; header: string | null; body: string }>(
     'SELECT kind, at, header, body FROM traces WHERE file = ? ORDER BY id',
     `${safe(name.replace(/\.json$/, ''))}.json`,
   )
