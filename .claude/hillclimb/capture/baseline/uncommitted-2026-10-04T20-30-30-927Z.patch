@@ -1,0 +1,5 @@
+# Code under test was commit cecab37269681cf92230d5d8692c5a7de2a8c653 plus this diff.
+diff --git a/.README.md.swp b/.README.md.swp
+deleted file mode 100644
+index 534d93c..0000000
+Binary files a/.README.md.swp and /dev/null differ
