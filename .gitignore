@@ -16,3 +16,5 @@ evals/capture/.build/
 .claude/hillclimb/**/progress.txt
 .claude/hillclimb/**/cases.html
 .claude/hillclimb/**/ref/
+*.swp
+*.swo
