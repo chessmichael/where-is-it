@@ -9,6 +9,9 @@
   "main": "server/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Served at https://where-is-it.YOUR-SUBDOMAIN.workers.dev; no per-version preview URLs.
+  "workers_dev": true,
+  "preview_urls": false,
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
