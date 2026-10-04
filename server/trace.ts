@@ -1,54 +1,59 @@
-// Conversation and compaction traces, stored as readable JSON files in R2:
-//   users/<uid>/traces/<conversationId>.json      one file per conversation
-//   users/<uid>/traces/compaction-<timestamp>.json one file per tidy-up run
+import type { HouseDb } from './db/repo'
+
+// Conversation and compaction traces, kept in the account's own database and
+// served as readable JSON files:
+//   traces/<conversationId>.json        one file per conversation
+//   traces/compaction-<timestamp>.json  one file per tidy-up run
 // Each holds the exact model input, every model step, tool call and result,
 // token usage and timing — the raw material for evals.
+//
+// Storage is one row per conversation turn (rows are size-limited, and
+// conversations grow), stitched back into a single document on read.
 
-export function userPrefix(uid: string): string {
-  return `users/${uid.replace(/[^a-zA-Z0-9:_-]/g, '_')}/`
+export const TRACE_SCHEMA = `CREATE TABLE IF NOT EXISTS traces (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  file    TEXT NOT NULL,   -- c_2026-10-04_ab12cd.json, compaction-2026-10-04T18-31-18-430Z.json
+  kind    TEXT NOT NULL,   -- conversation | compaction
+  at      TEXT NOT NULL,
+  header  TEXT,            -- JSON, provider/model; first row of a conversation
+  body    TEXT NOT NULL    -- JSON: one turn, or the whole compaction run
+)`
+export const TRACE_INDEX = 'CREATE INDEX IF NOT EXISTS traces_file ON traces (file, id)'
+
+const safe = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120)
+
+export function appendConversationTrace(db: HouseDb, conversationId: string, header: Record<string, unknown>, turn: Record<string, unknown>): void {
+  db.run(
+    `INSERT INTO traces (file, kind, at, header, body) VALUES (?, 'conversation', ?, ?, ?)`,
+    `${safe(conversationId)}.json`, new Date().toISOString(), JSON.stringify({ conversation: conversationId, ...header }), JSON.stringify(turn),
+  )
 }
 
-export async function appendConversationTrace(
-  bucket: R2Bucket,
-  uid: string,
-  conversationId: string,
-  header: Record<string, unknown>,
-  turn: Record<string, unknown>,
-): Promise<void> {
-  const key = `${userPrefix(uid)}traces/${safe(conversationId)}.json`
-  const existing = await bucket.get(key)
-  const doc: { turns: unknown[] } & Record<string, unknown> = existing
-    ? await existing.json()
-    : { conversation: conversationId, started_at: new Date().toISOString(), ...header, turns: [] }
-  doc.turns.push(turn)
-  await bucket.put(key, JSON.stringify(doc, null, 2), { httpMetadata: { contentType: 'application/json' } })
+export function writeCompactionTrace(db: HouseDb, doc: Record<string, unknown>): string {
+  const file = `compaction-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  db.run(`INSERT INTO traces (file, kind, at, body) VALUES (?, 'compaction', ?, ?)`, file, new Date().toISOString(), JSON.stringify(doc))
+  return file
 }
 
-export async function writeCompactionTrace(bucket: R2Bucket, uid: string, doc: Record<string, unknown>): Promise<string> {
-  const name = `compaction-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
-  await bucket.put(`${userPrefix(uid)}traces/${name}`, JSON.stringify(doc, null, 2), {
-    httpMetadata: { contentType: 'application/json' },
-  })
-  return name
+export function listTraces(db: HouseDb): { name: string; size: number; uploaded: string }[] {
+  return db
+    .all<{ name: string; size: number; uploaded: string }>(
+      'SELECT file AS name, SUM(LENGTH(body)) AS size, MAX(at) AS uploaded FROM traces GROUP BY file ORDER BY uploaded DESC',
+    )
+    .map((r) => ({ ...r }))
 }
 
-export async function listTraces(bucket: R2Bucket, uid: string): Promise<{ name: string; size: number; uploaded: string }[]> {
-  const prefix = `${userPrefix(uid)}traces/`
-  const out: { name: string; size: number; uploaded: string }[] = []
-  let cursor: string | undefined
-  do {
-    const page = await bucket.list({ prefix, cursor })
-    for (const o of page.objects) out.push({ name: o.key.slice(prefix.length), size: o.size, uploaded: o.uploaded.toISOString() })
-    cursor = page.truncated ? page.cursor : undefined
-  } while (cursor)
-  return out.sort((a, b) => b.uploaded.localeCompare(a.uploaded))
-}
-
-export async function getTrace(bucket: R2Bucket, uid: string, name: string): Promise<string | null> {
-  const obj = await bucket.get(`${userPrefix(uid)}traces/${safe(name.replace(/\.json$/, ''))}.json`)
-  return obj ? obj.text() : null
-}
-
-function safe(s: string): string {
-  return s.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120)
+export function getTrace(db: HouseDb, name: string): string | null {
+  const rows = db.all<{ kind: string; at: string; header: string | null; body: string }>(
+    'SELECT kind, at, header, body FROM traces WHERE file = ? ORDER BY id',
+    `${safe(name.replace(/\.json$/, ''))}.json`,
+  )
+  if (!rows.length) return null
+  if (rows[0].kind === 'compaction') return JSON.stringify(JSON.parse(rows[0].body), null, 2)
+  const doc = {
+    ...JSON.parse(rows[0].header ?? '{}'),
+    started_at: rows[0].at,
+    turns: rows.map((r) => JSON.parse(r.body)),
+  }
+  return JSON.stringify(doc, null, 2)
 }

@@ -2,7 +2,6 @@ import { strToU8, zipSync } from 'fflate'
 import { clearCookie, passwordMatches, readSession, sessionCookie, type Account } from './auth'
 import type { Origin } from './auth-do'
 import { EXPORT_FILES, type ExportName } from './db/export'
-import { getTrace, listTraces } from './trace'
 
 export { AuthDO } from './auth-do'
 export { HouseDO } from './house-do'
@@ -128,13 +127,13 @@ async function route(req: Request, env: Env, url: URL): Promise<Response> {
   if (path === '/files' && req.method === 'GET') {
     return json({
       files: Object.entries(EXPORT_FILES).map(([name, description]) => ({ name, description })),
-      traces: await listTraces(env.FILES, account.uid),
+      traces: await house.traceList(),
     })
   }
 
   const trace = path.match(/^\/files\/traces\/([\w.-]+)$/)
   if (trace && req.method === 'GET') {
-    const body = await getTrace(env.FILES, account.uid, trace[1])
+    const body = await house.traceFile(trace[1])
     return body ? download(body, 'application/json', trace[1]) : fail(404, 'no such trace')
   }
 
@@ -148,8 +147,8 @@ async function route(req: Request, env: Env, url: URL): Promise<Response> {
   if (path === '/export.zip' && req.method === 'GET') {
     const entries: Record<string, Uint8Array> = {}
     for (const name of Object.keys(EXPORT_FILES) as ExportName[]) entries[name] = strToU8((await house.exportFile(name)).body)
-    for (const t of await listTraces(env.FILES, account.uid)) {
-      const body = await getTrace(env.FILES, account.uid, t.name)
+    for (const t of await house.traceList()) {
+      const body = await house.traceFile(t.name)
       if (body) entries[`traces/${t.name}`] = strToU8(body)
     }
     const day = new Date().toISOString().slice(0, 10)

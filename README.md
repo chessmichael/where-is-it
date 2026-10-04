@@ -14,10 +14,8 @@ Phone (PWA: speech → text)  ──▶  Cloudflare Worker  /api/*
                           HouseDO — one Durable Object (own SQLite DB) per account
                             ├─ inbox        layer 1: every utterance verbatim + the agent's reading of it
                             ├─ house tables layer 2: rooms → storage → items, details, relationships, history
+                            ├─ traces       full trace of every conversation and tidy-up (served as JSON files)
                             └─ agents       converse (per utterance) · compact (tidy-up)
-                                   │
-                                   ▼
-                          R2: users/<account>/traces/*.json — full trace of every conversation and tidy-up
 ```
 
 - **A model decides what to store.** Each utterance is saved to the inbox *first*,
@@ -64,7 +62,7 @@ Phone (PWA: speech → text)  ──▶  Cloudflare Worker  /api/*
 ```bash
 npm install
 cp .env.example .env   # fill in ACCESS_PASSWORD, SESSION_SECRET, a model key; DEV_AUTH=1 for password-only local sign-in
-npm run dev            # PWA + Worker + Durable Objects + R2, all local, at http://localhost:5173
+npm run dev            # PWA + Worker + Durable Objects, all local, at http://localhost:5173
 npm test               # server logic tests (node:sqlite + a scripted fake model; no network)
 npm run build
 ```
@@ -73,8 +71,7 @@ npm run build
 
 One-time setup:
 
-1. Create the trace bucket: `npx wrangler r2 bucket create where-is-it-files`.
-2. Set the secrets. Each command prompts for its value:
+Set the secrets. Each command prompts for its value:
    ```bash
    npx wrangler secret put ACCESS_PASSWORD
    npx wrangler secret put SESSION_SECRET     # e.g. output of: openssl rand -hex 32
@@ -104,7 +101,7 @@ server/
   agent/compact.ts  compaction agent + its tools
   agent/loop.ts     provider-neutral tool-use loop that produces traces
   llm/              provider interface + Anthropic and OpenAI-compatible adapters
-  trace.ts          trace files in R2
+  trace.ts          conversation/compaction traces (stored per turn, served as files)
 src/
   App.tsx           mic loop, conversation transcript, clarifying-question chips
   components/       SignIn, HouseTree, Files, Settings

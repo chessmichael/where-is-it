@@ -24,7 +24,6 @@
     { "tag": "v1", "new_sqlite_classes": ["HouseDO"] },
     { "tag": "v2", "new_sqlite_classes": ["AuthDO"] }
   ],
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "where-is-it-files" }],
   // Sign-in / sign-up attempts per IP per minute.
   "ratelimits": [{ "name": "AUTH_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
   "vars": {

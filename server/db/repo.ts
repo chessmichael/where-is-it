@@ -1,5 +1,6 @@
 import { HOUSE_TABLES, SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema'
 import { normalize, rank } from './search'
+import { TRACE_INDEX, TRACE_SCHEMA } from '../trace'
 import type { Observation } from '../agent/observations'
 
 // Typed access to one account's SQLite database. All writes go through here so
@@ -81,6 +82,9 @@ export class HouseDb {
 
   migrate(): void {
     for (const s of SCHEMA_STATEMENTS) this.sql.exec(s)
+    // Traces live here too but stay out of house.sql (they're exported as files).
+    this.sql.exec(TRACE_SCHEMA)
+    this.sql.exec(TRACE_INDEX)
     this.setMeta('schema_version', String(SCHEMA_VERSION))
   }
 

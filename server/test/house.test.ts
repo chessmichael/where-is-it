@@ -210,3 +210,19 @@ describe('configuration', () => {
     expect(await passwordMatches('', undefined)).toBe(false)
   })
 })
+
+describe('traces', () => {
+  it('stores one row per turn and serves a conversation as one file', async () => {
+    const { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } = await import('../trace')
+    const { db } = memoryDb()
+    appendConversationTrace(db, 'c_1', { provider: 'openai', model: 'gpt-5.5' }, { said: 'one' })
+    appendConversationTrace(db, 'c_1', { provider: 'openai', model: 'gpt-5.5' }, { said: 'two' })
+    const run = writeCompactionTrace(db, { kind: 'compaction', compacted: [] })
+    const doc = JSON.parse(getTrace(db, 'c_1.json')!)
+    expect(doc).toMatchObject({ conversation: 'c_1', model: 'gpt-5.5', turns: [{ said: 'one' }, { said: 'two' }] })
+    expect(JSON.parse(getTrace(db, run)!)).toMatchObject({ kind: 'compaction' })
+    expect(listTraces(db).map((t) => t.name).sort()).toEqual(['c_1.json', run].sort())
+    expect(getTrace(db, '../etc/passwd')).toBeNull()
+    expect(sqlDump(db)).not.toContain('CREATE TABLE IF NOT EXISTS traces')
+  })
+})

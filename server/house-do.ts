@@ -5,7 +5,7 @@ import { converse } from './agent/converse'
 import { HouseDb } from './db/repo'
 import { houseTree, renderExport, type ExportName } from './db/export'
 import { createProvider } from './llm'
-import { appendConversationTrace, writeCompactionTrace } from './trace'
+import { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } from './trace'
 
 // One instance per account: owns that account's SQLite database and runs its
 // agents. Requests for the same account are serialized here.
@@ -43,9 +43,8 @@ export class HouseDO extends DurableObject<Env> {
           ? 'pending_compaction'
           : 'nothing_to_store'
       this.db.updateInbox(entry.id, { observations: res.observations, agent_reply: res.reply, status })
-      await appendConversationTrace(
-        this.env.FILES,
-        account.uid,
+      appendConversationTrace(
+        this.db,
         conversationId,
         { provider: llm.provider, model: llm.model },
         {
@@ -72,9 +71,9 @@ export class HouseDO extends DurableObject<Env> {
       const message = e instanceof Error ? e.message : String(e)
       // Keep the raw utterance; compaction can still interpret `said` later.
       this.db.updateInbox(entry.id, { status: 'error', note: message.slice(0, 500) })
-      await appendConversationTrace(this.env.FILES, account.uid, conversationId, { provider: llm.provider, model: llm.model }, {
+      appendConversationTrace(this.db, conversationId, { provider: llm.provider, model: llm.model }, {
         inbox_id: entry.id, at: entry.at, said: text, error: message, ms: Date.now() - started,
-      }).catch(() => {})
+      })
       await this.scheduleCompaction()
       return {
         inboxId: entry.id,
@@ -93,6 +92,14 @@ export class HouseDO extends DurableObject<Env> {
   async dismissQuestion(id: string) {
     this.db.resolveQuestion(id, 'dismissed', null, null)
     return { ok: true }
+  }
+
+  async traceList() {
+    return listTraces(this.db)
+  }
+
+  async traceFile(name: string) {
+    return getTrace(this.db, name)
   }
 
   async exportFile(name: ExportName) {
@@ -129,16 +136,14 @@ export class HouseDO extends DurableObject<Env> {
   }
 
   private async compactAll() {
-    const uid = this.db.getMeta('account_uid')
     const llm = createProvider(this.env)
-    const runs: { compacted: number; questions: string[]; summary: string; trace: string | null }[] = []
+    const runs: { compacted: number; questions: string[]; summary: string; trace: string }[] = []
     for (let batch = 0; batch < 5; batch++) {
       const entries = this.fileable().slice(0, COMPACT_BATCH)
       if (entries.length === 0) break
       const started = Date.now()
       const res = await compact(llm, this.db, entries)
-      const trace = uid
-        ? await writeCompactionTrace(this.env.FILES, uid, {
+      const trace = writeCompactionTrace(this.db, {
             kind: 'compaction',
             provider: llm.provider,
             model: llm.model,
@@ -152,7 +157,6 @@ export class HouseDO extends DurableObject<Env> {
             input: res.messages[0],
             steps: res.steps,
           })
-        : null
       runs.push({ compacted: res.compacted.length, questions: res.questions, summary: res.summary, trace })
       if (res.compacted.length === 0) break // no progress; don't spin
     }
