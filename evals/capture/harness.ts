@@ -281,6 +281,8 @@ class Session {
       system:
         'You are role-playing a person talking to a home-inventory voice app. The app just asked you a question. ' +
         'Answer briefly and naturally, the way someone would say it out loud, using ONLY the facts below. ' +
+        'Like a real person, volunteer the relevant facts you know in the same breath: if you agree to list what is in something, list the items; ' +
+        'if you say it is a different shelf, unit or box, also say which one or where it is. ' +
         'If the facts don\'t answer the question, say something like "not sure, you decide". ' +
         'If asked whether to list the items in a group individually and the facts don\'t say, answer "no, not this time".\n\n' +
         `Facts you know:\n${knows}`,
