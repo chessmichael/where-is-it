@@ -295,3 +295,30 @@ describe('positions, moving places, and things that are also places (schema v2)'
     expect(db.locations.describedPath('garage')).toBe('Garage (behind the house)')
   })
 })
+
+describe('house inspector', () => {
+  it('explains the structure, tells each item\'s story, and flags confusing data', async () => {
+    const { inspectHouse } = await import('../db/inspect')
+    const { renderInspector } = await import('../db/inspect-html')
+    const { db } = memoryDb()
+    const said = db.inbox.add('c', 'the holiday lights are in the red tote in the garage')
+    const tote = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Red tote', kind: 'container' }])
+    db.items.save(null, { name: 'Holiday lights', location_id: tote, inbox_id: said.id })
+    const moved = db.inbox.add('c', 'I moved the red tote to the attic')
+    db.locations.move(tote, db.locations.ensurePath([{ name: 'Attic' }]), null, moved.id)
+    for (const name of ['Top box', 'Box of books']) {
+      db.locations.update(db.locations.ensurePath([{ name: 'Closet' }, { name, kind: 'container' }]), { position: 'top of the stack' })
+    }
+    const report = inspectHouse(db)
+    expect(report.structure.find((t) => t.name === 'items')?.columns.find((c) => c.name === 'location_id')?.linksTo).toBe('locations.id')
+    const story = report.stories.find((s) => s.name === 'Holiday lights')!
+    expect(story.events.map((e) => e.said)).toEqual([said.said, moved.said])
+    expect(story.now).toBe('Attic › Red tote')
+    const checks = report.health.map((h) => h.check)
+    expect(checks).toContain('Named by position') // "Top box"
+    expect(checks).toContain('Same position twice') // two boxes on top
+    const html = renderInspector(report, { title: '<script>x</script>' })
+    expect(html).not.toContain('<script>x')
+    expect(html).toContain('&lt;script&gt;x')
+  })
+})

@@ -12,7 +12,9 @@
     "test": "vitest run",
     "eval:build": "esbuild evals/capture/harness.ts evals/capture/selftest.ts --bundle --platform=node --format=esm --outdir=evals/capture/.build --out-extension:.js=.mjs --packages=external --log-level=warning",
     "eval:selftest": "npm run eval:build && node evals/capture/.build/selftest.mjs",
-    "eval:capture": "npm run eval:build && node evals/capture/run.mjs"
+    "eval:capture": "npm run eval:build && npm run inspect:build && node evals/capture/run.mjs",
+    "inspect:build": "esbuild scripts/inspect.ts --bundle --platform=node --format=esm --outdir=scripts/.build --out-extension:.js=.mjs --packages=external --log-level=warning",
+    "inspect": "npm run inspect:build && node scripts/.build/inspect.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

@@ -10,7 +10,7 @@ import Settings from './components/Settings'
 import SignIn from './components/SignIn'
 
 type Status = 'idle' | 'listening' | 'thinking' | 'speaking'
-type View = 'main' | 'house' | 'files' | 'settings'
+type View = 'main' | 'house' | 'inspect' | 'files' | 'settings'
 
 interface Line {
   who: 'you' | 'agent' | 'system'
@@ -233,6 +233,9 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         <button className={view === 'house' ? 'tab active' : 'tab'} onClick={() => open('house')}>
           House
         </button>
+        <button className={view === 'inspect' ? 'tab active' : 'tab'} onClick={() => open('inspect')}>
+          Inspect
+        </button>
         <button className={view === 'files' ? 'tab active' : 'tab'} onClick={() => open('files')}>
           Files
         </button>
@@ -247,6 +250,13 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       {view === 'house' && (
         <div className="panel">
           <HouseTree />
+        </div>
+      )}
+
+      {view === 'inspect' && (
+        <div className="panel inspect-panel">
+          {/* Sandboxed with no permissions: the page has no scripts and can't navigate the app. */}
+          <iframe className="inspector" src="/api/inspect" sandbox="" title="House inspector" />
         </div>
       )}
 

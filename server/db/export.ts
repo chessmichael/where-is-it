@@ -1,4 +1,6 @@
 import type { HouseDb, Location } from './house'
+import { inspectHouse } from './inspect'
+import { renderInspector } from './inspect-html'
 import { HOUSE_TABLES, SCHEMA_STATEMENTS } from './schema'
 
 // Human-readable exports of one account's data. These are the "files" the
@@ -10,6 +12,7 @@ export const EXPORT_FILES = {
   'house.md': 'The compacted house as a readable outline: rooms, storage, items.',
   'house.json': 'The compacted house as a nested JSON tree.',
   'house.sql': 'The whole database as SQL (load with: sqlite3 house.db < house.sql).',
+  'house-inspector.html': 'A readable page explaining the data: health checks, the house tree, each item\'s story, and how the tables fit together.',
 } as const
 export type ExportName = keyof typeof EXPORT_FILES
 
@@ -25,6 +28,8 @@ export function renderExport(db: HouseDb, name: ExportName): { body: string; typ
       return { body: houseMarkdown(db), type: 'text/markdown; charset=utf-8' }
     case 'house.sql':
       return { body: sqlDump(db), type: 'application/sql' }
+    case 'house-inspector.html':
+      return { body: renderInspector(inspectHouse(db), { title: 'House inspector' }), type: 'text/html; charset=utf-8' }
   }
 }
 

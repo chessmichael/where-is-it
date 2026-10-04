@@ -23,7 +23,7 @@ const before = summarize(variant)
 const run = spawnSync(
   process.execPath,
   ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', '6', '--timeout-s', '600', ...extra.filter((a, i) => a !== '--model' && extra[i - 1] !== '--model')],
-  { stdio: 'inherit' },
+  { stdio: 'inherit', env: { ...process.env, EVAL_DB_DIR: join(FLOW, variant, 'dbs') } },
 )
 const finishedAt = new Date().toISOString()
 const shaAfter = harnessSha()
@@ -57,5 +57,6 @@ const committed = commitPaths(
   `eval run: capture/${variant} ${after.passed}/${after.cases} passed on ${after.models.join(', ') || model}\n\nCode: ${code.commit.slice(0, 12)}${code.dirty ? ' + uncommitted diff (saved with the results)' : ''}\nHarness: ${String(shaAfter).slice(0, 12)}`,
 )
 console.error(`ledger: recorded run and committed as ${committed}`)
+spawnSync(process.execPath, ['scripts/.build/inspect.mjs', '--eval', variant, '--all'], { stdio: 'inherit' })
 spawnSync(process.execPath, ['evals/capture/build-viewer.mjs', variant], { stdio: 'inherit' })
 process.exit(run.status ?? 1)

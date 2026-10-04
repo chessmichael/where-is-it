@@ -3,6 +3,8 @@ import type { Account } from './auth'
 import { fileableEntries, hearUtterance, tidyUp } from './agent/pipeline'
 import { HouseDb } from './db/house'
 import { houseTree, renderExport, type ExportName } from './db/export'
+import { inspectHouse } from './db/inspect'
+import { renderInspector } from './db/inspect-html'
 import { createProvider } from './llm'
 import { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } from './trace'
 
@@ -78,6 +80,10 @@ export class HouseDO extends DurableObject<Env> {
 
   async traceFile(name: string) {
     return getTrace(this.db, name)
+  }
+
+  async inspectPage(title: string) {
+    return renderInspector(inspectHouse(this.db), { title, subtitle: 'your house, live' })
   }
 
   async exportFile(name: ExportName) {

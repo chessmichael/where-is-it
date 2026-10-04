@@ -213,6 +213,7 @@ for (const r of rows.sort((a, b) => a.prompt_id.localeCompare(b.prompt_id))) {
   </div>
   <div class="grades">${['database', 'reply', 'observations', 'asking'].map((m) => badge(m, r.grade?.[m], r.explanation?.[m])).join(' ')}</div>
   <ul class="reasons">${reasons}</ul>
+  ${existsSync(join(FLOW, variant, 'dbs', `${r.prompt_id}.inspect.html`)) ? `<p class="inspect-link"><a href="${esc(`${variant}/dbs/${r.prompt_id}.inspect.html`)}">Inspect this case's final database →</a></p>` : ''}
   <details class="convo"><summary>Show the conversation and what each agent did</summary>
     <div class="transcript">${renderTranscript(transcript)}</div>
     <p class="rawlink">Raw transcript file: <code>${esc(`${variant}/traces/${r.prompt_id}_rep${r.rep}.json`)}</code></p>
@@ -293,6 +294,7 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 .house pre{background:transparent;border-style:dashed}
 .divider{text-align:center;color:var(--muted);font-size:13px;margin:6px 0}
 .rawlink{font-size:12px;color:var(--muted)}
+.inspect-link{margin:6px 0 0;font-size:14px}.inspect-link a{color:inherit}
 </style></head>
 <body><main>
 <h1>Capture eval — case by case</h1>

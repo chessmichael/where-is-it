@@ -576,3 +576,19 @@ button.danger {
 .captured .unsure {
   color: var(--warn);
 }
+
+/* ── inspect ─────────────────────────────────────────────── */
+.inspect-panel {
+  padding: 0;
+  display: flex;
+}
+.inspector {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+}
+.tree-node-type.position {
+  color: var(--accent);
+  border-color: var(--accent-2);
+}

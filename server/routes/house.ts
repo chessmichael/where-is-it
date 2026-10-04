@@ -16,6 +16,7 @@ import { directory } from './auth'
 //   GET  /files/:name               one export (?view shows it in the browser)
 //   GET  /files/traces/:name        one trace
 //   GET  /export.zip                everything
+//   GET  /inspect                   the house inspector page (no scripts; sandboxed)
 
 const MAX_UTTERANCE_CHARS = 4000
 
@@ -125,7 +126,24 @@ const exportZip: Route = {
   },
 }
 
-export const houseRoutes = [converse, house, dismissQuestion, compactNow, passkeys, listFiles, traceFile, exportFile, exportZip]
+const inspect: Route = {
+  method: 'GET',
+  path: '/inspect',
+  signedIn: true,
+  async handle(ctx) {
+    const html = await houseOf(ctx).inspectPage(`${ctx.account!.name}'s house`)
+    return new Response(html, {
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        // The page has no scripts; this makes sure nothing in it could ever run or load anything.
+        'content-security-policy': "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:",
+        'cache-control': 'no-store',
+      },
+    })
+  },
+}
+
+export const houseRoutes = [inspect, converse, house, dismissQuestion, compactNow, passkeys, listFiles, traceFile, exportFile, exportZip]
 
 /** The signed-in person's own HouseDO. */
 function houseOf({ env, account }: RequestContext) {

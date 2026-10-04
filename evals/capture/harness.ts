@@ -13,7 +13,9 @@ import { hearUtterance, tidyUp, type Heard } from '../../server/agent/pipeline'
 import { CONVERSE_SYSTEM } from '../../server/agent/prompts'
 import type { Observation } from '../../server/agent/observations'
 import type { TraceStep } from '../../server/agent/loop'
-import { houseMarkdown } from '../../server/db/export'
+import { houseMarkdown, sqlDump } from '../../server/db/export'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type { HouseDb, Item, Location } from '../../server/db/house'
 import { memoryDb } from '../../server/test/helpers'
 
@@ -144,6 +146,11 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
   }
 
   session.note(`House after the case:\n${houseMarkdown(db).split('\n').slice(3).join('\n').trim() || '(empty)'}`)
+  // Keep the final database so it can be inspected later (npm run inspect -- --eval <variant> <id>).
+  if (opts.env.EVAL_DB_DIR) {
+    mkdirSync(opts.env.EVAL_DB_DIR, { recursive: true })
+    writeFileSync(join(opts.env.EVAL_DB_DIR, `${c.id}.sql`), sqlDump(db))
+  }
   const usage = agent.usage
   return {
     output: session.lastReply,
