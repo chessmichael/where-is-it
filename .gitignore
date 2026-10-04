@@ -14,3 +14,4 @@ evals/capture/.build/
 .claude/hillclimb/**/state.json
 .claude/hillclimb/**/trajectory/
 .claude/hillclimb/**/progress.txt
+.claude/hillclimb/**/cases.html

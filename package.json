@@ -12,7 +12,7 @@
     "test": "vitest run",
     "eval:build": "esbuild evals/capture/harness.ts evals/capture/selftest.ts --bundle --platform=node --format=esm --outdir=evals/capture/.build --out-extension:.js=.mjs --packages=external --log-level=warning",
     "eval:selftest": "npm run eval:build && node evals/capture/.build/selftest.mjs",
-    "eval:capture": "npm run eval:build && node --env-file=.env evals/capture/run-eval.mjs --flow .claude/hillclimb/capture --model gpt-5.5 --concurrency 6 --timeout-s 600"
+    "eval:capture": "npm run eval:build && node --env-file=.env evals/capture/run-eval.mjs --flow .claude/hillclimb/capture --model gpt-5.5 --concurrency 6 --timeout-s 600 ; node evals/capture/build-viewer.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
