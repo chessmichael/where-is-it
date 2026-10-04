@@ -35,41 +35,111 @@ export interface ListenHandlers {
 }
 
 export interface Listener {
-  stop: () => void
+  stop: () => void // cancel; discard what was heard
+  finish: () => void // send what was heard now
+  hasText: () => boolean
 }
 
+// How long a pause ends an utterance. People pause mid-thought while
+// describing a room, so this is generous; tapping the mic sends sooner.
+export const SILENCE_MS = 3500
+
+// Dictation that survives pauses. Browsers (iOS Safari especially) end a
+// recognition session at the first pause even in continuous mode, so we keep
+// restarting it and stitching the text together until there has been
+// SILENCE_MS of quiet after the person started talking, or they tap to send.
 export function listen(handlers: ListenHandlers): Listener | null {
   const Ctor = getCtor()
   if (!Ctor) {
     handlers.onError?.('unsupported')
     return null
   }
-  const rec = new Ctor()
-  rec.lang = 'en-US'
-  rec.continuous = false
-  rec.interimResults = true
+  let committed = '' // text from earlier sessions
+  let session = '' // text from the current session (finals + interim)
+  let done = false
+  let rec: SpeechRecognitionLike | null = null
+  let silence: ReturnType<typeof setTimeout> | null = null
+  let started = false
 
-  rec.onstart = () => handlers.onStart?.()
-  rec.onresult = (e: any) => {
-    let interim = ''
-    let final = ''
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i]
-      if (r.isFinal) final += r[0].transcript
-      else interim += r[0].transcript
+  const text = () => `${committed} ${session}`.replace(/\s+/g, ' ').trim()
+  const clearSilence = () => {
+    if (silence) clearTimeout(silence)
+    silence = null
+  }
+  const end = (send: boolean) => {
+    if (done) return
+    done = true
+    clearSilence()
+    try {
+      rec?.abort()
+    } catch {
+      /* already stopped */
     }
-    if (interim) handlers.onInterim?.(interim)
-    if (final) handlers.onFinal(final)
+    const t = text()
+    if (send && t) handlers.onFinal(t)
+    handlers.onEnd?.()
   }
-  rec.onerror = (e: any) => handlers.onError?.(e.error || 'error')
-  rec.onend = () => handlers.onEnd?.()
 
-  try {
-    rec.start()
-  } catch {
-    // start() throws if already running; ignore.
+  const startSession = () => {
+    const r = new Ctor()
+    rec = r
+    r.lang = 'en-US'
+    r.continuous = true
+    r.interimResults = true
+    r.onstart = () => {
+      if (!started) {
+        started = true
+        handlers.onStart?.()
+      }
+    }
+    r.onresult = (e: any) => {
+      let all = ''
+      for (let i = 0; i < e.results.length; i++) all += e.results[i][0].transcript
+      session = all
+      handlers.onInterim?.(text())
+      clearSilence()
+      silence = setTimeout(() => end(true), SILENCE_MS)
+    }
+    r.onerror = (e: any) => {
+      const err = e.error || 'error'
+      if (err === 'no-speech' || err === 'aborted') return // onend decides what next
+      done = true
+      clearSilence()
+      handlers.onError?.(err)
+    }
+    r.onend = () => {
+      if (done) return
+      // Session ended on its own (a pause, or the platform's time limit).
+      committed = text()
+      session = ''
+      if (!committed) {
+        // Never heard anything: report it like the browser's no-speech.
+        done = true
+        handlers.onError?.('no-speech')
+        return
+      }
+      startSession() // keep listening; the silence timer decides when to send
+    }
+    try {
+      r.start()
+    } catch {
+      // start() throws if a session is already running; ignore.
+    }
   }
-  return { stop: () => rec.abort() }
+
+  startSession()
+  return { stop: () => end(false), finish: () => end(true), hasText: () => text().length > 0 }
+}
+
+// iOS only allows speech output that starts from a tap. Speaking a silent
+// utterance during the first tap unlocks it for later, automatic replies.
+let unlocked = false
+export function unlockSpeech(): void {
+  if (unlocked || !('speechSynthesis' in window)) return
+  unlocked = true
+  const u = new SpeechSynthesisUtterance(' ')
+  u.volume = 0
+  window.speechSynthesis.speak(u)
 }
 
 // Browsers default to whatever voice the OS lists first, which is often a
@@ -108,8 +178,17 @@ export function speak(text: string, onEnd?: () => void): void {
   u.rate = 1.0
   u.pitch = 1.0
   if (onEnd) {
-    u.onend = onEnd
-    u.onerror = onEnd
+    // iOS sometimes never fires onend/onerror; don't let that stall the app.
+    let fired = false
+    const once = () => {
+      if (fired) return
+      fired = true
+      clearTimeout(guard)
+      onEnd()
+    }
+    const guard = setTimeout(once, 2000 + text.split(/\s+/).length * 450)
+    u.onend = once
+    u.onerror = once
   }
   window.speechSynthesis.speak(u)
 }

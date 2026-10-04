@@ -444,6 +444,11 @@ button.danger {
   line-height: 1.4;
   animation: rise 0.2s ease;
 }
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .line.you {
   align-self: flex-end;
   background: var(--bg-3);
@@ -552,4 +557,22 @@ button.danger {
   color: var(--accent);
   text-decoration: none;
   font-size: 14px;
+}
+
+.captured {
+  align-self: flex-start;
+  max-width: 85%;
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border-left: 3px solid var(--good);
+  background: rgba(52, 211, 153, 0.08);
+  border-radius: 0 10px 10px 0;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.captured .unsure {
+  color: var(--warn);
 }

@@ -31,7 +31,23 @@ export interface ConverseReply {
   reply: string
   question: AgentQuestion | null
   stored: number
+  observations: Captured[]
   error?: string
+}
+
+// What the agent recorded for one utterance (mirrors server/agent/observations.ts).
+export interface Captured {
+  kind: string
+  item: string | null
+  quantity: number | null
+  location: string[] | null
+  from_location: string[] | null
+  details: { key: string; value: string }[] | null
+  relation: string | null
+  related_item: string | null
+  person: string | null
+  note: string | null
+  confidence: 'high' | 'medium' | 'low'
 }
 
 export interface HouseItem {
@@ -86,13 +102,28 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
-  const res = await fetch(`/api${path}`, {
-    method: init?.method ?? (init?.body !== undefined ? 'POST' : 'GET'),
-    headers: init?.body !== undefined ? { 'content-type': 'application/json' } : undefined,
-    body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
-    credentials: 'same-origin',
-  })
+// Long enough for a multi-step agent turn; short enough that a stuck request
+// becomes a visible error instead of an endless "Thinking…".
+const TIMEOUT_MS = 90_000
+
+async function call<T>(path: string, init?: { method?: string; body?: unknown; timeoutMs?: number }): Promise<T> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), init?.timeoutMs ?? TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`/api${path}`, {
+      signal: ctrl.signal,
+      method: init?.method ?? (init?.body !== undefined ? 'POST' : 'GET'),
+      headers: init?.body !== undefined ? { 'content-type': 'application/json' } : undefined,
+      body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
+      credentials: 'same-origin',
+    })
+  } catch (e) {
+    if (ctrl.signal.aborted) throw new ApiError(504, 'That took too long. Your words were saved — try asking again.')
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new ApiError(res.status, (data as { error?: string }).error ?? res.statusText)
   return data as T
@@ -113,7 +144,7 @@ export const api = {
   converse: (conversationId: string, text: string) => call<ConverseReply>('/converse', { body: { conversationId, text } }),
   house: () => call<House>('/house'),
   dismissQuestion: (id: string) => call<{ ok: true }>(`/questions/${id}/dismiss`, { body: {} }),
-  compact: () => call<{ runs: { compacted: number; summary: string }[] }>('/compact', { body: {} }),
+  compact: () => call<{ runs: { compacted: number; summary: string }[] }>('/compact', { body: {}, timeoutMs: 600_000 }),
   files: () => call<FileList>('/files'),
 }
 

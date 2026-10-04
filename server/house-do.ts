@@ -66,6 +66,7 @@ export class HouseDO extends DurableObject<Env> {
         reply: res.reply,
         question: res.question ? { id: res.question.id, text: res.question.question, options: res.question.options } : null,
         stored: res.observations.length,
+        observations: res.observations,
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
@@ -80,6 +81,7 @@ export class HouseDO extends DurableObject<Env> {
         reply: "I saved what you said, but couldn't work it out just now. I'll sort it out later.",
         question: null,
         stored: 0,
+        observations: [],
         error: message,
       }
     }

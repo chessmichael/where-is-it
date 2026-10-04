@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, enqueue, flushOutbox, isOfflineError, queued, type AgentQuestion, type Me } from './lib/api'
+import { api, enqueue, flushOutbox, isOfflineError, queued, type AgentQuestion, type Captured as Obs, type Me } from './lib/api'
 import { legacyUtterances, clearLegacy } from './lib/legacy'
 import { getSpeakAnswers } from './lib/settings'
-import { isSpeechSupported, listen, speak, type Listener } from './lib/speech'
+import { isSpeechSupported, listen, speak, unlockSpeech, type Listener } from './lib/speech'
+import Captured from './components/Captured'
 import Files from './components/Files'
 import HouseTree from './components/HouseTree'
 import Settings from './components/Settings'
 import SignIn from './components/SignIn'
 
-type Status = 'idle' | 'listening' | 'thinking'
+type Status = 'idle' | 'listening' | 'thinking' | 'speaking'
 type View = 'main' | 'house' | 'files' | 'settings'
 
 interface Line {
   who: 'you' | 'agent' | 'system'
   text: string
   question?: AgentQuestion | null
+  captured?: Obs[]
 }
 
 // A conversation is a run of exchanges; a long pause starts a new one so
@@ -82,8 +84,11 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       if (loopRef.current && viewRef.current === 'main') startListeningRef.current()
       else setStatus('idle')
     }
-    if (spoken && getSpeakAnswers()) speak(spoken, restart)
-    else restart()
+    // Leave "thinking" as soon as the answer is in, whether or not speech plays.
+    if (spoken && getSpeakAnswers()) {
+      setStatus('speaking')
+      speak(spoken, restart)
+    } else restart()
   }, [])
 
   const process = useCallback(
@@ -97,7 +102,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       const cid = conversationId()
       try {
         const r = await api.converse(cid, clean)
-        add({ who: 'agent', text: r.reply, question: r.question })
+        add({ who: 'agent', text: r.reply, question: r.question, captured: r.observations })
         afterReply(r.reply)
       } catch (e) {
         if (isOfflineError(e)) {
@@ -147,6 +152,12 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   }, [speechOk, process])
   startListeningRef.current = startListening
 
+  // Unlock spoken replies on the first tap (iOS requires a user gesture).
+  useEffect(() => {
+    window.addEventListener('pointerdown', unlockSpeech, { once: true })
+    return () => window.removeEventListener('pointerdown', unlockSpeech)
+  }, [])
+
   useEffect(() => {
     if (speechOk) startListening()
     return () => stopListening()
@@ -158,7 +169,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
     const flush = () =>
       flushOutbox((q, r) => {
         add({ who: 'you', text: q.text })
-        add({ who: 'agent', text: r.reply, question: r.question })
+        add({ who: 'agent', text: r.reply, question: r.question, captured: r.observations })
       }).then(() => setPendingOffline(queued().length))
     flush()
     window.addEventListener('online', flush)
@@ -166,7 +177,13 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   }, [add])
 
   function toggleMic() {
+    if (status === 'speaking') {
+      window.speechSynthesis?.cancel() // the speak() guard then restarts listening
+      return
+    }
     if (status === 'listening') {
+      // Tap while talking = send now; tap with nothing heard = stop listening.
+      if (listenerRef.current?.hasText()) return listenerRef.current.finish()
       setLoop(false)
       stopListening()
     } else {
@@ -249,9 +266,10 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               </p>
             )}
             {lines.map((l, i) => (
-              <p key={i} className={`line ${l.who}`}>
-                {l.text}
-              </p>
+              <div key={i} className={`turn ${l.who}`}>
+                <p className={`line ${l.who}`}>{l.text}</p>
+                {l.captured && <Captured items={l.captured} />}
+              </div>
             ))}
             {lastQuestion && lastQuestion.options.length > 0 && status !== 'thinking' && (
               <div className="options">
@@ -271,14 +289,15 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               className={`mic ${status}`}
               onClick={toggleMic}
               disabled={status === 'thinking'}
-              aria-label={status === 'listening' ? 'Stop listening' : 'Start listening'}
+              aria-label={status === 'listening' ? (interim ? 'Send' : 'Stop listening') : 'Start listening'}
             >
-              <span className="mic-glyph">{status === 'thinking' ? '…' : '🎤'}</span>
+              <span className="mic-glyph">{status === 'thinking' ? '…' : status === 'listening' && interim ? '➤' : '🎤'}</span>
               {status === 'listening' && <span className="pulse" />}
             </button>
             <p className="status-line">
-              {status === 'listening' && 'Listening…'}
+              {status === 'listening' && (interim ? 'Pause for a moment or tap the mic to send.' : 'Listening…')}
               {status === 'thinking' && 'Thinking…'}
+              {status === 'speaking' && 'Tap the mic to skip.'}
               {status === 'idle' && (speechOk ? 'Tap the mic to talk.' : 'Type below.')}
             </p>
             {pendingOffline > 0 && <p className="hint">{pendingOffline} waiting to send (offline)</p>}

@@ -47,7 +47,7 @@ const tools: AgentTool<Ctx>[] = [
     def: {
       name: 'record_observations',
       description:
-        "Attach structured observations to the current inbox entry. Call once per turn with everything the utterance establishes. Calling again replaces this turn's earlier observations.",
+        "Attach structured observations to the current inbox entry, following the field guide in your instructions (one fact per observation, null for fields that don't apply). Call once per turn with everything the utterance establishes; calling again replaces this turn's earlier observations.",
       parameters: obj({ observations: { type: 'array', items: OBSERVATION_SCHEMA } }),
     },
     run: ({ observations }, ctx) => {

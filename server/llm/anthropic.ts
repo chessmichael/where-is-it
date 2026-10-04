@@ -13,7 +13,8 @@ export class AnthropicProvider implements LLMProvider {
     readonly model: string,
     baseURL?: string,
   ) {
-    this.client = new Anthropic({ apiKey, baseURL: baseURL || undefined })
+    // Bounded so one slow call can't hang a turn; the app shows an error instead.
+    this.client = new Anthropic({ apiKey, baseURL: baseURL || undefined, timeout: 60_000, maxRetries: 1 })
   }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
