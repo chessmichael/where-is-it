@@ -1,10 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { cloudflare } from '@cloudflare/vite-plugin'
 
 export default defineConfig({
   plugins: [
     react(),
+    // Runs the Worker (server/index.ts, per wrangler.jsonc) inside the dev server
+    // and bundles it alongside the PWA on build.
+    cloudflare(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
@@ -30,6 +34,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Never serve the API (or file downloads) from the service-worker cache.
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],

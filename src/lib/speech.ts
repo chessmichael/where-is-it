@@ -72,6 +72,23 @@ export function listen(handlers: ListenHandlers): Listener | null {
   return { stop: () => rec.abort() }
 }
 
+// Browsers default to whatever voice the OS lists first, which is often a
+// robotic one. Prefer downloaded high-quality voices, then known-good ones.
+const PREFERRED = [/premium/i, /enhanced/i, /natural/i, /^(Ava|Zoe|Evan|Nathan|Samantha|Allison|Susan|Tom)\b/i, /Google US English/i]
+let chosen: SpeechSynthesisVoice | null | undefined
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  if (chosen !== undefined) return chosen
+  const voices = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('en'))
+  if (voices.length === 0) return null // not loaded yet; try again next time
+  const score = (v: SpeechSynthesisVoice) => {
+    const i = PREFERRED.findIndex((re) => re.test(v.name))
+    return (i === -1 ? 100 : i) + (v.lang === 'en-US' ? 0 : 0.5)
+  }
+  chosen = [...voices].sort((a, b) => score(a) - score(b))[0] ?? null
+  return chosen
+}
+
 let voicesReady = false
 export function speak(text: string, onEnd?: () => void): void {
   if (!('speechSynthesis' in window)) {
@@ -81,10 +98,13 @@ export function speak(text: string, onEnd?: () => void): void {
   // Warm up voices on first call (some browsers load them lazily).
   if (!voicesReady) {
     window.speechSynthesis.getVoices()
+    window.speechSynthesis.addEventListener?.('voiceschanged', () => (chosen = undefined))
     voicesReady = true
   }
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(text)
+  const voice = pickVoice()
+  if (voice) u.voice = voice
   u.rate = 1.0
   u.pitch = 1.0
   if (onEnd) {

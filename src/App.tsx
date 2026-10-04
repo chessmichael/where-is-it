@@ -1,33 +1,73 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { handleInput, type EngineResult } from './lib/engine'
-import { getItems, getRooms } from './lib/model'
+import { api, enqueue, flushOutbox, isOfflineError, queued, type AgentQuestion, type Me } from './lib/api'
+import { legacyUtterances, clearLegacy } from './lib/legacy'
 import { getSpeakAnswers } from './lib/settings'
 import { isSpeechSupported, listen, speak, type Listener } from './lib/speech'
+import Files from './components/Files'
 import HouseTree from './components/HouseTree'
-import RoomSetup from './components/RoomSetup'
 import Settings from './components/Settings'
+import SignIn from './components/SignIn'
 
 type Status = 'idle' | 'listening' | 'thinking'
-type View = 'main' | 'house' | 'setup' | 'settings'
+type View = 'main' | 'house' | 'files' | 'settings'
+
+interface Line {
+  who: 'you' | 'agent' | 'system'
+  text: string
+  question?: AgentQuestion | null
+}
+
+// A conversation is a run of exchanges; a long pause starts a new one so
+// traces stay readable and the agent's short-term context stays relevant.
+const CONVERSATION_IDLE_MS = 20 * 60_000
+const newConversationId = () => `c_${new Date().toISOString().slice(0, 10)}_${Math.random().toString(36).slice(2, 8)}`
 
 export default function App() {
+  const [me, setMe] = useState<Me | null>(null)
+  const [bootError, setBootError] = useState<string | null>(null)
+
+  const refreshMe = useCallback(() => {
+    api.me().then(setMe, (e) => setBootError(String(e.message ?? e)))
+  }, [])
+  useEffect(refreshMe, [refreshMe])
+
+  if (bootError) return <p className="error boot">Can't reach the server: {bootError}</p>
+  if (!me) return <p className="hint boot">Loading…</p>
+  if (!me.account) return <SignIn me={me} onSignedIn={refreshMe} />
+  return <Main me={me} onSignOut={() => api.signOut().finally(refreshMe)} />
+}
+
+function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [status, setStatus] = useState<Status>('idle')
   const [interim, setInterim] = useState('')
-  const [result, setResult] = useState<EngineResult | null>(null)
+  const [lines, setLines] = useState<Line[]>([])
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>('main')
   const [typed, setTyped] = useState('')
   const [loop, setLoop] = useState(true)
-  const [, setTick] = useState(0) // force re-read of the model after changes
+  const [pendingOffline, setPendingOffline] = useState(queued().length)
+  const [legacy, setLegacy] = useState(() => legacyUtterances())
 
   const listenerRef = useRef<Listener | null>(null)
   const loopRef = useRef(loop)
   loopRef.current = loop
+  const viewRef = useRef(view)
+  viewRef.current = view
+  const conversation = useRef({ id: newConversationId(), last: Date.now() })
+  const transcriptEnd = useRef<HTMLDivElement>(null)
   const speechOk = isSpeechSupported()
 
-  const refresh = useCallback(() => setTick((t) => t + 1), [])
-  const itemCount = getItems().length
-  const hasHouse = getRooms().length > 0 || itemCount > 0
+  const add = useCallback((l: Line) => setLines((ls) => [...ls, l]), [])
+  useEffect(() => {
+    transcriptEnd.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [lines])
+
+  const conversationId = () => {
+    const c = conversation.current
+    if (Date.now() - c.last > CONVERSATION_IDLE_MS) c.id = newConversationId()
+    c.last = Date.now()
+    return c.id
+  }
 
   const stopListening = useCallback(() => {
     listenerRef.current?.stop()
@@ -35,33 +75,48 @@ export default function App() {
     setStatus('idle')
   }, [])
 
-  const process = useCallback(async (text: string) => {
-    const clean = text.trim()
-    if (!clean) return
-    setStatus('thinking')
-    setInterim('')
-    setError(null)
-    try {
-      const res = await handleInput(clean)
-      setResult(res)
-      setTick((t) => t + 1)
-      const restart = () => {
-        if (loopRef.current && view === 'main') startListening()
-        else setStatus('idle')
-      }
-      if (res.kind === 'answer' && getSpeakAnswers()) speak(res.spoken, restart)
-      else restart()
-    } catch (e) {
-      setError(String(e))
-      setStatus('idle')
+  const startListeningRef = useRef<() => void>(() => {})
+
+  const afterReply = useCallback((spoken: string | null) => {
+    const restart = () => {
+      if (loopRef.current && viewRef.current === 'main') startListeningRef.current()
+      else setStatus('idle')
     }
+    if (spoken && getSpeakAnswers()) speak(spoken, restart)
+    else restart()
+  }, [])
+
+  const process = useCallback(
+    async (text: string) => {
+      const clean = text.trim()
+      if (!clean) return
+      setStatus('thinking')
+      setInterim('')
+      setError(null)
+      add({ who: 'you', text: clean })
+      const cid = conversationId()
+      try {
+        const r = await api.converse(cid, clean)
+        add({ who: 'agent', text: r.reply, question: r.question })
+        afterReply(r.reply)
+      } catch (e) {
+        if (isOfflineError(e)) {
+          enqueue({ conversationId: cid, text: clean, at: new Date().toISOString() })
+          setPendingOffline(queued().length)
+          add({ who: 'system', text: "You're offline. Saved on this phone; it'll be sent when you're back online." })
+        } else {
+          setError(e instanceof Error ? e.message : String(e))
+        }
+        setStatus('idle')
+      }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view])
+    [add, afterReply],
+  )
 
   const startListening = useCallback(() => {
     if (!speechOk) return
     setError(null)
-    setResult(null)
     setInterim('')
     listenerRef.current = listen({
       onStart: () => setStatus('listening'),
@@ -73,7 +128,7 @@ export default function App() {
       onError: (err) => {
         listenerRef.current = null
         if (err === 'no-speech') {
-          if (loopRef.current && view === 'main') startListening()
+          if (loopRef.current && viewRef.current === 'main') startListeningRef.current()
           else setStatus('idle')
           return
         }
@@ -86,17 +141,29 @@ export default function App() {
         setStatus('idle')
       },
       onEnd: () => {
-        if (!listenerRef.current && status === 'listening') setStatus('idle')
+        if (!listenerRef.current) setStatus((s) => (s === 'listening' ? 'idle' : s))
       },
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speechOk, process, view])
+  }, [speechOk, process])
+  startListeningRef.current = startListening
 
   useEffect(() => {
-    if (speechOk && view === 'main') startListening()
+    if (speechOk) startListening()
     return () => stopListening()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Send anything queued while offline.
+  useEffect(() => {
+    const flush = () =>
+      flushOutbox((q, r) => {
+        add({ who: 'you', text: q.text })
+        add({ who: 'agent', text: r.reply, question: r.question })
+      }).then(() => setPendingOffline(queued().length))
+    flush()
+    window.addEventListener('online', flush)
+    return () => window.removeEventListener('online', flush)
+  }, [add])
 
   function toggleMic() {
     if (status === 'listening') {
@@ -117,52 +184,88 @@ export default function App() {
     setTyped('')
   }
 
+  function answer(option: string) {
+    stopListening()
+    process(option)
+  }
+
+  function open(v: View) {
+    if (view === v) return goMain()
+    stopListening()
+    setView(v)
+  }
+
   function goMain() {
     setView('main')
     if (loop && speechOk) startListening()
   }
 
-  const highlightId =
-    result?.kind === 'added'
-      ? result.item.id
-      : result?.kind === 'answer' && result.matches[0]
-        ? result.matches[0].id
-        : undefined
+  async function importLegacy() {
+    stopListening()
+    setLoop(false)
+    for (const u of legacy) await process(u)
+    clearLegacy()
+    setLegacy([])
+  }
+
+  const lastQuestion = [...lines].reverse().find((l) => l.who === 'agent')?.question
 
   return (
     <div className="app">
       <header className="topbar">
-        <button
-          className={view === 'house' ? 'tab active' : 'tab'}
-          onClick={() => (view === 'house' ? goMain() : (stopListening(), setView('house')))}
-        >
-          House {itemCount > 0 && <span className="count">{itemCount}</span>}
+        <button className={view === 'house' ? 'tab active' : 'tab'} onClick={() => open('house')}>
+          House
+        </button>
+        <button className={view === 'files' ? 'tab active' : 'tab'} onClick={() => open('files')}>
+          Files
         </button>
         <h1 className="title">Where Is It</h1>
-        <button
-          className={view === 'settings' ? 'tab active' : 'tab'}
-          onClick={() => (view === 'settings' ? goMain() : (stopListening(), setView('settings')))}
-        >
+        <button className={view === 'settings' ? 'tab active' : 'tab'} onClick={() => open('settings')}>
           ⚙
         </button>
       </header>
 
-      {view === 'settings' && <Settings onClose={goMain} onChanged={refresh} />}
-      {view === 'setup' && <RoomSetup onClose={() => setView('house')} onSaved={refresh} />}
+      {view === 'settings' && <Settings me={me} onClose={goMain} onSignOut={onSignOut} />}
 
       {view === 'house' && (
         <div className="panel">
-          <div className="house-actions">
-            <button className="primary" onClick={() => (stopListening(), setView('setup'))}>
-              ＋ Describe a room
-            </button>
-          </div>
-          <HouseTree highlightId={highlightId} onChange={refresh} />
+          <HouseTree />
+        </div>
+      )}
+
+      {view === 'files' && (
+        <div className="panel">
+          <Files />
         </div>
       )}
 
       {view === 'main' && (
         <main className="main">
+          <div className="transcript">
+            {lines.length === 0 && (
+              <p className="hint transcript-empty">
+                Say where something is — “the extension cords are in the blue bin on the top garage shelf” — or ask
+                “where’s my passport?”
+              </p>
+            )}
+            {lines.map((l, i) => (
+              <p key={i} className={`line ${l.who}`}>
+                {l.text}
+              </p>
+            ))}
+            {lastQuestion && lastQuestion.options.length > 0 && status !== 'thinking' && (
+              <div className="options">
+                {lastQuestion.options.map((o) => (
+                  <button key={o} className="ghost option" onClick={() => answer(o)}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            )}
+            {interim && <p className="line you interim">“{interim}”</p>}
+            <div ref={transcriptEnd} />
+          </div>
+
           <div className="stage">
             <button
               className={`mic ${status}`}
@@ -173,35 +276,18 @@ export default function App() {
               <span className="mic-glyph">{status === 'thinking' ? '…' : '🎤'}</span>
               {status === 'listening' && <span className="pulse" />}
             </button>
-
             <p className="status-line">
-              {status === 'listening' && 'Listening… say where something is, or ask where it is.'}
+              {status === 'listening' && 'Listening…'}
               {status === 'thinking' && 'Thinking…'}
               {status === 'idle' && (speechOk ? 'Tap the mic to talk.' : 'Type below.')}
             </p>
-
-            {interim && <p className="interim">“{interim}”</p>}
-
-            {result && (
-              <div className={`result ${result.kind}`}>
-                <p className="result-text">{result.spoken}</p>
-                {result.kind === 'answer' && result.matches.length > 1 && (
-                  <ul className="result-matches">
-                    {result.matches.map((m) => (
-                      <li key={m.id}>{m.name}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {error && <p className="error">{error}</p>}
-
-            {!hasHouse && !result && (
-              <button className="ghost setup-cta" onClick={() => (stopListening(), setView('setup'))}>
-                Set up your house →
+            {pendingOffline > 0 && <p className="hint">{pendingOffline} waiting to send (offline)</p>}
+            {legacy.length > 0 && (
+              <button className="ghost setup-cta" onClick={importLegacy} disabled={status === 'thinking'}>
+                Import {legacy.length} {legacy.length === 1 ? 'room' : 'rooms'} saved on this phone by the old version →
               </button>
             )}
+            {error && <p className="error">{error}</p>}
           </div>
 
           <form className="typebar" onSubmit={submitTyped}>
@@ -209,7 +295,7 @@ export default function App() {
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder='e.g. "where is my phone charger?"'
-              aria-label="Type an item or question"
+              aria-label="Type a statement or question"
             />
             <button className="primary" type="submit">
               Send
