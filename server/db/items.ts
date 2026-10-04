@@ -20,6 +20,7 @@ export interface ItemChanges {
   aliases?: string[] | null
   details?: Detail[] | null
   inbox_id?: string | null // the utterance this change came from (for history)
+  place_id?: string | null // this item is also that place (a toolbox that holds things)
 }
 
 export class Items {
@@ -58,8 +59,8 @@ export class Items {
     const status = changes.status || 'present'
     const timestamp = now()
     this.sql.run(
-      `INSERT INTO items (id, name, category, description, quantity, location_id, location_note, status, lent_to, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO items (id, name, category, description, quantity, location_id, location_note, status, lent_to, place_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       changes.name,
       changes.category ?? null,
@@ -69,6 +70,7 @@ export class Items {
       changes.location_id ? null : changes.location_note ?? null,
       status,
       status === 'lent' ? changes.lent_to ?? null : null,
+      changes.place_id ?? null,
       timestamp,
       timestamp,
     )
@@ -111,6 +113,14 @@ export class Items {
       after.location_id, after.location_note, after.status, after.lent_to, now(),
       id,
     )
+
+    if (changes.place_id) this.sql.run('UPDATE items SET place_id = ? WHERE id = ?', changes.place_id, id)
+
+    // An item that is also a place (a toolbox) carries that place along when it moves.
+    const placeId = changes.place_id ?? before.place_id
+    if (placeId && after.location_id && after.location_id !== before.location_id) {
+      this.sql.run('UPDATE locations SET parent_id = ?, updated_at = ? WHERE id = ?', after.location_id, now(), placeId)
+    }
 
     const event = historyEvent(before, after)
     if (event) this.logHistory(id, event, before.location_id, after.location_id, changes.inbox_id)

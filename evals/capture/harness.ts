@@ -454,9 +454,13 @@ function itemSatisfies(db: HouseDb, it: Item, want: ExpectedItem): string[] {
   return issues
 }
 
-/** Text that could carry a place's position marker: its name, aliases and description. */
+/**
+ * Text that could carry a place's position marker. The position field comes
+ * first (it's the authoritative one); name, aliases and description are also
+ * read, so agents without a position field can still be graded.
+ */
 function markerText(db: HouseDb, loc: Location): string {
-  return [loc.name, loc.description ?? '', ...db.locations.aliases(loc.id)].join(' | ').toLowerCase()
+  return [loc.position ?? '', loc.name, loc.description ?? '', ...db.locations.aliases(loc.id)].join(' | ').toLowerCase()
 }
 
 function ancestors(db: HouseDb, id: string | null): Location[] {

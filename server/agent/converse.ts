@@ -143,13 +143,14 @@ function chooseReply(modelText: string, stop: string, turn: TurnState): string {
 /**
  * The agent's input for this turn. Kept out of the system prompt (which never
  * changes, so providers can cache it):
- *   - the house map (places only; items are found with search_house)
+ *   - the house map: places (with positions) and the items in them, so
+ *     same-named things are visible without a search
  *   - questions still waiting for an answer
  *   - the last few exchanges of this conversation
  *   - the utterance itself, tagged with its inbox id
  */
 function describeTurn(db: HouseDb, entry: InboxEntry): string {
-  const houseMap = `<house_map>\n${db.outline(false)}\n</house_map>`
+  const houseMap = `<house_map>\n${db.outline(true)}\n</house_map>`
 
   const open = db.questions.open()
   const openQuestions = open.length

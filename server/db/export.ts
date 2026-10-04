@@ -36,6 +36,7 @@ export function houseTree(db: HouseDb) {
     name: l.name,
     kind: l.kind,
     preposition: l.preposition,
+    ...(l.position ? { position: l.position } : {}),
     ...(l.description ? { description: l.description } : {}),
     ...(db.locations.aliases(l.id).length ? { aliases: db.locations.aliases(l.id) } : {}),
     items: items.filter((i) => i.location_id === l.id).map((i) => itemJson(db, i.id)),
@@ -76,7 +77,7 @@ export function houseMarkdown(db: HouseDb): string {
   }
   const walk = (parent: string, depth: number) => {
     for (const l of locs.filter((x) => x.parent_id === parent)) {
-      out.push(`${'  '.repeat(depth)}- **${l.name}** _(${l.kind})_${l.description ? ` — ${l.description}` : ''}`)
+      out.push(`${'  '.repeat(depth)}- **${l.name}** _(${l.kind}${l.position ? `, ${l.position}` : ''})_${l.description ? ` — ${l.description}` : ''}`)
       for (const i of items.filter((x) => x.location_id === l.id)) out.push(`${'  '.repeat(depth + 1)}- ${itemLine(i)}`)
       walk(l.id, depth + 1)
     }

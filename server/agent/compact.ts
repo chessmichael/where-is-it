@@ -3,7 +3,7 @@ import type { LLMProvider, Msg } from '../llm/types'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { RELATIONS } from './observations'
 import { COMPACT_SYSTEM } from './prompts'
-import { integer, listOf, nullable, object, oneOf, text, textList, textOrNull, textWith } from './schema'
+import { boolean, integer, listOf, nullable, object, oneOf, text, textList, textOrNull, textWith } from './schema'
 
 // The tidy-up agent: folds pending inbox entries (layer 1) into the house
 // tables (layer 2).
@@ -31,41 +31,91 @@ const locationPath = listOf(
 const upsertLocation: AgentTool<RunState> = {
   def: {
     name: 'upsert_location',
-    description: "Ensure a location path exists (creating missing levels) and optionally set the leaf's description and aliases. Returns its id.",
-    parameters: object({ path: locationPath, description: nullable(text), aliases: listOf(text) }),
+    description:
+      "Ensure a location path exists (creating missing levels) and optionally set the leaf's description, position and aliases. Set also_an_item when the leaf is something the person owns and might ask for by name (a toolbox, a tote, a suitcase): it's then also filed as an item at its parent, kept in sync when either moves. Returns its id.",
+    parameters: object({
+      path: locationPath,
+      description: nullable(text),
+      position: nullable(textWith('Where it sits among its neighbors: "left", "top of the stack", "closest to the door".')),
+      aliases: listOf(text),
+      also_an_item: boolean,
+      inbox_id: nullable(text),
+    }),
   },
   run: (input, { db }) =>
     db.sql.tx(() => {
       const id = db.locations.ensurePath(input.path as PathStep[])
-      db.locations.update(id, { description: textOrNull(input.description), aliases: textList(input.aliases) })
-      return { id, path: db.locations.path(id) }
+      const inboxId = textOrNull(input.inbox_id)
+      db.locations.update(id, { description: textOrNull(input.description), position: textOrNull(input.position), aliases: textList(input.aliases) }, inboxId)
+      if (input.also_an_item) linkItemToPlace(db, id, inboxId)
+      return { id, path: db.locations.describedPath(id) }
+    }),
+}
+
+/** File a place as an item too (at its parent), reusing a same-named item already there. */
+function linkItemToPlace(db: HouseDb, placeId: string, inboxId: string | null) {
+  const place = db.locations.get(placeId)!
+  if (db.items.all().some((it) => it.place_id === placeId)) return
+  const sameName = db.items.all().find((it) => it.location_id === place.parent_id && it.name.toLowerCase() === place.name.toLowerCase())
+  if (sameName) db.items.save(sameName.id, { name: sameName.name, place_id: placeId, inbox_id: inboxId })
+  else db.items.save(null, { name: place.name, location_id: place.parent_id, place_id: placeId, inbox_id: inboxId })
+}
+
+const moveLocation: AgentTool<RunState> = {
+  def: {
+    name: 'move_location',
+    description:
+      'Move a place — and therefore everything in it — under a new parent ("I moved the red tote to the attic"). Give new_parent_path (created as needed) or new_parent_id. Optionally set its new position. Use this instead of moving its contents one by one.',
+    parameters: object({
+      location_id: text,
+      new_parent_path: nullable(locationPath),
+      new_parent_id: nullable(text),
+      position: nullable(text),
+      inbox_id: nullable(text),
+    }),
+  },
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      const id = String(input.location_id)
+      let parentId = textOrNull(input.new_parent_id)
+      if (input.new_parent_path) parentId = db.locations.ensurePath(input.new_parent_path as PathStep[])
+      if (!parentId) throw new Error('give new_parent_path or new_parent_id')
+      db.locations.move(id, parentId, textOrNull(input.position), textOrNull(input.inbox_id))
+      return { ok: true, path: db.locations.describedPath(id) }
     }),
 }
 
 const updateLocation: AgentTool<RunState> = {
   def: {
     name: 'update_location',
-    description: 'Rename or re-describe an existing location by id. Null fields are left unchanged.',
+    description: 'Rename, re-describe or re-position an existing location by id (e.g. a reordered stack: set each box\'s new position). Null fields are left unchanged.',
     parameters: object({
       location_id: text,
       name: nullable(text),
       kind: nullable(oneOf(LOCATION_KINDS)),
       preposition: nullable(text),
       description: nullable(text),
+      position: nullable(text),
       aliases: listOf(text),
+      inbox_id: nullable(text),
     }),
   },
   run: (input, { db }) =>
     db.sql.tx(() => {
       const id = String(input.location_id)
-      db.locations.update(id, {
-        name: textOrNull(input.name),
-        kind: textOrNull(input.kind),
-        preposition: textOrNull(input.preposition),
-        description: textOrNull(input.description),
-        aliases: textList(input.aliases),
-      })
-      return { ok: true, path: db.locations.path(id) }
+      db.locations.update(
+        id,
+        {
+          name: textOrNull(input.name),
+          kind: textOrNull(input.kind),
+          preposition: textOrNull(input.preposition),
+          description: textOrNull(input.description),
+          position: textOrNull(input.position),
+          aliases: textList(input.aliases),
+        },
+        textOrNull(input.inbox_id),
+      )
+      return { ok: true, path: db.locations.describedPath(id) }
     }),
 }
 
@@ -213,7 +263,7 @@ const finish: AgentTool<RunState> = {
   },
 }
 
-const TOOLS = [upsertLocation, updateLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, askUser, finish]
+const TOOLS = [upsertLocation, updateLocation, moveLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, askUser, finish]
 
 // ── The run ────────────────────────────────────────────────────────────────
 

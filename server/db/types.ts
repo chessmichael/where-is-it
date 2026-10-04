@@ -43,6 +43,7 @@ export interface Location {
   kind: string
   parent_id: string | null
   preposition: string
+  position: string | null
   description: string | null
   created_at: string
   updated_at: string
@@ -58,6 +59,7 @@ export interface Item {
   location_note: string | null
   status: string
   lent_to: string | null
+  place_id: string | null
   created_at: string
   updated_at: string
 }

@@ -52,12 +52,29 @@ export class Locations {
     return parent!.id
   }
 
-  /** Rename / re-describe a location. Null fields are left as they are. */
+  /**
+   * The address a person reads, with positions where known:
+   * "Basement › Closet › Box of old photos (top of the stack)".
+   */
+  describedPath(id: string | null): string | null {
+    const chain: Location[] = []
+    for (let loc = id ? this.get(id) : null; loc; loc = loc.parent_id ? this.get(loc.parent_id) : null) chain.unshift(loc)
+    if (!chain.length) return null
+    return chain.map((loc) => (loc.position ? `${loc.name} (${loc.position})` : loc.name)).join(' › ')
+  }
+
+  /** Rename / re-describe / re-position a location. Null fields are left as they are. */
   update(
     id: string,
-    changes: { name?: string | null; kind?: string | null; preposition?: string | null; description?: string | null; aliases?: string[] | null },
+    changes: { name?: string | null; kind?: string | null; preposition?: string | null; description?: string | null; position?: string | null; aliases?: string[] | null },
+    inboxId?: string | null,
   ): void {
-    if (!this.get(id)) throw new Error(`no location ${id}`)
+    const before = this.get(id)
+    if (!before) throw new Error(`no location ${id}`)
+    if (changes.position && changes.position !== before.position) {
+      this.sql.run('UPDATE locations SET position = ? WHERE id = ?', changes.position, id)
+      this.logHistory(id, 'repositioned', before.parent_id, before.parent_id, before.position, changes.position, inboxId)
+    }
     this.sql.run(
       `UPDATE locations
        SET name        = COALESCE(?, name),
@@ -69,6 +86,32 @@ export class Locations {
       changes.name ?? null, changes.kind ?? null, changes.preposition ?? null, changes.description ?? null, now(), id,
     )
     for (const alias of changes.aliases ?? []) this.addAlias(id, alias)
+  }
+
+  /**
+   * Move a place (and so everything in it) under a new parent: the red tote
+   * goes to the attic, its contents with it. Items that ARE this place (a
+   * toolbox) move with it. Optionally sets its new position.
+   */
+  move(id: string, newParentId: string, position?: string | null, inboxId?: string | null): void {
+    const place = this.get(id)
+    if (!place) throw new Error(`no location ${id}`)
+    if (!this.get(newParentId)) throw new Error(`no location ${newParentId}`)
+    if (this.isWithin(newParentId, id)) throw new Error(`can't move ${place.name} inside itself`)
+    if (place.parent_id === newParentId && !position) return
+    this.sql.run('UPDATE locations SET parent_id = ?, position = COALESCE(?, position), updated_at = ? WHERE id = ?', newParentId, position ?? null, now(), id)
+    this.sql.run('UPDATE items SET location_id = ?, updated_at = ? WHERE place_id = ?', newParentId, now(), id)
+    this.logHistory(id, 'moved', place.parent_id, newParentId, place.position, position ?? place.position, inboxId)
+  }
+
+  /** Is `id` the place `ancestorId` or somewhere inside it? */
+  isWithin(id: string, ancestorId: string): boolean {
+    for (let loc = this.get(id); loc; loc = loc.parent_id ? this.get(loc.parent_id) : null) if (loc.id === ancestorId) return true
+    return false
+  }
+
+  history(id: string) {
+    return this.sql.all('SELECT * FROM location_history WHERE location_id = ? ORDER BY id', id)
   }
 
   /**
@@ -84,6 +127,8 @@ export class Locations {
     this.sql.run('UPDATE items SET location_id = ? WHERE location_id = ?', keepId, removeId)
     this.sql.run('UPDATE item_history SET to_location_id = ? WHERE to_location_id = ?', keepId, removeId)
     this.sql.run('UPDATE item_history SET from_location_id = ? WHERE from_location_id = ?', keepId, removeId)
+    this.sql.run('UPDATE items SET place_id = ? WHERE place_id = ?', keepId, removeId)
+    this.sql.run('UPDATE location_history SET location_id = ? WHERE location_id = ?', keepId, removeId)
 
     // Keep the old name findable.
     this.sql.run(
@@ -130,16 +175,25 @@ export class Locations {
       name: location.name,
       kind: location.kind,
       preposition: location.preposition,
+      position: location.position,
       description: location.description,
       items: this.sql
         .all<Item>(`SELECT * FROM items WHERE location_id = ? AND status != 'gone' ORDER BY name`, location.id)
         .map((item) => ({ id: item.id, name: item.name, quantity: item.quantity, status: item.status })),
       children: this.childrenOf(location.id).map(describe),
     })
-    return { path: this.path(id), ...(describe(root) as object) }
+    return { path: this.describedPath(id), ...(describe(root) as object) }
   }
 
   // ── helpers ──
+
+  private logHistory(id: string, event: string, fromParent: string | null, toParent: string | null, fromPosition: string | null, toPosition: string | null, inboxId?: string | null) {
+    this.sql.run(
+      `INSERT INTO location_history (location_id, event, from_parent_id, to_parent_id, from_position, to_position, at, inbox_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, event, fromParent, toParent, fromPosition, toPosition, now(), inboxId ?? null,
+    )
+  }
 
   private addAlias(id: string, alias: string): void {
     this.sql.run('INSERT OR IGNORE INTO location_aliases (location_id, alias) VALUES (?, ?)', id, alias)

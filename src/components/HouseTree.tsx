@@ -27,6 +27,7 @@ function NodeBlock({ node }: { node: HouseNode }) {
       <div className="tree-node-head">
         <span className="tree-node-name">{node.name}</span>
         <span className="tree-node-type">{node.kind}</span>
+        {node.position && <span className="tree-node-type position">{node.position}</span>}
       </div>
       {node.description && <p className="tree-node-desc">{node.description}</p>}
       {(node.items.length > 0 || node.children.length > 0) && (

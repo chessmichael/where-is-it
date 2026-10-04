@@ -9,7 +9,7 @@
 // Statements are separated by blank-line-free `;\n` so they can be run one by
 // one and re-emitted verbatim in the house.sql export.
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (
@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS locations (
   kind         TEXT NOT NULL,               -- room | furniture | storage | shelf | container | area | fixture
   parent_id    TEXT REFERENCES locations(id),
   preposition  TEXT NOT NULL DEFAULT 'in',  -- how things sit there: in / on / under / by
+  position     TEXT,                        -- where it sits among its neighbors: left / top of the stack / closest to the door
   description  TEXT,
   created_at   TEXT NOT NULL,
   updated_at   TEXT NOT NULL
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS items (
   location_note TEXT,                       -- free text when no node fits ("in Sam's car")
   status        TEXT NOT NULL DEFAULT 'present', -- present | lent | gone | lost
   lent_to       TEXT,
+  place_id      TEXT REFERENCES locations(id), -- set when the item is also a place that holds things (a toolbox, a tote)
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL
 );
@@ -103,6 +105,18 @@ CREATE TABLE IF NOT EXISTS item_history (
   inbox_id          TEXT                    -- the utterance this came from
 );
 
+CREATE TABLE IF NOT EXISTS location_history (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  location_id     TEXT NOT NULL REFERENCES locations(id),
+  event           TEXT NOT NULL,            -- moved | repositioned
+  from_parent_id  TEXT,
+  to_parent_id    TEXT,
+  from_position   TEXT,
+  to_position     TEXT,
+  at              TEXT NOT NULL,
+  inbox_id        TEXT                      -- the utterance this came from
+);
+
 CREATE VIEW IF NOT EXISTS location_paths AS
 WITH RECURSIVE p(id, path, depth) AS (
   SELECT id, name, 0 FROM locations WHERE parent_id IS NULL
@@ -131,4 +145,12 @@ export const HOUSE_TABLES = [
   'item_details',
   'relationships',
   'item_history',
+  'location_history',
 ] as const
+
+// Columns added after the first release, for databases created before them:
+// [table, column, definition]. migrate() adds any that are missing.
+export const ADDED_COLUMNS: [string, string, string][] = [
+  ['locations', 'position', 'TEXT'],
+  ['items', 'place_id', 'TEXT REFERENCES locations(id)'],
+]

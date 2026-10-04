@@ -29,6 +29,7 @@ export interface Observation {
   relation: (typeof RELATIONS)[number] | null
   related_item: string | null
   person: string | null
+  position: string | null
   corrects_inbox_id: string | null
   answers_question_id: string | null
   note: string | null
@@ -63,6 +64,10 @@ export const OBSERVATION_SCHEMA = {
     relation: nullable({ type: 'string', enum: [...RELATIONS] }),
     related_item: nullable({ type: 'string' }),
     person: { ...nullable({ type: 'string' }), description: 'For lend: who has it.' },
+    position: {
+      ...nullable({ type: 'string' }),
+      description: 'Where the place at the end of `location` sits among its neighbors: "left", "middle of three", "top of the stack", "2nd from the top", "closest to the door".',
+    },
     corrects_inbox_id: nullable({ type: 'string' }),
     answers_question_id: nullable({ type: 'string' }),
     note: { ...nullable({ type: 'string' }), description: 'Anything else worth keeping, verbatim-ish.' },
@@ -70,6 +75,6 @@ export const OBSERVATION_SCHEMA = {
   },
   required: [
     'kind', 'item', 'quantity', 'location', 'from_location', 'details', 'relation',
-    'related_item', 'person', 'corrects_inbox_id', 'answers_question_id', 'note', 'confidence',
+    'related_item', 'person', 'position', 'corrects_inbox_id', 'answers_question_id', 'note', 'confidence',
   ],
 }

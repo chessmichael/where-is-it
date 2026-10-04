@@ -237,3 +237,61 @@ describe('traces', () => {
     expect(sqlDump(db)).not.toContain('CREATE TABLE IF NOT EXISTS traces')
   })
 })
+
+describe('positions, moving places, and things that are also places (schema v2)', () => {
+  it('moving a place moves everything in it, and is logged', () => {
+    const { db } = memoryDb()
+    const tote = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Shelf' }, { name: 'Red tote', kind: 'container' }])
+    const lights = db.items.save(null, { name: 'Holiday lights', location_id: tote })
+    const attic = db.locations.ensurePath([{ name: 'Attic' }])
+    db.locations.move(tote, attic, 'by the window', 'in_1')
+    expect(db.locations.path(db.items.get(lights)!.location_id)).toBe('Attic › Red tote')
+    expect(db.describeItem(db.items.get(lights)!).where).toBe('Attic › Red tote (by the window)')
+    expect(db.locations.history(tote)).toMatchObject([{ event: 'moved', from_parent_id: 'garage/shelf', to_parent_id: 'attic', to_position: 'by the window', inbox_id: 'in_1' }])
+    expect(() => db.locations.move(attic, tote)).toThrow(/inside itself/) // the attic now holds the tote
+  })
+
+  it('repositioning is logged, and the stack reads in order', () => {
+    const { db } = memoryDb()
+    const box = db.locations.ensurePath([{ name: 'Closet' }, { name: 'Box of books', kind: 'container' }])
+    db.locations.update(box, { position: 'top of the stack' })
+    db.locations.update(box, { position: 'bottom of the stack' }, 'in_2')
+    expect(db.locations.get(box)?.position).toBe('bottom of the stack')
+    expect(db.locations.history(box).map((h: any) => [h.from_position, h.to_position])).toEqual([[null, 'top of the stack'], ['top of the stack', 'bottom of the stack']])
+  })
+
+  it('an item that is also a place stays in sync when either moves', () => {
+    const { db } = memoryDb()
+    const bench = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Workbench' }])
+    const toolboxPlace = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Workbench' }, { name: 'Toolbox', kind: 'container' }])
+    const wrench = db.items.save(null, { name: 'Wrench', location_id: toolboxPlace })
+    const toolbox = db.items.save(null, { name: 'Toolbox', location_id: bench, place_id: toolboxPlace })
+    // Move the item → the place (and the wrench) follow.
+    const shed = db.locations.ensurePath([{ name: 'Shed' }])
+    db.items.save(toolbox, { name: 'Toolbox', location_id: shed })
+    expect(db.locations.path(db.items.get(wrench)!.location_id)).toBe('Shed › Toolbox')
+    // Move the place → the item follows.
+    db.locations.move(toolboxPlace, bench)
+    expect(db.items.get(toolbox)!.location_id).toBe(bench)
+  })
+
+  it('upgrades a database created before positions and place links existed', () => {
+    const { raw, db } = memoryDb()
+    // Recreate the exact v1 tables (no position, no place_id, no location_history).
+    raw.exec(`PRAGMA foreign_keys = OFF;
+      DROP VIEW item_paths; DROP VIEW location_paths; DROP TABLE location_history; DROP TABLE locations; DROP TABLE items;
+      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL, parent_id TEXT REFERENCES locations(id),
+        preposition TEXT NOT NULL DEFAULT 'in', description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE TABLE items (id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT, description TEXT, quantity INTEGER,
+        location_id TEXT REFERENCES locations(id), location_note TEXT, status TEXT NOT NULL DEFAULT 'present', lent_to TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL);`)
+    raw.exec(`INSERT INTO locations VALUES ('garage', 'Garage', 'room', NULL, 'in', NULL, 'x', 'x')`)
+    expect(raw.prepare(`SELECT name FROM pragma_table_info('locations')`).all().map((r: any) => r.name)).not.toContain('position')
+    db.migrate()
+    const cols = (t: string) => raw.prepare(`SELECT name FROM pragma_table_info('${t}')`).all().map((r: any) => r.name)
+    expect(cols('locations')).toContain('position')
+    expect(cols('items')).toContain('place_id')
+    db.locations.update('garage', { position: 'behind the house' })
+    expect(db.locations.describedPath('garage')).toBe('Garage (behind the house)')
+  })
+})

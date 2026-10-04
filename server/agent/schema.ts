@@ -8,6 +8,7 @@ type Schema = Record<string, unknown>
 
 export const text: Schema = { type: 'string' }
 export const integer: Schema = { type: 'integer' }
+export const boolean: Schema = { type: 'boolean' }
 
 export const textWith = (description: string): Schema => ({ type: 'string', description })
 

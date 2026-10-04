@@ -3,7 +3,7 @@ import { TRACE_INDEX, TRACE_SCHEMA } from '../trace'
 import { Inbox, Questions } from './inbox'
 import { Items } from './items'
 import { Locations } from './locations'
-import { HOUSE_TABLES, SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema'
+import { ADDED_COLUMNS, HOUSE_TABLES, SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema'
 import { rank } from './search'
 import { Sql } from './sql'
 import type { InboxEntry, Item } from './types'
@@ -36,6 +36,14 @@ export class HouseDb {
 
   /** Create any missing tables. Safe to run on every start. */
   migrate(): void {
+    // Columns added in later versions go on first: an older database's views
+    // and tables must have them before any statement below refers to them.
+    for (const [table, column, definition] of ADDED_COLUMNS) {
+      const exists = this.sql.first(`SELECT 1 AS x FROM sqlite_master WHERE type = 'table' AND name = ?`, table)
+      if (!exists) continue
+      const has = this.sql.all<{ name: string }>(`SELECT name FROM pragma_table_info(?)`, table).some((c) => c.name === column)
+      if (!has) this.sql.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+    }
     for (const statement of SCHEMA_STATEMENTS) this.sql.run(statement)
     // Traces live here too, but stay out of house.sql (they're exported as their own files).
     this.sql.run(TRACE_SCHEMA)
@@ -52,10 +60,11 @@ export class HouseDb {
       lent_to: item.lent_to,
       quantity: item.quantity,
       category: item.category,
-      where: this.locations.path(item.location_id) ?? item.location_note,
+      where: this.locations.describedPath(item.location_id) ?? item.location_note,
       preposition: item.location_id ? this.locations.get(item.location_id)?.preposition ?? null : null,
       aliases: this.items.aliases(item.id),
       details: this.items.details(item.id),
+      ...(item.place_id ? { also_a_place: this.locations.describedPath(item.place_id) } : {}),
       updated_at: item.updated_at,
     }
   }
@@ -88,7 +97,7 @@ export class HouseDb {
     const locations = this.locations
       .search(query)
       .slice(0, 4)
-      .map((match) => ({ id: match.location.id, path: this.locations.path(match.location.id), score: round(match.score) }))
+      .map((match) => ({ id: match.location.id, path: this.locations.describedPath(match.location.id), score: round(match.score) }))
 
     return { items, recent_unfiled, locations }
   }
@@ -115,7 +124,8 @@ export class HouseDb {
       for (const location of children) {
         const aliases = this.locations.aliases(location.id)
         const aka = aliases.length ? ` aka ${aliases.join(', ')}` : ''
-        lines.push(`${indent}- ${location.name} [${location.kind}, ${location.preposition}] id=${location.id}${aka}`)
+        const position = location.position ? `, position: ${location.position}` : ''
+        lines.push(`${indent}- ${location.name} [${location.kind}, ${location.preposition}${position}] id=${location.id}${aka}`)
         for (const item of items.filter((i) => i.location_id === location.id)) lines.push(`${indent}  • ${describeItem(item)}`)
         walk(location.id, depth + 1)
       }

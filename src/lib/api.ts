@@ -66,6 +66,7 @@ export interface HouseNode {
   name: string
   kind: string
   preposition: string
+  position?: string
   description?: string
   aliases?: string[]
   items: HouseItem[]
