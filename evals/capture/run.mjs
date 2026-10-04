@@ -56,10 +56,12 @@ if (suitesText) {
 // ── --rerun: move the chosen rows out (kept in archive/, recorded in the ledger) ──
 if (rerun) {
   const cases = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases
+  const inSuite = env.EVAL_ONLY ? new Set(env.EVAL_ONLY.split(',')) : null // --suite narrows what's re-run
   const ids = new Set(
-    rerun === 'all'
+    (rerun === 'all'
       ? cases.map((c) => c.id)
-      : rerun.split(',').flatMap((t) => (t.startsWith('set:') ? cases.filter((c) => c.id.startsWith(t.slice(4))).map((c) => c.id) : [t.trim()])),
+      : rerun.split(',').flatMap((t) => (t.startsWith('set:') ? cases.filter((c) => c.id.startsWith(t.slice(4))).map((c) => c.id) : [t.trim()]))
+    ).filter((id) => !inSuite || inSuite.has(id)),
   )
   for (const file of ['results.jsonl', 'errors.jsonl']) {
     const path = join(FLOW, variant, file)
