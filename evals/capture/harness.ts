@@ -95,9 +95,9 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
     case 'existing':
     case 'pantry': {
       const asked = await session.say(c.said!)
-      await session.tidy()
+      const tidyAsked = await session.tidy()
       checks = gradeItems(db, c.expect, session.observations, locationsAtStart)
-      checks.ask(c.ask ?? 'either', asked)
+      checks.ask(c.ask ?? 'either', asked || tidyAsked)
       break
     }
     case 'groups': {
@@ -106,9 +106,9 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       const locationsBefore = db.locations.all().length
       session.observations = []
       const asked = await session.say(c.said!)
-      await session.tidy()
+      const tidyAsked = await session.tidy()
       checks = gradeItems(db, c.expect, session.observations, locationsBefore)
-      checks.ask(c.ask!, asked)
+      checks.ask(c.ask!, asked || tidyAsked)
       break
     }
     case 'shelving':
@@ -116,8 +116,9 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       for (const line of c.setup ?? []) await session.say(line)
       await session.tidy()
       const boxesBefore = itemHomes(db)
-      const asked = await session.say(c.update!)
-      await session.tidy()
+      const askedInConversation = await session.say(c.update!)
+      const askedByTidyUp = await session.tidy()
+      const asked = askedInConversation || askedByTidyUp
       checks = c.set === 'shelving' ? gradeShelving(db, c.expect) : gradeStack(db, c.expect, boxesBefore)
       checks.ask(c.ask!, asked)
       break
@@ -127,9 +128,9 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       if (c.mode === 'lookup') {
         checks = gradeDuplicateLookup(session.lastReply, c.expect, asked)
       } else {
-        await session.tidy()
+        const tidyAsked = await session.tidy()
         checks = gradeItems(db, c.expect, session.observations, locationsAtStart)
-        checks.ask(c.ask!, asked)
+        checks.ask(c.ask!, asked || tidyAsked)
       }
       break
     }
@@ -212,14 +213,34 @@ class Session {
     return asked
   }
 
-  async tidy() {
-    this.transcript.push({ role: 'user', name: 'eval', content: '🧹 tidy-up runs now (as if time passed)' })
-    const runs = await tidyUp(this.agent, this.db)
-    for (const run of runs) {
-      this.addSteps(run.result.steps, 'tidy-up agent')
-      this.transcript.push({ role: 'assistant', name: 'tidy-up agent', content: `Summary: ${run.result.summary}` })
+  /**
+   * Run tidy-up. If it raises questions (in the app they appear on the House
+   * screen), the simulated person answers them by talking, and tidy-up runs
+   * again — up to MAX_FOLLOW_UPS rounds. Returns whether tidy-up asked anything.
+   */
+  async tidy(): Promise<boolean> {
+    let asked = false
+    const answered = new Set<string>()
+    for (let round = 0; round <= MAX_FOLLOW_UPS; round++) {
+      this.transcript.push({ role: 'user', name: 'eval', content: round === 0 ? '🧹 tidy-up runs now (as if time passed)' : '🧹 tidy-up runs again' })
+      const runs = await tidyUp(this.agent, this.db)
+      for (const run of runs) {
+        this.addSteps(run.result.steps, 'tidy-up agent')
+        this.transcript.push({ role: 'assistant', name: 'tidy-up agent', content: `Summary: ${run.result.summary}` })
+      }
+      if (!runs.length) this.note('(nothing waiting to be tidied)')
+
+      const fromTidyUp = this.db.questions.open().filter((q) => q.conversation === null && !answered.has(q.id))
+      if (!fromTidyUp.length) break
+      asked = true
+      for (const q of fromTidyUp) {
+        answered.add(q.id)
+        this.questionsAsked++
+        this.note(`The House screen shows a question from tidy-up: “${q.question}”${q.options.length ? ` (${q.options.join(' / ')})` : ''}`)
+        await this.say(await this.answer(q.question, q.options))
+      }
     }
-    if (!runs.length) this.note('(nothing waiting to be tidied)')
+    return asked
   }
 
   private async hear(text: string, who: string): Promise<Heard> {
@@ -338,6 +359,11 @@ function pathMatches(expected: string[], actual: string[]): boolean {
   return allInOrder && leafMatches && extraLevels <= 1 + optionalCount
 }
 
+/** A free-text location ("in the trunk of my car") matches if it mentions every required level. */
+function noteMatches(expected: string[], note: string): boolean {
+  return expected.filter((seg) => !seg.endsWith('?')).every((seg) => seg.split('|').some((alt) => tokens(alt).every((t) => tokens(note).includes(t))))
+}
+
 function itemPath(db: HouseDb, item: Item): string[] {
   const path = db.locations.path(item.location_id)
   if (path) return path.split(' › ')
@@ -416,7 +442,8 @@ export function gradeItems(db: HouseDb, expect: Record<string, any>, observation
 function itemSatisfies(db: HouseDb, it: Item, want: ExpectedItem): string[] {
   const issues: string[] = []
   const path = itemPath(db, it)
-  if (want.path && !pathMatches(want.path, path)) issues.push(`filed at "${path.join(' › ') || 'nowhere'}", expected "${want.path.join(' › ').replace(/\|/g, ' / ')}"`)
+  const noteOk = !it.location_id && it.location_note && want.path && noteMatches(want.path, it.location_note)
+  if (want.path && !noteOk && !pathMatches(want.path, path)) issues.push(`filed at "${path.join(' › ') || 'nowhere'}", expected "${want.path.join(' › ').replace(/\|/g, ' / ')}"`)
   if (want.quantity != null && it.quantity !== want.quantity) issues.push(`quantity ${it.quantity ?? 'none'}, expected ${want.quantity}`)
   if (want.status && it.status !== want.status) issues.push(`status ${it.status}, expected ${want.status}`)
   if (want.lent_to && !(it.lent_to ?? it.location_note ?? '').toLowerCase().includes(want.lent_to.toLowerCase())) issues.push(`lent to "${it.lent_to ?? ''}", expected ${want.lent_to}`)
@@ -526,7 +553,7 @@ export function gradeStack(db: HouseDb, expect: Record<string, any>, homesBefore
 /** Sets F, G: does the spoken reply give the right place (and not a stale one)? */
 export function gradeReply(reply: string, expect: Record<string, any>): Checks {
   const checks = new Checks()
-  const text = reply.toLowerCase().replace(/[-‐]/g, ' ')
+  const text = reply.toLowerCase().replace(/[‘’]/g, "'").replace(/[-‐]/g, ' ')
   const has = (alt: string) => text.includes(alt.toLowerCase().replace(/-/g, ' '))
   const missing = (expect.answer_mentions as string[]).filter((g) => !g.split('|').some(has))
   const stale = ((expect.answer_not_mentions as string[]) ?? []).filter((g) => g.split('|').some(has))
