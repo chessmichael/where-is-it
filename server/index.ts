@@ -1,16 +1,10 @@
 import { strToU8, zipSync } from 'fflate'
-import {
-  clearCookie,
-  emailAllowed,
-  passwordMatches,
-  readSession,
-  sessionCookie,
-  verifyGoogleCredential,
-  type Account,
-} from './auth'
+import { clearCookie, passwordMatches, readSession, sessionCookie, type Account } from './auth'
+import type { Origin } from './auth-do'
 import { EXPORT_FILES, type ExportName } from './db/export'
 import { getTrace, listTraces } from './trace'
 
+export { AuthDO } from './auth-do'
 export { HouseDO } from './house-do'
 
 // Worker entry: /api/* lives here; everything else is the PWA's static assets.
@@ -47,35 +41,59 @@ async function route(req: Request, env: Env, url: URL): Promise<Response> {
     const account = await readSession(req, env.SESSION_SECRET)
     return json({
       account,
-      googleClientId: env.GOOGLE_CLIENT_ID ?? null,
       devAuth: env.DEV_AUTH === '1',
       model: account ? { provider: env.LLM_PROVIDER || 'auto', model: env.LLM_MODEL || 'default' } : null,
     })
   }
 
-  if (path === '/auth/google' && req.method === 'POST') {
+  // Passkeys. The relying party is whatever host serves the app, so the same
+  // code works on localhost and on the deployed domain.
+  const at: Origin = { rpID: url.hostname, origin: url.origin }
+  const directory = env.AUTH.get(env.AUTH.idFromName('directory'))
+  const signedIn = (account: Account) =>
+    sessionCookie(account, env.SESSION_SECRET, secure).then((c) => json({ account }, { headers: { 'set-cookie': c } }))
+
+  // New account: needs the access password. Adding a device: needs a session.
+  if (path === '/auth/register/options' && req.method === 'POST') {
+    const body = (await req.json()) as { password?: string; name?: string }
+    const current = await readSession(req, env.SESSION_SECRET)
+    if (current?.uid.startsWith('pk:')) return json(await directory.registerOptions(at, { userId: current.uid.slice(3) }))
     const limited = await rateLimited(req, env)
     if (limited) return limited
-    const body = (await req.json()) as { credential?: string; password?: string }
     if (!(await passwordMatches(body.password ?? '', env.ACCESS_PASSWORD))) return fail(401, 'Wrong access password')
-    if (!env.GOOGLE_CLIENT_ID) return fail(500, 'GOOGLE_CLIENT_ID is not configured')
-    let account: Account
+    return json(await directory.registerOptions(at, { name: body.name ?? '' }))
+  }
+
+  if (path === '/auth/register/verify' && req.method === 'POST') {
+    const body = (await req.json()) as { flowId: string; response: never }
     try {
-      account = await verifyGoogleCredential(body.credential ?? '', env.GOOGLE_CLIENT_ID)
-    } catch {
-      return fail(401, 'Google sign-in could not be verified')
+      return await signedIn(await directory.registerVerify(at, body.flowId, body.response, req.headers.get('user-agent') ?? ''))
+    } catch (e) {
+      return fail(400, e instanceof Error ? e.message : 'Passkey registration failed')
     }
-    if (!emailAllowed(account.email, env.ALLOWED_EMAILS)) return fail(403, `${account.email} is not allowed`)
-    return json({ account }, { headers: { 'set-cookie': await sessionCookie(account, env.SESSION_SECRET, secure) } })
+  }
+
+  if (path === '/auth/login/options' && req.method === 'POST') {
+    const limited = await rateLimited(req, env)
+    if (limited) return limited
+    return json(await directory.loginOptions(at))
+  }
+
+  if (path === '/auth/login/verify' && req.method === 'POST') {
+    const body = (await req.json()) as { flowId: string; response: never }
+    try {
+      return await signedIn(await directory.loginVerify(at, body.flowId, body.response))
+    } catch (e) {
+      return fail(401, e instanceof Error ? e.message : 'Passkey sign-in failed')
+    }
   }
 
   // Local development only: sign in without Google (DEV_AUTH=1 in .env).
   if (path === '/auth/dev' && req.method === 'POST' && env.DEV_AUTH === '1') {
-    const body = (await req.json()) as { email?: string; password?: string }
+    const body = (await req.json()) as { name?: string; password?: string }
     if (!(await passwordMatches(body.password ?? '', env.ACCESS_PASSWORD))) return fail(401, 'Wrong access password')
-    const email = (body.email || 'dev@example.com').toLowerCase()
-    const account: Account = { uid: `dev:${email}`, email, name: email }
-    return json({ account }, { headers: { 'set-cookie': await sessionCookie(account, env.SESSION_SECRET, secure) } })
+    const name = (body.name || 'dev').toLowerCase()
+    return signedIn({ uid: `dev:${name}`, name })
   }
 
   if (path === '/auth/logout' && req.method === 'POST') {
@@ -97,6 +115,10 @@ async function route(req: Request, env: Env, url: URL): Promise<Response> {
   }
 
   if (path === '/house' && req.method === 'GET') return json(await house.house())
+
+  if (path === '/passkeys' && req.method === 'GET') {
+    return json({ passkeys: account.uid.startsWith('pk:') ? await directory.passkeys(account.uid.slice(3)) : [] })
+  }
 
   const dismiss = path.match(/^\/questions\/([\w-]+)\/dismiss$/)
   if (dismiss && req.method === 'POST') return json(await house.dismissQuestion(dismiss[1]))

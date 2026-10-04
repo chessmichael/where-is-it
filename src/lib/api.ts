@@ -1,15 +1,20 @@
+import type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/browser'
+
 // Thin client for the Worker API, plus an offline outbox: utterances made
 // without a connection are queued locally and sent, in order, once back online.
 
 export interface Account {
   uid: string
-  email: string
   name: string
 }
 
 export interface Me {
   account: Account | null
-  googleClientId: string | null
   devAuth: boolean
   model: { provider: string; model: string } | null
 }
@@ -95,9 +100,15 @@ async function call<T>(path: string, init?: { method?: string; body?: unknown })
 
 export const api = {
   me: () => call<Me>('/me'),
-  signInGoogle: (credential: string, password: string) =>
-    call<{ account: Account }>('/auth/google', { body: { credential, password } }),
-  signInDev: (email: string, password: string) => call<{ account: Account }>('/auth/dev', { body: { email, password } }),
+  registerOptions: (body: { password?: string; name?: string }) =>
+    call<{ flowId: string; options: PublicKeyCredentialCreationOptionsJSON }>('/auth/register/options', { body }),
+  registerVerify: (flowId: string, response: RegistrationResponseJSON) =>
+    call<{ account: Account }>('/auth/register/verify', { body: { flowId, response } }),
+  loginOptions: () => call<{ flowId: string; options: PublicKeyCredentialRequestOptionsJSON }>('/auth/login/options', { body: {} }),
+  loginVerify: (flowId: string, response: AuthenticationResponseJSON) =>
+    call<{ account: Account }>('/auth/login/verify', { body: { flowId, response } }),
+  passkeys: () => call<{ passkeys: { id: string; device: string | null; created_at: string; last_used: string | null }[] }>('/passkeys'),
+  signInDev: (name: string, password: string) => call<{ account: Account }>('/auth/dev', { body: { name, password } }),
   signOut: () => call<{ ok: true }>('/auth/logout', { body: {} }),
   converse: (conversationId: string, text: string) => call<ConverseReply>('/converse', { body: { conversationId, text } }),
   house: () => call<House>('/house'),

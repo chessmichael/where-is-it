@@ -26,7 +26,7 @@ export class HouseDO extends DurableObject<Env> {
 
   private remember(account: Account): void {
     if (this.db.getMeta('account_uid') !== account.uid) this.db.setMeta('account_uid', account.uid)
-    this.db.setMeta('account_email', account.email)
+    this.db.setMeta('account_name', account.name)
   }
 
   async converse(account: Account, conversationId: string, text: string) {

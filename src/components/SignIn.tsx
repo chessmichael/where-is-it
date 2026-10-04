@@ -1,73 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { api, type Account, type Me } from '../lib/api'
+import { createPasskey, passkeyError, passkeysSupported, signInWithPasskey } from '../lib/passkeys'
 
-// Access password (owner-held) + Google account. The password is checked by
-// the server together with the Google credential.
-
-declare global {
-  interface Window {
-    google?: any
-  }
-}
-
-function loadGis(): Promise<void> {
-  if (window.google?.accounts?.id) return Promise.resolve()
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://accounts.google.com/gsi/client'
-    s.async = true
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Could not load Google sign-in'))
-    document.head.appendChild(s)
-  })
-}
+// Returning people: one tap, Face ID / Touch ID. New people: the owner's
+// access password plus a name, then this device saves a passkey.
 
 export default function SignIn({ me, onSignedIn }: { me: Me; onSignedIn: (a: Account) => void }) {
+  const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [devEmail, setDevEmail] = useState('')
-  const buttonRef = useRef<HTMLDivElement>(null)
-  const passwordRef = useRef(password)
-  passwordRef.current = password
+  const supported = passkeysSupported()
 
-  useEffect(() => {
-    if (!me.googleClientId) return
-    let cancelled = false
-    loadGis()
-      .then(() => {
-        if (cancelled || !buttonRef.current) return
-        window.google.accounts.id.initialize({
-          client_id: me.googleClientId,
-          callback: async ({ credential }: { credential: string }) => {
-            setBusy(true)
-            setError(null)
-            try {
-              const { account } = await api.signInGoogle(credential, passwordRef.current)
-              onSignedIn(account)
-            } catch (e) {
-              setError(e instanceof Error ? e.message : String(e))
-            } finally {
-              setBusy(false)
-            }
-          },
-        })
-        window.google.accounts.id.renderButton(buttonRef.current, { theme: 'filled_black', size: 'large', shape: 'pill', width: 280 })
-      })
-      .catch((e) => setError(e.message))
-    return () => {
-      cancelled = true
-    }
-  }, [me.googleClientId, onSignedIn])
-
-  async function devSignIn(e: React.FormEvent) {
-    e.preventDefault()
+  async function run(fn: () => Promise<Account>) {
     setBusy(true)
     setError(null)
     try {
-      onSignedIn((await api.signInDev(devEmail, password)).account)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      onSignedIn(await fn())
+    } catch (e) {
+      setError(passkeyError(e))
     } finally {
       setBusy(false)
     }
@@ -78,37 +30,65 @@ export default function SignIn({ me, onSignedIn }: { me: Me; onSignedIn: (a: Acc
       <h1 className="signin-title">Where Is It</h1>
       <p className="hint">Tell it where you put things. Ask it later.</p>
 
-      <label className="signin-field">
-        <span>Access password</span>
-        <input
-          type="password"
-          value={password}
-          autoComplete="current-password"
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Ask the owner for this"
-        />
-      </label>
+      {!supported && <p className="error">This browser doesn't support passkeys. Use Safari or Chrome on a current phone.</p>}
 
-      {me.googleClientId ? (
-        <div className={password ? 'gsi' : 'gsi disabled'} aria-disabled={!password}>
-          <div ref={buttonRef} />
-          {!password && <p className="hint">Enter the access password first.</p>}
-        </div>
+      {mode === 'signin' ? (
+        <>
+          <button className="primary wide" disabled={busy || !supported} onClick={() => run(signInWithPasskey)}>
+            Sign in with passkey
+          </button>
+          <button className="ghost" onClick={() => (setError(null), setMode('create'))}>
+            First time here? Create an account
+          </button>
+        </>
       ) : (
-        !me.devAuth && <p className="error">Google sign-in isn't configured on the server yet (GOOGLE_CLIENT_ID).</p>
+        <form
+          className="signin-create"
+          onSubmit={(e) => {
+            e.preventDefault()
+            run(() => createPasskey({ password, name }))
+          }}
+        >
+          <label className="signin-field">
+            <span>Access password</span>
+            <input
+              type="password"
+              value={password}
+              autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Ask the owner for this"
+            />
+          </label>
+          <label className="signin-field">
+            <span>Your name</span>
+            <input value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} placeholder="e.g. Andy" />
+          </label>
+          <button className="primary wide" type="submit" disabled={busy || !supported || !password || !name.trim()}>
+            Create account &amp; save passkey
+          </button>
+          <p className="hint">Your phone will ask for Face ID or Touch ID to save a passkey. After that, that’s all you need.</p>
+          <button type="button" className="ghost" onClick={() => (setError(null), setMode('signin'))}>
+            I already have an account
+          </button>
+        </form>
       )}
 
       {me.devAuth && (
-        <form className="signin-dev" onSubmit={devSignIn}>
-          <p className="hint">Local development sign-in</p>
-          <input value={devEmail} onChange={(e) => setDevEmail(e.target.value)} placeholder="any email" />
+        <form
+          className="signin-dev"
+          onSubmit={(e) => {
+            e.preventDefault()
+            run(async () => (await api.signInDev(name || 'dev', password)).account)
+          }}
+        >
+          <p className="hint">Local development: password-only sign-in (uses the fields above)</p>
           <button className="ghost" type="submit" disabled={!password || busy}>
             Sign in (dev)
           </button>
         </form>
       )}
 
-      {busy && <p className="hint">Signing in…</p>}
+      {busy && <p className="hint">Waiting for your device…</p>}
       {error && <p className="error">{error}</p>}
     </main>
   )

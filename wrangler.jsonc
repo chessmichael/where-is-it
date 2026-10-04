@@ -1,8 +1,7 @@
 // Cloudflare Worker: serves the PWA (static assets) and the /api backend.
 // Secrets (set with `npx wrangler secret put NAME`, or in .env for local dev):
-//   ACCESS_PASSWORD   - owner-held password required to sign in at all
+//   ACCESS_PASSWORD   - owner-held password required to create an account
 //   SESSION_SECRET    - random string used to sign session cookies
-//   GOOGLE_CLIENT_ID  - OAuth web client id (not secret, but kept with the rest)
 //   OPENAI_API_KEY / ANTHROPIC_API_KEY / LLM_API_KEY - whichever provider is used
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -16,11 +15,17 @@
     "run_worker_first": ["/api/*"]
   },
   "durable_objects": {
-    "bindings": [{ "name": "HOUSE", "class_name": "HouseDO" }]
+    "bindings": [
+      { "name": "HOUSE", "class_name": "HouseDO" },
+      { "name": "AUTH", "class_name": "AuthDO" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["HouseDO"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["HouseDO"] },
+    { "tag": "v2", "new_sqlite_classes": ["AuthDO"] }
+  ],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "where-is-it-files" }],
-  // Sign-in attempts per IP per minute.
+  // Sign-in / sign-up attempts per IP per minute.
   "ratelimits": [{ "name": "AUTH_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
   "vars": {
     // Which model backs the agent. Swap without code changes:
@@ -29,9 +34,7 @@
     //   LLM_BASE_URL = optional, for OpenAI-compatible hosts (Ollama, OpenRouter, Gemini, ...)
     "LLM_PROVIDER": "openai",
     "LLM_MODEL": "",
-    "LLM_BASE_URL": "",
-    // Optional comma-separated allowlist of Google emails ("" = anyone who has the password).
-    "ALLOWED_EMAILS": ""
+    "LLM_BASE_URL": ""
   },
   "observability": { "enabled": true }
 }

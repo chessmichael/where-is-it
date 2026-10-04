@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { compact } from '../agent/compact'
 import { converse } from '../agent/converse'
-import { emailAllowed, passwordMatches } from '../auth'
+import { passwordMatches } from '../auth'
 import { houseMarkdown, sqlDump } from '../db/export'
 import { createProvider } from '../llm'
 import { memoryDb, obs, ScriptedLLM } from './helpers'
@@ -204,12 +204,9 @@ describe('configuration', () => {
     expect(() => createProvider({ LLM_PROVIDER: 'gemini', LLM_API_KEY: 'k' })).toThrow(/Unknown LLM_PROVIDER/)
   })
 
-  it('checks the access password and email allowlist', async () => {
+  it('checks the access password', async () => {
     expect(await passwordMatches('open sesame', 'open sesame')).toBe(true)
     expect(await passwordMatches('open sesam', 'open sesame')).toBe(false)
     expect(await passwordMatches('', undefined)).toBe(false)
-    expect(emailAllowed('A@x.com', '')).toBe(true)
-    expect(emailAllowed('A@x.com', 'a@x.com, b@x.com')).toBe(true)
-    expect(emailAllowed('c@x.com', 'a@x.com,b@x.com')).toBe(false)
   })
 })

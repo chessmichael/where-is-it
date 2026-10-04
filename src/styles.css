@@ -405,9 +405,14 @@ button.danger {
   padding: 12px 14px;
   font-size: 16px;
 }
-.gsi.disabled > div:first-child {
-  opacity: 0.35;
-  pointer-events: none;
+.signin-create {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.passkeys {
+  margin: 0 0 8px;
+  padding-left: 18px;
 }
 .signin-dev {
   display: flex;

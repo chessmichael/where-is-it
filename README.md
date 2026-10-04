@@ -8,7 +8,8 @@ later ask *"where are the extension cords?"*. You can also type.
 
 ```
 Phone (PWA: speech → text)  ──▶  Cloudflare Worker  /api/*
-                                   │  access password + Google sign-in → session cookie
+                                   │  passkeys (access password to create an account) → session cookie
+                          AuthDO — global account directory: people + their passkeys
                                    ▼
                           HouseDO — one Durable Object (own SQLite DB) per account
                             ├─ inbox        layer 1: every utterance verbatim + the agent's reading of it
@@ -48,9 +49,13 @@ Phone (PWA: speech → text)  ──▶  Cloudflare Worker  /api/*
   | `LLM_BASE_URL` | Optional, for other OpenAI-compatible hosts: Ollama (`http://localhost:11434/v1`), OpenRouter, Gemini, vLLM, … |
   | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `LLM_API_KEY` | API key. `LLM_API_KEY` overrides the vendor-specific ones. |
 
-- **Sign-in.** You need two things: an access password that the owner holds
-  (`ACCESS_PASSWORD`) **and** a Google account, which decides whose house it is.
-  `ALLOWED_EMAILS` optionally restricts which Google accounts can sign in.
+- **Sign-in uses passkeys**, so there's no third-party account.
+  - **Creating an account** needs the owner-held access password (`ACCESS_PASSWORD`)
+    and a name. The phone then saves a passkey with Face ID or Touch ID.
+  - **After that**, you sign in with the passkey alone.
+  - **Other devices:** passkeys sync across your own Apple or Google devices.
+    For a different device or browser, use Settings → *Add a passkey on this device*
+    while signed in.
 - **Offline.** Utterances made without a connection are queued on the phone and
   sent when it reconnects.
 
@@ -69,14 +74,10 @@ npm run build
 One-time setup:
 
 1. Create the trace bucket: `npx wrangler r2 bucket create where-is-it-files`.
-2. Create a Google OAuth client:
-   - In Google Cloud Console → APIs & Services → Credentials → *Create OAuth client ID* → *Web application*.
-   - Under Authorized JavaScript origins, add your `https://where-is-it.<subdomain>.workers.dev` URL and `http://localhost:5173`.
-3. Set the secrets. Each command prompts for its value:
+2. Set the secrets. Each command prompts for its value:
    ```bash
    npx wrangler secret put ACCESS_PASSWORD
    npx wrangler secret put SESSION_SECRET     # e.g. output of: openssl rand -hex 32
-   npx wrangler secret put GOOGLE_CLIENT_ID
    npx wrangler secret put OPENAI_API_KEY     # or ANTHROPIC_API_KEY
    ```
 
@@ -92,7 +93,8 @@ Then deploy with `npm run deploy`. On the phone, open the URL in Safari and use 
 ```
 server/
   index.ts          Worker entry: routing, auth, file downloads
-  auth.ts           access password, Google ID-token verification, session cookies
+  auth.ts           access password check, session cookies
+  auth-do.ts        account directory + passkey (WebAuthn) registration and sign-in
   house-do.ts       per-account Durable Object: inbox capture, agents, compaction scheduling
   db/schema.ts      the SQLite schema (both layers), documented inline
   db/repo.ts        typed reads/writes; the only code that touches SQL
@@ -106,6 +108,7 @@ server/
 src/
   App.tsx           mic loop, conversation transcript, clarifying-question chips
   components/       SignIn, HouseTree, Files, Settings
+  lib/passkeys.ts   browser side of passkey sign-up / sign-in
   lib/api.ts        API client + offline outbox
   lib/speech.ts     Web Speech API (recognition + synthesis)
 ```
