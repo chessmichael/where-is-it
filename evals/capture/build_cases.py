@@ -524,6 +524,42 @@ DUPLICATES = [
             "the house key", tags=["keys", "partial-name"]),
 ]
 
+
+# ── Set J: position words in what people say ───────────────────────────────
+# People say "the top box" meaning whichever box is on top right now — but a
+# thing can also be NAMED that way (a car's roof "top box"). The agent should
+# resolve position words against current positions, and ask when a name and a
+# position could both apply, or when no positions are known.
+
+CLOSET = ["Basement", "Closet"]
+def stack_house(with_positions=True, with_car_box=False):
+    # The current order (after an earlier reorder): photos on top, books, winter clothes at the bottom.
+    boxes = [("Box of old photos", "old photos", "top of the stack"), ("Box of books", "books", "middle of the stack"), ("Box of winter clothes", "winter clothes", "bottom of the stack")]
+    house = {"locations": [CLOSET + [b] for b, _, _ in boxes], "aliases": {}, "items": [{"name": thing, "path": CLOSET + [b]} for b, thing, _ in boxes]}
+    if with_positions:
+        house["positions"] = {"/".join(CLOSET + [b]): pos for b, _, pos in boxes}
+    if with_car_box:
+        house["locations"].append(["Car", "Top box"])
+        house["items"].append({"name": "ski boots", "path": ["Car", "Top box"]})
+    return house
+
+PHOTOS_BOX = CLOSET + ["Box of old photos"]
+CAR_TOP_BOX = ["Car", "Top box|Roof box|Cargo box"]
+POSITIONAL = [
+ dup_lookup(stack_house(), "what's in the top box in the basement closet", [["photos"]], ["photos"], None, tags=["resolve-position"]),
+ dup_change(stack_house(), "I put the photo albums in the top box in the basement closet", "no",
+            [item("photo albums", PHOTOS_BOX)], {"photo albums": 1}, new_locations=0, tags=["resolve-position"]),
+ dup_change(stack_house(with_car_box=True), "I put the ski gloves in the top box", "must",
+            [item("ski gloves", CAR_TOP_BOX)], {"ski gloves": 1}, knows="the one on the car roof", new_locations=0, tags=["name-vs-position"]),
+ dup_change(stack_house(with_car_box=True), "I put the ski gloves in the top box", "must",
+            [item("ski gloves", PHOTOS_BOX)], {"ski gloves": 1}, knows="the box on top of the stack in the basement closet", new_locations=0, tags=["name-vs-position"]),
+ dup_change(stack_house(with_car_box=True), "I put the ski gloves in the top box on the car", "no",
+            [item("ski gloves", CAR_TOP_BOX)], {"ski gloves": 1}, new_locations=0, tags=["name-vs-position", "control"]),
+ dup_lookup(stack_house(with_car_box=True), "what's in the top box", [["photos"], ["ski boots"]], ["ski boots"], "the one on the car", tags=["name-vs-position"]),
+ dup_change(stack_house(with_positions=False), "the bike lights are in the top box in the basement closet", "must",
+            [item("bike lights", PHOTOS_BOX)], {"bike lights": 1}, knows="the box with the old photos is the one on top", new_locations=0, tags=["unknown-positions"]),
+]
+
 def build():
     cases = []
     for i, (said, tags, items) in enumerate(EMPTY, 1):
@@ -547,6 +583,8 @@ def build():
         cases.append({"id": f"H{i:02d}", "set": "groups", **c, "tags": ["group-items"] + c["tags"]})
     for i, c in enumerate(DUPLICATES, 1):
         cases.append({"id": f"I{i:02d}", "set": "duplicates", **c, "tags": ["duplicates", c["mode"]] + c["tags"]})
+    for i, c in enumerate(POSITIONAL, 1):
+        cases.append({"id": f"J{i:02d}", "set": "positional", **c, "tags": ["positional", c["mode"]] + c["tags"]})
     with open(os.path.join(HERE, "cases.json"), "w") as f:
         json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases}, f, indent=2)
         f.write("\n")
@@ -582,8 +620,9 @@ def markdown(cases):
            f"**{sum(c['set'] == 'stack' for c in cases)}** reordering box stacks (set D), "
            f"**{sum(c['set'] == 'pantry' for c in cases)}** pantry shelves (set E), **{sum(c['set'] == 'lookup' for c in cases)}** simple lookups (set F), "
            f"**{sum(c['set'] == 'journey' for c in cases)}** lookups after a series of changes (set G), "
-           f"**{sum(c['set'] == 'groups' for c in cases)}** asking what a group of things is (set H), and "
-           f"**{sum(c['set'] == 'duplicates' for c in cases)}** telling same-named things apart (set I).", "",
+           f"**{sum(c['set'] == 'groups' for c in cases)}** asking what a group of things is (set H), "
+           f"**{sum(c['set'] == 'duplicates' for c in cases)}** telling same-named things apart (set I), and "
+           f"**{sum(c['set'] == 'positional' for c in cases)}** position words in what people say (set J).", "",
            "**Questions from the agent:** in every set, if the agent asks something, a simulated person answers using only what the case says they know. "
            "Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.",
            "Generated from `build_cases.py` — edit there, then rerun it.", "",
@@ -620,6 +659,10 @@ def markdown(cases):
     out += journey_markdown([c for c in cases if c["set"] == "journey"])
     out += groups_markdown([c for c in cases if c["set"] == "groups"])
     out += duplicates_markdown([c for c in cases if c["set"] == "duplicates"])
+    out += duplicates_markdown([c for c in cases if c["set"] == "positional"], title="Set J — position words in what people say",
+        intro="People say “the top box” meaning whichever box is on top now — but a thing can also be named that way (a car’s roof “top box”). "
+              "The agent should resolve position words against current positions, and ask when a name and a position could both apply, or no positions are known. "
+              "Positions in the starting house are shown in brackets.")
     return "\n".join(out)
 
 def mentions(groups):
@@ -679,14 +722,19 @@ def groups_markdown(cases):
         out.append(f"| {c['id']} | {said} | {ASK_LABEL[c['ask']]} | {esc(c['knows'] or '—')} | {exp} | {', '.join(c['tags'][1:])} |")
     return out + [""]
 
-def duplicates_markdown(cases):
-    out = ["## Set I — telling same-named things apart", "",
-           "The house already holds two things with the same name. *Lookups* get credit for naming both places, or for asking which one "
-           "and then giving the right place. *Changes* must ask (unless the words already pick one out); afterwards the right one changed, "
-           "the other is untouched, and the count is right.", "",
+DUP_INTRO = ("The house already holds two things with the same name. *Lookups* get credit for naming both places, or for asking which one "
+             "and then giving the right place. *Changes* must ask (unless the words already pick one out); afterwards the right one changed, "
+             "the other is untouched, and the count is right.")
+
+def duplicates_markdown(cases, title="Set I — telling same-named things apart", intro=DUP_INTRO):
+    out = [f"## {title}", "", intro, "",
            "| # | Already in the house | What's said | Asking | The person knows | Expected | Tags |", "|---|---|---|---|---|---|---|"]
     for c in cases:
-        house = "<br>".join(f"{esc(i['name'])} → {esc(fmt_path(i['path']))}" for i in c["seed_inline"]["items"])
+        positions = c["seed_inline"].get("positions", {})
+        def where(path):
+            pos = positions.get("/".join(path))
+            return esc(fmt_path(path)) + (f" [{esc(pos)}]" if pos else "")
+        house = "<br>".join(f"{esc(i['name'])} → {where(i['path'])}" for i in c["seed_inline"]["items"])
         e = c["expect"]
         if c["mode"] == "lookup":
             exp = "reply names both: " + " and ".join(mentions(g) for g in e["answer_mentions_each"]) + f"<br>— or asks, then names {mentions(e['after_answer_mentions'])}"

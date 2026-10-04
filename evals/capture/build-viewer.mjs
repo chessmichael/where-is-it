@@ -40,6 +40,7 @@ const SET_NAMES = {
   journey: 'G · Lookups after changes',
   groups: 'H · Groups of things',
   duplicates: 'I · Same-named things',
+  positional: 'J · Position words',
 }
 const METRIC_LABEL = Object.fromEntries(state.metrics.map((m) => [m.id, m.label ?? m.id]))
 
@@ -169,7 +170,13 @@ function renderExpected(c) {
 
 function renderLines(c) {
   const lines = []
-  if (c.set === 'duplicates') for (const it of c.seed_inline?.items ?? []) lines.push(['already has', `${it.name} → ${it.path.join(' › ')}`])
+  if (c.set === 'duplicates' || c.set === 'positional') {
+    const positions = c.seed_inline?.positions ?? {}
+    for (const it of c.seed_inline?.items ?? []) {
+      const pos = positions[it.path.join('/')]
+      lines.push(['already has', `${it.name} → ${it.path.join(' › ')}${pos ? ` [${pos}]` : ''}`])
+    }
+  }
   for (const s of c.setup ?? []) lines.push(['earlier', s])
   for (const s of c.steps ?? []) lines.push(s === '<tidy>' ? ['', '🧹 tidy-up'] : ['', s])
   if (c.said) lines.push(['says', c.said])

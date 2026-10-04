@@ -32,11 +32,12 @@ interface ExpectedItem {
 interface SeedHouse {
   locations: string[][]
   aliases: Record<string, string[]>
+  positions?: Record<string, string> // "Basement/Closet/Box of books": "top of the stack"
   items: { name: string; path: string[] | null; quantity?: number; status?: string; lent_to?: string; details?: Record<string, string> }[]
 }
 export interface Case {
   id: string
-  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups' | 'duplicates'
+  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups' | 'duplicates' | 'positional'
   mode?: 'lookup' | 'change'
   tags: string[]
   said?: string
@@ -125,7 +126,8 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       checks.ask(c.ask!, asked)
       break
     }
-    case 'duplicates': {
+    case 'duplicates':
+    case 'positional': {
       const asked = await session.say(c.said!)
       if (c.mode === 'lookup') {
         checks = gradeDuplicateLookup(session.lastReply, c.expect, asked)
@@ -294,6 +296,9 @@ class Session {
 
 export function seedHouse(db: HouseDb, seed: SeedHouse) {
   for (const path of seed.locations) db.locations.ensurePath(path.map((name, depth) => ({ name, kind: depth === 0 ? 'room' : kindFor(name) })))
+  for (const [pathText, position] of Object.entries(seed.positions ?? {})) {
+    db.locations.update(db.locations.ensurePath(pathText.split('/').map((name) => ({ name }))), { position })
+  }
   for (const [pathText, aliases] of Object.entries(seed.aliases)) {
     db.locations.update(db.locations.ensurePath(pathText.split('/').map((name) => ({ name }))), { aliases })
   }

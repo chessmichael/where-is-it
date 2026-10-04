@@ -21,3 +21,4 @@ evals/capture/.build/
 scripts/.build/
 .claude/hillclimb/**/dbs/
 .claude/inspect-demo/
+.claude/worktrees/

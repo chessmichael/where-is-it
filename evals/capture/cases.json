@@ -6245,6 +6245,595 @@
         "keys",
         "partial-name"
       ]
+    },
+    {
+      "id": "J01",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "lookup",
+      "said": "what's in the top box in the basement closet",
+      "ask": "either",
+      "knows": null,
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "photos"
+          ]
+        ],
+        "after_answer_mentions": [
+          "photos"
+        ]
+      },
+      "tags": [
+        "positional",
+        "lookup",
+        "resolve-position"
+      ]
+    },
+    {
+      "id": "J02",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "change",
+      "said": "I put the photo albums in the top box in the basement closet",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "photo albums",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          }
+        ],
+        "item_counts": {
+          "photo albums": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "positional",
+        "change",
+        "resolve-position"
+      ]
+    },
+    {
+      "id": "J03",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ],
+          [
+            "Car",
+            "Top box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          },
+          {
+            "name": "ski boots",
+            "path": [
+              "Car",
+              "Top box"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "change",
+      "said": "I put the ski gloves in the top box",
+      "ask": "must",
+      "knows": "the one on the car roof",
+      "expect": {
+        "items": [
+          {
+            "name": "ski gloves",
+            "path": [
+              "Car",
+              "Top box|Roof box|Cargo box"
+            ]
+          }
+        ],
+        "item_counts": {
+          "ski gloves": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "positional",
+        "change",
+        "name-vs-position"
+      ]
+    },
+    {
+      "id": "J04",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ],
+          [
+            "Car",
+            "Top box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          },
+          {
+            "name": "ski boots",
+            "path": [
+              "Car",
+              "Top box"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "change",
+      "said": "I put the ski gloves in the top box",
+      "ask": "must",
+      "knows": "the box on top of the stack in the basement closet",
+      "expect": {
+        "items": [
+          {
+            "name": "ski gloves",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          }
+        ],
+        "item_counts": {
+          "ski gloves": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "positional",
+        "change",
+        "name-vs-position"
+      ]
+    },
+    {
+      "id": "J05",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ],
+          [
+            "Car",
+            "Top box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          },
+          {
+            "name": "ski boots",
+            "path": [
+              "Car",
+              "Top box"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "change",
+      "said": "I put the ski gloves in the top box on the car",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "ski gloves",
+            "path": [
+              "Car",
+              "Top box|Roof box|Cargo box"
+            ]
+          }
+        ],
+        "item_counts": {
+          "ski gloves": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "positional",
+        "change",
+        "name-vs-position",
+        "control"
+      ]
+    },
+    {
+      "id": "J06",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ],
+          [
+            "Car",
+            "Top box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          },
+          {
+            "name": "ski boots",
+            "path": [
+              "Car",
+              "Top box"
+            ]
+          }
+        ],
+        "positions": {
+          "Basement/Closet/Box of old photos": "top of the stack",
+          "Basement/Closet/Box of books": "middle of the stack",
+          "Basement/Closet/Box of winter clothes": "bottom of the stack"
+        }
+      },
+      "mode": "lookup",
+      "said": "what's in the top box",
+      "ask": "either",
+      "knows": "the one on the car",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "photos"
+          ],
+          [
+            "ski boots"
+          ]
+        ],
+        "after_answer_mentions": [
+          "ski boots"
+        ]
+      },
+      "tags": [
+        "positional",
+        "lookup",
+        "name-vs-position"
+      ]
+    },
+    {
+      "id": "J07",
+      "set": "positional",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Closet",
+            "Box of old photos"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of books"
+          ],
+          [
+            "Basement",
+            "Closet",
+            "Box of winter clothes"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "old photos",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          },
+          {
+            "name": "books",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of books"
+            ]
+          },
+          {
+            "name": "winter clothes",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of winter clothes"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "the bike lights are in the top box in the basement closet",
+      "ask": "must",
+      "knows": "the box with the old photos is the one on top",
+      "expect": {
+        "items": [
+          {
+            "name": "bike lights",
+            "path": [
+              "Basement",
+              "Closet",
+              "Box of old photos"
+            ]
+          }
+        ],
+        "item_counts": {
+          "bike lights": 1
+        },
+        "new_locations": 0
+      },
+      "tags": [
+        "positional",
+        "change",
+        "unknown-positions"
+      ]
     }
   ]
 }

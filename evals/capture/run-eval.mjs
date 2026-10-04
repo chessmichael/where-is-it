@@ -145,7 +145,8 @@ const REF_EXTS = ['', '.html', '.txt', '.json'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 let harness = null;
 async function loadHarness() {
-  harness ??= await import(join(HERE, '.build', 'harness.mjs'));
+  // run.mjs --code <commit> points this at a bundle built from that commit's agent code.
+  harness ??= await import(process.env.EVAL_HARNESS_BUNDLE ?? join(HERE, '.build', 'harness.mjs'));
   return harness;
 }
 let caseFile = null;

@@ -131,7 +131,7 @@ function duplicatesCase(c: Case): Outcome {
 let bad = 0
 for (const c of file.cases) {
   const outcome =
-    c.set === 'duplicates' ? duplicatesCase(c) : c.set === 'shelving' ? shelvingCase(c) : c.set === 'stack' ? stackCase(c) : c.set === 'lookup' || c.set === 'journey' ? replyCase(c) : itemsCase(c)
+    c.set === 'duplicates' || c.set === 'positional' ? duplicatesCase(c) : c.set === 'shelving' ? shelvingCase(c) : c.set === 'stack' ? stackCase(c) : c.set === 'lookup' || c.set === 'journey' ? replyCase(c) : itemsCase(c)
   const ok = outcome.oracle === 1 && outcome.wrong === 0
   if (!ok) {
     bad++
