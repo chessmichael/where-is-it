@@ -1,3 +1,4 @@
+import { tokens } from './search'
 import { now, parseJson, type Row, type Sql } from './sql'
 import type { InboxEntry, InboxStatus, Question } from './types'
 
@@ -102,6 +103,34 @@ export class Questions {
   }
 
   /**
+   * Should an agent be allowed to ask this? People don't always answer in a
+   * way that settles things, so one rephrased follow-up is fine — but never
+   * the same words again, never after they said "not sure / you decide", and
+   * never a third time. Returns null to allow, or the reason to refuse.
+   *
+   * `earlier` = questions already asked about the same thing: in this
+   * conversation (by wording) or about the same inbox entries.
+   */
+  repeatCheck(question: string, earlier: Question[]): string | null {
+    const sameThing = earlier.filter((q) => overlap(q.question, question) >= 0.5)
+    if (!sameThing.length) return null
+    const declined = sameThing.find((q) => q.answer && DONT_KNOW.test(q.answer))
+    if (declined) return `They already said "${declined.answer}" to ${declined.id} ("${declined.question}"). Don't ask again: decide on a sensible default and tell them what you chose.`
+    if (sameThing.length >= 2) return `You've already asked about this ${sameThing.length} times (${sameThing.map((q) => q.id).join(', ')}). Stop asking: record it with the most specific place you know and a sensible default, and tell them they can correct it.`
+    if (sameThing.some((q) => overlap(q.question, question) >= 0.85)) return `That's the same question as ${sameThing[0].id} ("${sameThing[0].question}"). If their answer didn't settle it, ask differently: narrower, with 2-3 concrete options, and say why you need to know.`
+    return null
+  }
+
+  recentInConversation(conversation: string): Question[] {
+    return this.sql.all(`SELECT * FROM questions WHERE conversation = ? ORDER BY at DESC LIMIT 20`, conversation).map(toQuestion)
+  }
+
+  aboutEntries(inboxIds: string[]): Question[] {
+    if (!inboxIds.length) return []
+    return this.sql.all(`SELECT * FROM questions ORDER BY at DESC LIMIT 200`).map(toQuestion).filter((q) => q.inbox_ids.some((id) => inboxIds.includes(id)))
+  }
+
+  /**
    * Close a question. Inbox entries that were waiting on it become ready for
    * tidy-up again, with the answer noted so compaction can use it.
    */
@@ -116,6 +145,18 @@ export class Questions {
       )
     }
   }
+}
+
+/** Answers that mean "I can't or won't say" — asking again would just be nagging. */
+const DONT_KNOW = /\b(not sure|no idea|don'?t know|dunno|you decide|you pick|doesn'?t matter|whatever|up to you|can'?t remember|forget it|skip)\b/i
+
+/** Share of words two questions have in common (0–1), ignoring filler. */
+function overlap(a: string, b: string): number {
+  const x = new Set(tokens(a))
+  const y = new Set(tokens(b))
+  if (!x.size || !y.size) return 0
+  const shared = [...x].filter((t) => y.has(t)).length
+  return shared / Math.min(x.size, y.size)
 }
 
 function toEntry(row: Row): InboxEntry {

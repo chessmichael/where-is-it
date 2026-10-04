@@ -85,6 +85,9 @@ const askUser: AgentTool<TurnState> = {
   },
   endsTurn: true,
   run: (input, turn) => {
+    // One rephrased follow-up is fine; nagging isn't (see Questions.repeatCheck).
+    const refusal = turn.db.questions.repeatCheck(String(input.question), turn.db.questions.recentInConversation(turn.entry.conversation))
+    if (refusal) throw new Error(refusal)
     turn.asked = turn.db.questions.ask({
       conversation: turn.entry.conversation,
       inbox_ids: [turn.entry.id],

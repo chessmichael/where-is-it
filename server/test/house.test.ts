@@ -322,3 +322,36 @@ describe('house inspector', () => {
     expect(html).toContain('&lt;script&gt;x')
   })
 })
+
+describe('asking again: one rephrased follow-up, no nagging (v4)', () => {
+  it('refuses the same words, allows a rephrase, refuses a third try', () => {
+    const { db } = memoryDb()
+    const e = db.inbox.add('c1', 'I put the flashlight on my nightstand')
+    const recent = () => db.questions.recentInConversation('c1')
+    db.questions.ask({ conversation: 'c1', inbox_ids: [e.id], question: 'Which room is your nightstand in?', options: [] })
+    expect(db.questions.repeatCheck('Which room is your nightstand in?', recent())).toMatch(/same question/)
+    expect(db.questions.repeatCheck('So I can find it later — is the nightstand in the bedroom or the guest room?', recent())).toBeNull()
+    db.questions.ask({ conversation: 'c1', inbox_ids: [e.id], question: 'So I can find it later — is the nightstand in the bedroom or the guest room?', options: [] })
+    expect(db.questions.repeatCheck('Which bedroom has your nightstand?', recent())).toMatch(/already asked about this 2 times/)
+    expect(db.questions.repeatCheck('Where are the batteries?', recent())).toBeNull() // a different topic is fine
+  })
+
+  it('after "you decide" there is no follow-up, in conversation or in tidy-up', async () => {
+    const { db } = memoryDb()
+    const e = db.inbox.add('c1', 'the flashlight is on my nightstand')
+    db.inbox.update(e.id, { status: 'needs_clarification' })
+    const q = db.questions.ask({ conversation: null, inbox_ids: [e.id], question: 'Which room is the nightstand in?', options: [] })
+    db.questions.resolve(q.id, 'answered', 'not sure, you decide', null)
+    expect(db.questions.repeatCheck('Is the nightstand in the bedroom or the guest room?', db.questions.aboutEntries([e.id]))).toMatch(/decide on a sensible default/)
+    const llm = new ScriptedLLM([
+      () => ({ calls: [{ name: 'ask_user', input: { question: 'Which room is your nightstand in?', options: [], inbox_ids: [e.id] } }] }),
+      (req) => {
+        const last = req.messages.at(-1)
+        expect(last?.role === 'tool' && last.results[0].isError).toBe(true)
+        return { calls: [{ name: 'finish', input: { compacted_inbox_ids: [], summary: 'stopped' } }] }
+      },
+    ])
+    const res = await compact(llm, db, db.inbox.list('pending_compaction'))
+    expect(res.questions).toEqual([])
+  })
+})

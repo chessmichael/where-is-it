@@ -237,6 +237,9 @@ const askUser: AgentTool<RunState> = {
   run: (input, state) =>
     state.db.sql.tx(() => {
       const heldBack = textList(input.inbox_ids).filter((id) => state.pendingIds.has(id))
+      // One rephrased follow-up is fine; nagging isn't (see Questions.repeatCheck).
+      const refusal = state.db.questions.repeatCheck(String(input.question), state.db.questions.aboutEntries(heldBack))
+      if (refusal) throw new Error(refusal)
       const question = state.db.questions.ask({
         conversation: null,
         inbox_ids: heldBack,
