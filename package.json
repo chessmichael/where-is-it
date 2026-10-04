@@ -9,7 +9,10 @@
     "preview": "vite preview --host",
     "deploy": "npm run build && wrangler deploy",
     "types": "wrangler types server/worker-configuration.d.ts --env-file .env.example --strict-vars=false",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:build": "esbuild evals/capture/harness.ts evals/capture/selftest.ts --bundle --platform=node --format=esm --outdir=evals/capture/.build --out-extension:.js=.mjs --packages=external --log-level=warning",
+    "eval:selftest": "npm run eval:build && node evals/capture/.build/selftest.mjs",
+    "eval:capture": "npm run eval:build && node --env-file=.env evals/capture/run-eval.mjs --flow .claude/hillclimb/capture --model gpt-5.5 --concurrency 6 --timeout-s 600"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

@@ -8,3 +8,9 @@ dist/
 .claude/settings.local.json
 .dev.vars*
 !.env.example
+evals/capture/.build/
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/state.json
+.claude/hillclimb/**/trajectory/
+.claude/hillclimb/**/progress.txt

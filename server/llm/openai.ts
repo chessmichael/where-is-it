@@ -38,7 +38,7 @@ export class OpenAIProvider implements LLMProvider {
     const res = await this.client.chat.completions.create({
       model: this.model,
       messages: [{ role: 'system', content: req.system }, ...toOpenAI(req.messages)],
-      tools: req.tools.map((t) => ({
+      tools: req.tools.length === 0 ? undefined : req.tools.map((t) => ({
         type: 'function' as const,
         function: {
           name: t.name,

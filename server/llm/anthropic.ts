@@ -25,7 +25,7 @@ export class AnthropicProvider implements LLMProvider {
       // Auto-cache the stable prefix (tools + system + earlier turns).
       cache_control: { type: 'ephemeral' },
       system: req.system,
-      tools: req.tools.map((t) => ({
+      tools: req.tools.length === 0 ? undefined : req.tools.map((t) => ({
         name: t.name,
         description: t.description,
         input_schema: t.parameters as Anthropic.Beta.BetaTool.InputSchema,

@@ -1,7 +1,6 @@
 import { DurableObject } from 'cloudflare:workers'
 import type { Account } from './auth'
-import { compact } from './agent/compact'
-import { converse } from './agent/converse'
+import { fileableEntries, hearUtterance, tidyUp } from './agent/pipeline'
 import { HouseDb } from './db/house'
 import { houseTree, renderExport, type ExportName } from './db/export'
 import { createProvider } from './llm'
@@ -10,9 +9,8 @@ import { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } f
 // One instance per account: owns that account's SQLite database and runs its
 // agents. Requests for the same account are serialized here.
 
-const COMPACT_SOON_AT = 20 // pending entries that trigger a near-immediate tidy-up
-const COMPACT_EVENTUALLY_MS = 6 * 3600_000 // otherwise tidy up within 6 hours
-const COMPACT_BATCH = 40
+const TIDY_SOON_AT = 20 // pending entries that trigger a near-immediate tidy-up
+const TIDY_EVENTUALLY_MS = 6 * 3600_000 // otherwise tidy up within 6 hours
 
 export class HouseDO extends DurableObject<Env> {
   private db: HouseDb
@@ -31,59 +29,37 @@ export class HouseDO extends DurableObject<Env> {
 
   async converse(account: Account, conversationId: string, text: string) {
     this.remember(account)
-    // Capture first: the utterance is durable before any model call.
-    const entry = this.db.inbox.add(conversationId, text)
     const llm = createProvider(this.env)
-    const started = Date.now()
-    try {
-      const res = await converse(llm, this.db, entry)
-      const status = res.question
-        ? 'needs_clarification'
-        : res.observations.length
-          ? 'pending_compaction'
-          : 'nothing_to_store'
-      this.db.inbox.update(entry.id, { observations: res.observations, agent_reply: res.reply, status })
-      appendConversationTrace(
-        this.db,
-        conversationId,
-        { provider: llm.provider, model: llm.model },
-        {
-          inbox_id: entry.id,
-          at: entry.at,
-          said: text,
-          reply: res.reply,
-          question: res.question,
-          observations: res.observations,
-          stop: res.stop,
-          ms: Date.now() - started,
-          input: res.messages[0],
-          steps: res.steps,
-        },
-      )
-      await this.scheduleCompaction()
-      return {
-        inboxId: entry.id,
-        reply: res.reply,
-        question: res.question ? { id: res.question.id, text: res.question.question, options: res.question.options } : null,
-        stored: res.observations.length,
-        observations: res.observations,
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e)
-      // Keep the raw utterance; compaction can still interpret `said` later.
-      this.db.inbox.update(entry.id, { status: 'error', note: message.slice(0, 500) })
-      appendConversationTrace(this.db, conversationId, { provider: llm.provider, model: llm.model }, {
-        inbox_id: entry.id, at: entry.at, said: text, error: message, ms: Date.now() - started,
-      })
-      await this.scheduleCompaction()
+    const heard = await hearUtterance(llm, this.db, conversationId, text)
+    const { entry, result, error } = heard
+
+    appendConversationTrace(this.db, conversationId, { provider: llm.provider, model: llm.model }, {
+      inbox_id: entry.id,
+      at: entry.at,
+      said: text,
+      ms: heard.ms,
+      ...(result
+        ? { reply: result.reply, question: result.question, observations: result.observations, stop: result.stop, input: result.messages[0], steps: result.steps }
+        : { error }),
+    })
+    await this.scheduleTidyUp()
+
+    if (!result) {
       return {
         inboxId: entry.id,
         reply: "I saved what you said, but couldn't work it out just now. I'll sort it out later.",
         question: null,
         stored: 0,
         observations: [],
-        error: message,
+        error,
       }
+    }
+    return {
+      inboxId: entry.id,
+      reply: result.reply,
+      question: result.question ? { id: result.question.id, text: result.question.question, options: result.question.options } : null,
+      stored: result.observations.length,
+      observations: result.observations,
     }
   }
 
@@ -117,16 +93,11 @@ export class HouseDO extends DurableObject<Env> {
     await this.runCompaction()
   }
 
-  private fileable() {
-    return [...this.db.inbox.list('pending_compaction'), ...this.db.inbox.list('error')].sort((a, b) =>
-      a.id.localeCompare(b.id),
-    )
-  }
-
-  private async scheduleCompaction() {
-    const pending = this.fileable().length
+  /** Tidy up soon if a lot is waiting, otherwise within a few hours. */
+  private async scheduleTidyUp() {
+    const pending = fileableEntries(this.db).length
     if (pending === 0) return
-    const soon = Date.now() + (pending >= COMPACT_SOON_AT ? 2000 : COMPACT_EVENTUALLY_MS)
+    const soon = Date.now() + (pending >= TIDY_SOON_AT ? 2000 : TIDY_EVENTUALLY_MS)
     const current = await this.ctx.storage.getAlarm()
     if (current === null || current > soon) await this.ctx.storage.setAlarm(soon)
   }
@@ -139,32 +110,27 @@ export class HouseDO extends DurableObject<Env> {
 
   private async compactAll() {
     const llm = createProvider(this.env)
-    const runs: { compacted: number; questions: string[]; summary: string; trace: string }[] = []
-    for (let batch = 0; batch < 5; batch++) {
-      const entries = this.fileable().slice(0, COMPACT_BATCH)
-      if (entries.length === 0) break
-      const started = Date.now()
-      const res = await compact(llm, this.db, entries)
-      const trace = writeCompactionTrace(this.db, {
-            kind: 'compaction',
-            provider: llm.provider,
-            model: llm.model,
-            at: new Date(started).toISOString(),
-            ms: Date.now() - started,
-            entries: entries.map((e) => e.id),
-            compacted: res.compacted,
-            questions: res.questions,
-            summary: res.summary,
-            stop: res.stop,
-            input: res.messages[0],
-            steps: res.steps,
-          })
-      runs.push({ compacted: res.compacted.length, questions: res.questions, summary: res.summary, trace })
-      if (res.compacted.length === 0) break // no progress; don't spin
-    }
-    this.db.sql.setMeta('last_compacted_at', new Date().toISOString())
+    const runs = await tidyUp(llm, this.db, ({ entries, result, startedAt, ms }) => {
+      writeCompactionTrace(this.db, {
+        kind: 'compaction',
+        provider: llm.provider,
+        model: llm.model,
+        at: startedAt,
+        ms,
+        entries: entries.map((e) => e.id),
+        compacted: result.compacted,
+        questions: result.questions,
+        summary: result.summary,
+        stop: result.stop,
+        input: result.messages[0],
+        steps: result.steps,
+      })
+    })
     // Anything left (blocked or out of budget) gets another look later.
-    if (this.fileable().length) await this.ctx.storage.setAlarm(Date.now() + COMPACT_EVENTUALLY_MS)
-    return { runs, status: this.db.inbox.countByStatus() }
+    if (fileableEntries(this.db).length) await this.ctx.storage.setAlarm(Date.now() + TIDY_EVENTUALLY_MS)
+    return {
+      runs: runs.map((r) => ({ compacted: r.result.compacted.length, questions: r.result.questions, summary: r.result.summary })),
+      status: this.db.inbox.countByStatus(),
+    }
   }
 }
