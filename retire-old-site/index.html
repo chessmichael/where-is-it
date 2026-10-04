@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where Is It has moved</title>
+<style>
+  body { margin: 0; font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: #f1f5f9; }
+  main { max-width: 420px; margin: 0 auto; padding: 64px 24px; }
+  a { color: #38bdf8; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Where Is It has moved</h1>
+  <p>Taking you to the new app…</p>
+  <p>If nothing happens, open <a id="go" href="https://where-is-it.YOUR-SUBDOMAIN.workers.dev/">where-is-it.YOUR-SUBDOMAIN.workers.dev</a>.</p>
+</main>
+<script>
+  // This address used to serve the old, phone-only version of the app.
+  // 1. Remove the old app's offline copy so it never shows up again.
+  // 2. Forward to the new app, passing along anything the old version saved on
+  //    this device (in the link's #fragment, which is never sent to a server),
+  //    so the new app can offer to import it.
+  var NEW = 'https://where-is-it.YOUR-SUBDOMAIN.workers.dev/';
+  try {
+    if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+    if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+  } catch (e) {}
+  var target = NEW;
+  try {
+    var house = localStorage.getItem('whi.house.v1');
+    var items = localStorage.getItem('whi.items.v1');
+    if (house || items) {
+      var json = JSON.stringify({ house: house, items: items });
+      target = NEW + '#import=' + encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
+    }
+  } catch (e) {}
+  document.getElementById('go').href = target;
+  setTimeout(function () { location.replace(target); }, 300);
+</script>
+</body>
+</html>
