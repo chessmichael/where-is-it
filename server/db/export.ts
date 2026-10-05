@@ -1,5 +1,6 @@
 import type { HouseDb, Location } from './house'
 import { inspectHouse } from './inspect'
+import { sqlGuide } from './sql-guide'
 import { renderInspector } from './inspect-html'
 import { HOUSE_TABLES, SCHEMA_STATEMENTS } from './schema'
 
@@ -12,6 +13,7 @@ export const EXPORT_FILES = {
   'house.md': 'The compacted house as a readable outline: rooms, storage, items.',
   'house.json': 'The compacted house as a nested JSON tree.',
   'house.sql': 'The whole database as SQL. Load it with: sqlite3 house.db < house.sql (safe to run again).',
+  'house-database-guide.md': 'How to load house.sql into SQLite and query it: how the tables fit together, and ready-to-paste queries for your house.',
   'house-inspector.html': 'A readable page explaining the data: health checks, the house tree, each item\'s story, and how the tables fit together.',
 } as const
 export type ExportName = keyof typeof EXPORT_FILES
@@ -28,6 +30,8 @@ export function renderExport(db: HouseDb, name: ExportName): { body: string; typ
       return { body: houseMarkdown(db), type: 'text/markdown; charset=utf-8' }
     case 'house.sql':
       return { body: sqlDump(db), type: 'application/sql' }
+    case 'house-database-guide.md':
+      return { body: sqlGuide(db), type: 'text/markdown; charset=utf-8' }
     case 'house-inspector.html':
       return { body: renderInspector(inspectHouse(db), { title: 'House inspector' }), type: 'text/html; charset=utf-8' }
   }
@@ -114,6 +118,7 @@ export function sqlDump(db: HouseDb): string {
     `-- Generated ${new Date().toISOString()}`,
     '-- Load with:  sqlite3 house.db < house.sql',
     '-- Safe to run again: it replaces these tables (and only these) in house.db each time.',
+    '-- How the tables fit together, with ready-to-paste queries: house-database-guide.md (same download page).',
     'PRAGMA foreign_keys = OFF;',
     'BEGIN;',
     '',

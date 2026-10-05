@@ -325,3 +325,21 @@ describe('house inspector', () => {
     expect(html).toContain('&lt;script&gt;x')
   })
 })
+
+describe('database guide', () => {
+  it('generates for an empty house, and every query in it runs against the export', async () => {
+    const { sqlGuide } = await import('../db/sql-guide')
+    const { db: empty } = memoryDb()
+    expect(sqlGuide(empty)).toContain('# Your house database')
+
+    const { db } = memoryDb()
+    const tote = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Red tote', kind: 'container' }])
+    db.items.save(null, { name: "Kid's holiday lights", location_id: tote, details: [{ key: 'color', value: 'red' }] })
+    const guide = sqlGuide(db)
+    const loaded = new DatabaseSync(':memory:')
+    loaded.exec(sqlDump(db))
+    const queries = [...guide.matchAll(/```sql\n([\s\S]*?)```/g)].map((m) => m[1])
+    expect(queries.length).toBeGreaterThan(10)
+    for (const sql of queries) expect(() => loaded.prepare(sql).all()).not.toThrow()
+  })
+})
