@@ -11,7 +11,7 @@ export const EXPORT_FILES = {
   'questions.json': 'Clarifying questions the agent asked, open and answered.',
   'house.md': 'The compacted house as a readable outline: rooms, storage, items.',
   'house.json': 'The compacted house as a nested JSON tree.',
-  'house.sql': 'The whole database as SQL (load with: sqlite3 house.db < house.sql).',
+  'house.sql': 'The whole database as SQL. Load it with: sqlite3 house.db < house.sql (safe to run again).',
   'house-inspector.html': 'A readable page explaining the data: health checks, the house tree, each item\'s story, and how the tables fit together.',
 } as const
 export type ExportName = keyof typeof EXPORT_FILES
@@ -105,10 +105,25 @@ export function houseMarkdown(db: HouseDb): string {
   return out.join('\n') + '\n'
 }
 
+/** Every table the export writes, in creation order. */
+const DUMP_TABLES = ['meta', 'inbox', 'questions', ...HOUSE_TABLES]
+
 export function sqlDump(db: HouseDb): string {
-  const out = ['-- Where Is It: full database export', `-- Generated ${new Date().toISOString()}`, 'PRAGMA foreign_keys = OFF;', 'BEGIN;', '']
+  const out = [
+    '-- Where Is It: full database export',
+    `-- Generated ${new Date().toISOString()}`,
+    '-- Load with:  sqlite3 house.db < house.sql',
+    '-- Safe to run again: it replaces these tables (and only these) in house.db each time.',
+    'PRAGMA foreign_keys = OFF;',
+    'BEGIN;',
+    '',
+    'DROP VIEW IF EXISTS item_paths;',
+    'DROP VIEW IF EXISTS location_paths;',
+    ...[...DUMP_TABLES].reverse().map((t) => `DROP TABLE IF EXISTS ${t};`),
+    '',
+  ]
   out.push(...SCHEMA_STATEMENTS, '')
-  for (const table of ['meta', 'inbox', 'questions', ...HOUSE_TABLES]) {
+  for (const table of DUMP_TABLES) {
     const rows = db.sql.all(`SELECT * FROM ${table}`)
     if (!rows.length) continue
     out.push(`-- ${table}`)
