@@ -54,5 +54,5 @@
     "evals/capture/harness.ts",
     "evals/capture/cases.json"
   ],
-  "harness_sha": "d46031057e4f9eac237a91392ffca17cc9e2da382f56fa8130a9e0863c9b7ede"
+  "harness_sha": "f5ac9a813885a9575425429f564404423218e377cda8c23e2571f01e168496dd"
 }
