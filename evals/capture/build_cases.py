@@ -212,6 +212,12 @@ SHELVING = [
         tags=["explicit-link", "relative-marker"]),
 ]
 
+# Terse-person versions of the "answer-different" cases: the person answers only
+# what's asked ("a different one"). The agent must follow up to learn which unit
+# the first one is — otherwise there are two units it can't tell apart.
+for _c in [c for c in SHELVING if "answer-different" in c["tags"]]:
+    SHELVING.append(dict(_c, person="terse", tags=_c["tags"] + ["terse-person", "needs-follow-up"]))
+
 # ── Set D: reordering a stack of boxes ────────────────────────────────────
 # expect.stack: items whose boxes must be stacked in this order, top first.
 # Every case also checks each item is still in the SAME box row it was filed
@@ -657,7 +663,7 @@ def build():
     for i, (said, tags, items, new) in enumerate(EXISTING, 1):
         cases.append({"id": f"B{i:02d}", "set": "existing", "tags": ["existing-container"] + tags, "said": said, "seed": "SEED", "expect": {"items": items, "new_locations": new}})
     for i, c in enumerate(SHELVING, 1):
-        cases.append({"id": f"C{i:02d}", "set": "shelving", "tags": ["update", "shelving"] + c["tags"], **{k: c[k] for k in ("setup", "update", "ask", "knows", "expect")}})
+        cases.append({"id": f"C{i:02d}", "set": "shelving", "tags": ["update", "shelving"] + c["tags"], **{k: c[k] for k in ("setup", "update", "ask", "knows", "expect")}, **({"person": c["person"]} if c.get("person") else {})})
     for i, c in enumerate(STACKS, 1):
         exp = dict(c["expect"], items_keep_their_box=True)
         cases.append({"id": f"D{i:02d}", "set": "stack", "tags": ["update", "stack"] + c["tags"], **{k: c[k] for k in ("setup", "update", "ask", "knows")}, "expect": exp})
@@ -821,6 +827,8 @@ def journey_markdown(cases, title="Set G — lookups after a series of changes",
         out.append(f"- **ask:** “{c['question']}”")
         if c.get("knows"):
             out.append(f"- *the person knows:* “{c['knows']}”")
+        if c.get("person") == "terse":
+            out.append("- *the person answers tersely:* only what's asked, nothing volunteered")
         line = f"- *reply must mention:* {mentions(c['expect']['answer_mentions'])}"
         if c["expect"]["answer_not_mentions"]:
             line += f"; must **not** mention: {mentions(c['expect']['answer_not_mentions'])}"
@@ -874,6 +882,8 @@ def update_markdown(cases, letter, title, intro):
         out.append(f"- *update:* “{c['update']}” → {ASK_LABEL[c['ask']]}")
         if c.get("knows"):
             out.append(f"- *the person knows:* “{c['knows']}”")
+        if c.get("person") == "terse":
+            out.append("- *the person answers tersely:* only what's asked, nothing volunteered")
         e = c["expect"]
         exp = []
         for u in e.get("units", []):

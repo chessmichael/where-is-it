@@ -2266,6 +2266,117 @@
       }
     },
     {
+      "id": "C11",
+      "set": "shelving",
+      "tags": [
+        "update",
+        "shelving",
+        "ambiguous",
+        "answer-different",
+        "terse-person",
+        "needs-follow-up"
+      ],
+      "setup": [
+        "in the garage there's a metal shelving unit, the top shelf has all the camping gear"
+      ],
+      "update": "the right shelving unit has the power tools on the middle shelf",
+      "ask": "must",
+      "knows": "no, the camping gear is on the middle one",
+      "expect": {
+        "units": [
+          {
+            "holding": "camping gear",
+            "position": "middle"
+          },
+          {
+            "holding": "power tools",
+            "position": "right"
+          }
+        ],
+        "different_unit": [
+          [
+            "camping gear",
+            "power tools"
+          ]
+        ]
+      },
+      "person": "terse"
+    },
+    {
+      "id": "C12",
+      "set": "shelving",
+      "tags": [
+        "update",
+        "shelving",
+        "ambiguous",
+        "answer-different",
+        "terse-person",
+        "needs-follow-up"
+      ],
+      "setup": [
+        "the shelving unit in the basement has holiday decorations on every shelf"
+      ],
+      "update": "the middle shelving unit in the basement has the canned goods",
+      "ask": "must",
+      "knows": "the holiday one is on the left",
+      "expect": {
+        "units": [
+          {
+            "holding": "holiday decorations",
+            "position": "left"
+          },
+          {
+            "holding": "canned goods",
+            "position": "middle"
+          }
+        ],
+        "different_unit": [
+          [
+            "holiday decorations",
+            "canned goods"
+          ]
+        ]
+      },
+      "person": "terse"
+    },
+    {
+      "id": "C13",
+      "set": "shelving",
+      "tags": [
+        "update",
+        "shelving",
+        "ambiguous",
+        "answer-different",
+        "terse-person",
+        "needs-follow-up"
+      ],
+      "setup": [
+        "the shelving unit in the garage has the camping gear on the top shelf"
+      ],
+      "update": "the left one has the bike helmets",
+      "ask": "must",
+      "knows": "there are two of them, the camping one is on the right",
+      "expect": {
+        "units": [
+          {
+            "holding": "camping gear",
+            "position": "right"
+          },
+          {
+            "holding": "bike helmets",
+            "position": "left"
+          }
+        ],
+        "different_unit": [
+          [
+            "camping gear",
+            "bike helmets"
+          ]
+        ]
+      },
+      "person": "terse"
+    },
+    {
       "id": "D01",
       "set": "stack",
       "tags": [

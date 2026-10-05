@@ -49,6 +49,8 @@ export interface Case {
   question?: string
   ask?: 'must' | 'no' | 'either'
   knows?: string | null
+  /** How the simulated person talks: chatty (default) volunteers related facts; terse answers only what's asked. */
+  person?: 'chatty' | 'terse'
   expect: Record<string, any>
 }
 export interface CaseFile {
@@ -200,6 +202,7 @@ class Session {
   lastReply = ''
   questionsAsked = 0
   private conversationId = 'eval'
+  private spoken: string[] = [] // what the simulated person has said so far, for context
 
   constructor(
     private c: Case,
@@ -215,11 +218,13 @@ class Session {
   /** Say something; if the agent asks questions back, the simulated person answers. Returns whether it asked. */
   async say(text: string): Promise<boolean> {
     let asked = false
+    this.spoken.push(text)
     let heard = await this.hear(text, 'person')
     for (let i = 0; heard.result?.question && i < MAX_FOLLOW_UPS; i++) {
       asked = true
       this.questionsAsked++
       const answer = await this.answer(heard.result.question.question, heard.result.question.options)
+      this.spoken.push(answer)
       heard = await this.hear(answer, 'person (simulated answer)')
     }
     return asked
@@ -280,15 +285,22 @@ class Session {
   /** The simulated person answers using only what the case says they know. */
   private async answer(question: string, options: string[]): Promise<string> {
     const knows = this.c.knows?.trim() || "Nothing specific — you don't remember more than you already said."
+    const style =
+      this.c.person === 'terse'
+        ? 'Answer ONLY the exact question, in as few words as possible ("a different one", "yes", "the left one"). Volunteer nothing else; ' +
+          'give a fact only when the question asks for it directly. '
+        : 'Like a real person, volunteer the relevant facts you know in the same breath: if you agree to list what is in something, list the items; ' +
+          'if you say it is a different shelf, unit or box, also say which one or where it is. '
     const res = await this.person.chat({
       system:
         'You are role-playing a person talking to a home-inventory voice app. The app just asked you a question. ' +
         'Answer briefly and naturally, the way someone would say it out loud, using ONLY the facts below. ' +
-        'Like a real person, volunteer the relevant facts you know in the same breath: if you agree to list what is in something, list the items; ' +
-        'if you say it is a different shelf, unit or box, also say which one or where it is. ' +
+        style +
+        'Never contradict the facts. Read the question carefully — e.g. "is the one you told me about the left one, or a different one?" — ' +
+        'and check your answer against the facts and what you already said before giving it. ' +
         'If the facts don\'t answer the question, say something like "not sure, you decide". ' +
         'If asked whether to list the items in a group individually and the facts don\'t say, answer "no, not this time".\n\n' +
-        `Facts you know:\n${knows}`,
+        `Facts you know:\n${knows}\n\nWhat you've said to the app so far:\n${this.spoken.map((t) => `- "${t}"`).join('\n')}`,
       messages: [{ role: 'user', content: `The app asks: "${question}"${options.length ? ` (it suggests: ${options.join(' / ')})` : ''}` }],
       tools: [],
       effort: 'low',
