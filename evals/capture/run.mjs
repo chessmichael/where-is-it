@@ -10,6 +10,7 @@
 //   --reason "…"                 why rows are being re-run (goes in the ledger)
 //   --suite capability|regression  run only that suite (see suites.json / make_suites.py)
 //   --reps N                     repeats per case (existing reps are reused; only missing ones run)
+//   --no-open                    don't open the results page in the browser afterwards
 //
 // Afterwards: appends approval/run lines to evals/capture/ledger.jsonl, saves any uncommitted
 // diff beside the results, commits the ledger and the small result files, builds an inspector
@@ -30,6 +31,7 @@ const suite = flag('--suite')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
   if (['--model', '--code', '--rerun', '--reason', '--suite'].includes(extra[i])) { i++; continue }
+  if (extra[i] === '--no-open') continue
   passThrough.push(extra[i])
 }
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim()
@@ -132,4 +134,6 @@ const committed = commitPaths(
 console.error(`ledger: recorded run and committed as ${committed}`)
 spawnSync(process.execPath, ['scripts/.build/inspect.mjs', '--eval', variant, '--all'], { stdio: 'inherit' })
 spawnSync(process.execPath, ['evals/capture/build-viewer.mjs', variant], { stdio: 'inherit' })
+// Show the results (macOS `open`); pass --no-open to skip.
+if (!extra.includes('--no-open') && process.platform === 'darwin') spawnSync('open', [join(FLOW, `cases-${variant}.html`)])
 process.exit(run.status ?? 1)
