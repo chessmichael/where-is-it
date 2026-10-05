@@ -210,11 +210,11 @@ function parseArgs(argv) {
     else if (k === '-h' || k === '--help') { usage(); process.exit(0); }
     else { eprint(`unknown argument: ${k}`); usage(); process.exit(2); }
   }
-  if (!/^(baseline|v[1-9]\d*)$/.test(a.variant)) {
-    // The report only reads directories named 'baseline' or 'v<N>' - any other
-    // name runs to completion but spends the pass into a directory the Summary,
-    // trajectory, and budget arithmetic never see.
-    eprint(`--variant must be 'baseline' or 'v<N>', got '${a.variant}'`);
+  if (!/^(baseline|v[1-9]\d*(-[a-z0-9.]+)?)$/.test(a.variant)) {
+    // The pages only read directories named 'baseline', 'v<N>', or 'v<N>-<suffix>'
+    // (a version on another model, e.g. v4-mini) - any other name runs to
+    // completion but spends the pass into a directory nothing reads.
+    eprint(`--variant must be 'baseline', 'v<N>' or 'v<N>-<suffix>', got '${a.variant}'`);
     usage(); process.exit(2);
   }
   if (!Number.isFinite(a.timeoutS) || a.timeoutS < 0
