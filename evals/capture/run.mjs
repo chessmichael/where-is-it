@@ -9,6 +9,7 @@
 //                                and run them again; "set:D" means every case in set D
 //   --reason "…"                 why rows are being re-run (goes in the ledger)
 //   --suite capability|regression  run only that suite (see suites.json / make_suites.py)
+//   --only <ids|set:X>           run (or resume) only these cases, keeping their existing rows
 //   --reps N                     repeats per case (existing reps are reused; only missing ones run)
 //   --no-open                    don't open the results page in the browser afterwards
 //
@@ -28,9 +29,10 @@ const codeCommit = flag('--code')
 const rerun = flag('--rerun')
 const reason = flag('--reason') ?? 'grader or harness fix'
 const suite = flag('--suite')
+const only = flag('--only')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason', '--suite'].includes(extra[i])) { i++; continue }
+  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only'].includes(extra[i])) { i++; continue }
   if (extra[i] === '--no-open') continue
   passThrough.push(extra[i])
 }
@@ -54,6 +56,18 @@ if (suitesText) {
     env.EVAL_ONLY = suites[suite].join(',')
   }
 } else if (suite) throw new Error('no evals/capture/suites.json yet — run make_suites.py')
+
+// ── --only: narrow the run to some cases without touching their existing rows ──
+const expand = (spec) => {
+  const cases = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases
+  return spec === 'all'
+    ? cases.map((c) => c.id)
+    : spec.split(',').flatMap((t) => (t.startsWith('set:') ? cases.filter((c) => c.id.startsWith(t.slice(4))).map((c) => c.id) : [t.trim()]))
+}
+if (only) {
+  const ids = expand(only)
+  env.EVAL_ONLY = (env.EVAL_ONLY ? env.EVAL_ONLY.split(',').filter((id) => ids.includes(id)) : ids).join(',')
+}
 
 // ── --rerun: move the chosen rows out (kept in archive/, recorded in the ledger) ──
 if (rerun) {
@@ -124,6 +138,7 @@ append({
   runner_exit: run.status,
   ...(rerun ? { rerun: env.EVAL_ONLY.split(','), reason } : {}),
   ...(suite ? { suite } : {}),
+  ...(only ? { only } : {}),
   ...(flag('--reps') ? { reps: Number(flag('--reps')) } : {}),
   ...after,
 })
