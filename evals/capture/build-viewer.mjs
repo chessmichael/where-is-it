@@ -225,7 +225,7 @@ for (const id of [...byCase.keys()].sort()) {
     })
     .join('')
   cards.push(`
-<section class="card ${pass ? 'pass' : 'fail'}" id="${esc(id)}" data-set="${esc(c.set)}" data-pass="${pass ? 1 : 0}" data-suite="${esc(suite ?? '')}">
+<section class="card ${pass ? 'pass' : 'fail'}" id="${esc(id)}" data-set="${esc(c.set)}" data-pass="${pass ? 1 : 0}" data-passes="${passes}" data-reps="${reps.length}" data-suite="${esc(suite ?? '')}">
   <header>
     <span class="result ${pass ? 'ok' : 'bad'}">${pass ? 'PASS' : 'FAIL'}${reps.length > 1 ? ` ${passes}/${reps.length}` : ''}</span>
     <span class="cid">${esc(id)}</span>
@@ -252,7 +252,7 @@ const summaryRows = Object.keys(SET_NAMES)
   .filter((k) => bySet.has(k))
   .map((k) => {
     const s = bySet.get(k)
-    return `<tr><td>${esc(SET_NAMES[k])}</td><td class="num">${s.pass} / ${s.n}</td><td><div class="bar"><div style="width:${Math.round((100 * s.pass) / s.n)}%"></div></div></td></tr>`
+    return `<tr><td>${esc(SET_NAMES[k])}</td><td class="num">${s.pass} / ${s.n}</td><td><div class="bar" title="${s.pass} of ${s.n} runs passed"><div style="width:${Math.round((100 * s.pass) / s.n)}%"></div></div></td></tr>`
   })
   .join('')
 
@@ -273,6 +273,7 @@ h1{font-size:24px;margin:0 0 4px}
 .summary{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px}
 .big{font-size:40px;font-weight:700;line-height:1}
 .big small{font-size:15px;font-weight:400;color:var(--muted);display:block;margin-top:6px}
+#big-scope{font-size:13px;margin-top:2px}
 table{border-collapse:collapse;width:100%}
 td{padding:4px 8px;border-bottom:1px solid var(--line)}
 td.num{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
@@ -326,8 +327,8 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 <p class="sub">${esc(variant)} · model ${esc(model)} · ${total} case(s)${errors.length ? ` · ${errors.length} errored attempt(s) not counted` : ''} · built ${esc(new Date().toLocaleString())}<br>
 Each case runs the app's real agents against a throwaway house, then checks the database or the spoken reply. Higher is better. The official summary table is <code>report.html</code> in the same folder.</p>
 <div class="summary">
-  <div class="big">${passed}/${total}<small>cases passed${rows.length > total ? ' (every repeat)' : ''}</small></div>
-  <table>${summaryRows}</table>
+  <div class="big"><span id="big-num">${passed}/${total}</span><small id="big-label">cases passed${rows.length > total ? ' (every repeat)' : ''}</small><small id="big-scope">All cases</small></div>
+  <table id="set-bars">${summaryRows}</table>
 </div>
 <div class="filters" id="filters">
   <button data-f="all" class="on">All</button><button data-f="fail">Failures</button><button data-f="pass">Passes</button>
@@ -337,6 +338,35 @@ Each case runs the app's real agents against a throwaway house, then checks the 
 ${cards.join('\n')}
 </main>
 <script>
+var SET_NAMES = ${JSON.stringify(SET_NAMES).replace(/</g, '\\u003c')};
+var SCOPE = { all: 'All cases', fail: 'Failures only', pass: 'Passes only' };
+// Rebuild the summary (big number + per-set bars) from the cards currently showing.
+function summarize(label) {
+  var cards = Array.prototype.filter.call(document.querySelectorAll('.card'), function (c) { return c.style.display !== 'none'; });
+  var full = 0, bySet = {};
+  cards.forEach(function (c) {
+    var passes = +c.dataset.passes, reps = +c.dataset.reps;
+    if (passes === reps) full++;
+    var s = bySet[c.dataset.set] || (bySet[c.dataset.set] = { pass: 0, n: 0 });
+    s.pass += passes; s.n += reps;
+  });
+  document.getElementById('big-num').textContent = full + '/' + cards.length;
+  document.getElementById('big-scope').textContent = label;
+  var table = document.getElementById('set-bars');
+  table.textContent = '';
+  Object.keys(SET_NAMES).forEach(function (k) {
+    var s = bySet[k]; if (!s) return;
+    var tr = document.createElement('tr');
+    var name = document.createElement('td'); name.textContent = SET_NAMES[k];
+    var num = document.createElement('td'); num.className = 'num'; num.textContent = s.pass + ' / ' + s.n;
+    var cell = document.createElement('td');
+    var bar = document.createElement('div'); bar.className = 'bar'; bar.title = s.pass + ' of ' + s.n + ' runs passed';
+    var fill = document.createElement('div'); fill.style.width = Math.round(100 * s.pass / s.n) + '%';
+    bar.appendChild(fill); cell.appendChild(bar);
+    tr.appendChild(name); tr.appendChild(num); tr.appendChild(cell); table.appendChild(tr);
+  });
+  if (!cards.length) { var tr = document.createElement('tr'); var td = document.createElement('td'); td.textContent = 'No cases match this filter.'; tr.appendChild(td); table.appendChild(tr); }
+}
 document.getElementById('filters').addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;
   document.querySelectorAll('#filters button').forEach(function (x) { x.classList.toggle('on', x === b) });
@@ -345,6 +375,7 @@ document.getElementById('filters').addEventListener('click', function (e) {
     var show = f === 'all' || (f === 'fail' && c.dataset.pass === '0') || (f === 'pass' && c.dataset.pass === '1') || (f.indexOf('set:') === 0 && c.dataset.set === f.slice(4)) || (f.indexOf('suite:') === 0 && c.dataset.suite === f.slice(6));
     c.style.display = show ? '' : 'none';
   });
+  summarize(SCOPE[f] || b.textContent);
 });
 </script>
 </body></html>

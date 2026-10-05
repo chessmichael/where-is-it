@@ -149,6 +149,7 @@ const committed = commitPaths(
 console.error(`ledger: recorded run and committed as ${committed}`)
 spawnSync(process.execPath, ['scripts/.build/inspect.mjs', '--eval', variant, '--all'], { stdio: 'inherit' })
 spawnSync(process.execPath, ['evals/capture/build-viewer.mjs', variant], { stdio: 'inherit' })
-// Show the results (macOS `open`); pass --no-open to skip.
-if (!extra.includes('--no-open') && process.platform === 'darwin') spawnSync('open', [join(FLOW, `cases-${variant}.html`)])
+spawnSync(process.execPath, ['evals/capture/build-compare.mjs'], { stdio: 'inherit' })
+// Show the version-by-version comparison (it links to each version's case pages); --no-open to skip.
+if (!extra.includes('--no-open') && process.platform === 'darwin') spawnSync('open', [join(FLOW, 'compare.html')])
 process.exit(run.status ?? 1)
