@@ -37,7 +37,7 @@ interface SeedHouse {
 }
 export interface Case {
   id: string
-  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups' | 'duplicates' | 'positional'
+  set: 'empty' | 'existing' | 'shelving' | 'stack' | 'pantry' | 'lookup' | 'journey' | 'groups' | 'duplicates' | 'positional' | 'spatial'
   mode?: 'lookup' | 'change'
   tags: string[]
   said?: string
@@ -139,7 +139,8 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
       break
     }
     case 'lookup':
-    case 'journey': {
+    case 'journey':
+    case 'spatial': {
       for (const step of c.steps ?? []) step === TIDY ? await session.tidy() : await session.say(step)
       await session.say(c.question!)
       checks = gradeReply(session.lastReply, c.expect)

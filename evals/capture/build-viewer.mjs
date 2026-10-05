@@ -41,6 +41,7 @@ const SET_NAMES = {
   groups: 'H · Groups of things',
   duplicates: 'I · Same-named things',
   positional: 'J · Position words',
+  spatial: 'K · Picture of the furniture',
 }
 const METRIC_LABEL = Object.fromEntries(state.metrics.map((m) => [m.id, m.label ?? m.id]))
 
@@ -348,5 +349,7 @@ document.getElementById('filters').addEventListener('click', function (e) {
 </script>
 </body></html>
 `
+// cases.html is the latest run; cases-<variant>.html keeps each version's page side by side.
 writeFileSync(join(FLOW, 'cases.html'), html)
-console.log(`wrote ${join(FLOW, 'cases.html')} (${total} cases, ${passed} passed)`)
+writeFileSync(join(FLOW, `cases-${variant}.html`), html)
+console.log(`wrote ${join(FLOW, `cases-${variant}.html`)} (${total} cases, ${passed} passed)`)

@@ -23,3 +23,4 @@ scripts/.build/
 .claude/inspect-demo/
 .claude/worktrees/
 real_example_data_files/
+.claude/hillclimb/**/cases-*.html

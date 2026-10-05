@@ -6247,6 +6247,301 @@
       ]
     },
     {
+      "id": "K01",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>"
+      ],
+      "question": "which shelf from the top are the board games on?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "third|3rd",
+          "right"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "row-from-top"
+      ]
+    },
+    {
+      "id": "K02",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>"
+      ],
+      "question": "what's directly above the board games?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "photo albums"
+        ],
+        "answer_not_mentions": [
+          "vases"
+        ]
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K03",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>"
+      ],
+      "question": "what's on the left next to the photo albums?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "atlases"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K04",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>"
+      ],
+      "question": "where exactly are the atlases on the bookshelf?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "left",
+          "tall|below the top|under the top|second|2nd"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K05",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>"
+      ],
+      "question": "what's on the very bottom of the bookshelf?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "blankets"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K06",
+      "set": "spatial",
+      "steps": [
+        "the dresser in the bedroom has six drawers in two columns of three",
+        "the socks are in the top left drawer",
+        "the drawer right below the socks has the t-shirts",
+        "the drawer to the right of the t-shirts has the sweaters",
+        "the drawer above the sweaters has the underwear",
+        "the bottom drawer on the right has the jeans",
+        "the drawer below the t-shirts has the pajamas",
+        "<tidy>"
+      ],
+      "question": "which drawer are the sweaters in?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "middle",
+          "right"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "dresser",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K07",
+      "set": "spatial",
+      "steps": [
+        "the dresser in the bedroom has six drawers in two columns of three",
+        "the socks are in the top left drawer",
+        "the drawer right below the socks has the t-shirts",
+        "the drawer to the right of the t-shirts has the sweaters",
+        "the drawer above the sweaters has the underwear",
+        "the bottom drawer on the right has the jeans",
+        "the drawer below the t-shirts has the pajamas",
+        "<tidy>"
+      ],
+      "question": "what's in the top right drawer?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "underwear"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "dresser",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K08",
+      "set": "spatial",
+      "steps": [
+        "the dresser in the bedroom has six drawers in two columns of three",
+        "the socks are in the top left drawer",
+        "the drawer right below the socks has the t-shirts",
+        "the drawer to the right of the t-shirts has the sweaters",
+        "the drawer above the sweaters has the underwear",
+        "the bottom drawer on the right has the jeans",
+        "the drawer below the t-shirts has the pajamas",
+        "<tidy>"
+      ],
+      "question": "what's directly left of the jeans?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "pajamas"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "dresser",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K09",
+      "set": "spatial",
+      "steps": [
+        "the kitchen has four upper cabinets in a row over the counter",
+        "the one at the far left has the plates",
+        "the bowls are in the cabinet next to the plates",
+        "the glasses are two cabinets to the right of the bowls",
+        "the mugs are in the cabinet between the bowls and the glasses",
+        "<tidy>"
+      ],
+      "question": "which cabinet are the glasses in, counting from the left?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "fourth|4th|far right|last|rightmost|right end"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "cabinets",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K10",
+      "set": "spatial",
+      "steps": [
+        "the kitchen has four upper cabinets in a row over the counter",
+        "the one at the far left has the plates",
+        "the bowls are in the cabinet next to the plates",
+        "the glasses are two cabinets to the right of the bowls",
+        "the mugs are in the cabinet between the bowls and the glasses",
+        "<tidy>"
+      ],
+      "question": "what's in the cabinet right next to the plates?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "bowls"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "cabinets",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K11",
+      "set": "spatial",
+      "steps": [
+        "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+        "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+        "the tall shelf on the left has the atlases",
+        "the upper of the two short shelves on the right has the photo albums",
+        "the lower short shelf on the right has the board games",
+        "and the bottom shelf goes all the way across again and has the blankets",
+        "<tidy>",
+        "I swapped the photo albums and the board games",
+        "<tidy>"
+      ],
+      "question": "which shelf from the top are the board games on now?",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "second|2nd",
+          "right"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "bookshelf",
+        "after-change"
+      ]
+    },
+    {
       "id": "J01",
       "set": "positional",
       "seed_inline": {

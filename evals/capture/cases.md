@@ -1,6 +1,6 @@
 # Capture eval cases
 
-213 cases: **50** into an empty house (set A), **30** into places that already exist (set B), **10** telling identical shelving units apart (set C), and **12** reordering box stacks (set D), **12** pantry shelves (set E), **50** simple lookups (set F), **16** lookups after a series of changes (set G), **12** asking what a group of things is (set H), **14** telling same-named things apart (set I), and **7** position words in what people say (set J).
+224 cases: **50** into an empty house (set A), **30** into places that already exist (set B), **10** telling identical shelving units apart (set C), and **12** reordering box stacks (set D), **12** pantry shelves (set E), **50** simple lookups (set F), **16** lookups after a series of changes (set G), **12** asking what a group of things is (set H), **14** telling same-named things apart (set I), **7** position words in what people say (set J), and **11** building a picture of the furniture (set K).
 
 **Questions from the agent:** in every set, if the agent asks something, a simulated person answers using only what the case says they know. Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.
 Generated from `build_cases.py` — edit there, then rerun it.
@@ -504,6 +504,145 @@ Each line is said in order; **🧹 tidy** means the tidy-up agent runs at that p
 - 🧹 tidy
 - **ask:** “where's my snorkel”
 - *reply must mention:* “don't / no record / haven't / not sure / didn't / no snorkel”; must **not** mention: “garage” + “office”
+
+## Set K — building a picture of the furniture
+
+Furniture described piece by piece, relative to each other. Then a question that needs the assembled picture (which shelf from the top, what's directly above, what's to the left). **🧹 tidy** means the tidy-up agent runs at that point. The reply must mention the expected phrases and must **not** mention the wrong ones.
+
+### K01 · bookshelf, row-from-top
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- **ask:** “which shelf from the top are the board games on?”
+- *reply must mention:* “third / 3rd” + “right”
+
+### K02 · bookshelf, adjacency
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- **ask:** “what's directly above the board games?”
+- *reply must mention:* “photo albums”; must **not** mention: “vases”
+
+### K03 · bookshelf, adjacency
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- **ask:** “what's on the left next to the photo albums?”
+- *reply must mention:* “atlases”
+
+### K04 · bookshelf, absolute
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- **ask:** “where exactly are the atlases on the bookshelf?”
+- *reply must mention:* “left” + “tall / below the top / under the top / second / 2nd”
+
+### K05 · bookshelf, absolute
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- **ask:** “what's on the very bottom of the bookshelf?”
+- *reply must mention:* “blankets”
+
+### K06 · dresser, absolute
+
+- “the dresser in the bedroom has six drawers in two columns of three”
+- “the socks are in the top left drawer”
+- “the drawer right below the socks has the t-shirts”
+- “the drawer to the right of the t-shirts has the sweaters”
+- “the drawer above the sweaters has the underwear”
+- “the bottom drawer on the right has the jeans”
+- “the drawer below the t-shirts has the pajamas”
+- 🧹 tidy
+- **ask:** “which drawer are the sweaters in?”
+- *reply must mention:* “middle” + “right”
+
+### K07 · dresser, absolute
+
+- “the dresser in the bedroom has six drawers in two columns of three”
+- “the socks are in the top left drawer”
+- “the drawer right below the socks has the t-shirts”
+- “the drawer to the right of the t-shirts has the sweaters”
+- “the drawer above the sweaters has the underwear”
+- “the bottom drawer on the right has the jeans”
+- “the drawer below the t-shirts has the pajamas”
+- 🧹 tidy
+- **ask:** “what's in the top right drawer?”
+- *reply must mention:* “underwear”
+
+### K08 · dresser, adjacency
+
+- “the dresser in the bedroom has six drawers in two columns of three”
+- “the socks are in the top left drawer”
+- “the drawer right below the socks has the t-shirts”
+- “the drawer to the right of the t-shirts has the sweaters”
+- “the drawer above the sweaters has the underwear”
+- “the bottom drawer on the right has the jeans”
+- “the drawer below the t-shirts has the pajamas”
+- 🧹 tidy
+- **ask:** “what's directly left of the jeans?”
+- *reply must mention:* “pajamas”
+
+### K09 · cabinets, absolute
+
+- “the kitchen has four upper cabinets in a row over the counter”
+- “the one at the far left has the plates”
+- “the bowls are in the cabinet next to the plates”
+- “the glasses are two cabinets to the right of the bowls”
+- “the mugs are in the cabinet between the bowls and the glasses”
+- 🧹 tidy
+- **ask:** “which cabinet are the glasses in, counting from the left?”
+- *reply must mention:* “fourth / 4th / far right / last / rightmost / right end”
+
+### K10 · cabinets, adjacency
+
+- “the kitchen has four upper cabinets in a row over the counter”
+- “the one at the far left has the plates”
+- “the bowls are in the cabinet next to the plates”
+- “the glasses are two cabinets to the right of the bowls”
+- “the mugs are in the cabinet between the bowls and the glasses”
+- 🧹 tidy
+- **ask:** “what's in the cabinet right next to the plates?”
+- *reply must mention:* “bowls”
+
+### K11 · bookshelf, after-change
+
+- “the bookshelf in the living room, the top shelf goes all the way across and has the vases on it”
+- “under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other”
+- “the tall shelf on the left has the atlases”
+- “the upper of the two short shelves on the right has the photo albums”
+- “the lower short shelf on the right has the board games”
+- “and the bottom shelf goes all the way across again and has the blankets”
+- 🧹 tidy
+- “I swapped the photo albums and the board games”
+- 🧹 tidy
+- **ask:** “which shelf from the top are the board games on now?”
+- *reply must mention:* “second / 2nd” + “right”
 
 ## Set H — asking what a group of things is
 

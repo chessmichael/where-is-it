@@ -560,6 +560,53 @@ POSITIONAL = [
             [item("bike lights", PHOTOS_BOX)], {"bike lights": 1}, knows="the box with the old photos is the one on top", new_locations=0, tags=["unknown-positions"]),
 ]
 
+
+# ── Set K: building a picture of the furniture ─────────────────────────────
+# Furniture described the way people actually do it: piece by piece, relative
+# to each other ("the shelf below the photo albums", "the drawer right of the
+# t-shirts"). Then a question that needs the assembled picture — which shelf
+# from the top, what's directly above, what's to the left — not just the
+# words that were used.
+
+BOOKSHELF = [
+ "the bookshelf in the living room, the top shelf goes all the way across and has the vases on it",
+ "under the top shelf it splits: on the left there's one tall shelf, and on the right there are two short shelves stacked on top of each other",
+ "the tall shelf on the left has the atlases",
+ "the upper of the two short shelves on the right has the photo albums",
+ "the lower short shelf on the right has the board games",
+ "and the bottom shelf goes all the way across again and has the blankets",
+]
+DRESSER = [
+ "the dresser in the bedroom has six drawers in two columns of three",
+ "the socks are in the top left drawer",
+ "the drawer right below the socks has the t-shirts",
+ "the drawer to the right of the t-shirts has the sweaters",
+ "the drawer above the sweaters has the underwear",
+ "the bottom drawer on the right has the jeans",
+ "the drawer below the t-shirts has the pajamas",
+]
+CABINETS = [
+ "the kitchen has four upper cabinets in a row over the counter",
+ "the one at the far left has the plates",
+ "the bowls are in the cabinet next to the plates",
+ "the glasses are two cabinets to the right of the bowls",
+ "the mugs are in the cabinet between the bowls and the glasses",
+]
+
+SPATIAL = [
+ journey(BOOKSHELF + [TIDY], "which shelf from the top are the board games on?", ["third|3rd", "right"], tags=["bookshelf", "row-from-top"]),
+ journey(BOOKSHELF + [TIDY], "what's directly above the board games?", ["photo albums"], ["vases"], tags=["bookshelf", "adjacency"]),
+ journey(BOOKSHELF + [TIDY], "what's on the left next to the photo albums?", ["atlases"], tags=["bookshelf", "adjacency"]),
+ journey(BOOKSHELF + [TIDY], "where exactly are the atlases on the bookshelf?", ["left", "tall|below the top|under the top|second|2nd"], tags=["bookshelf", "absolute"]),
+ journey(BOOKSHELF + [TIDY], "what's on the very bottom of the bookshelf?", ["blankets"], tags=["bookshelf", "absolute"]),
+ journey(DRESSER + [TIDY], "which drawer are the sweaters in?", ["middle", "right"], tags=["dresser", "absolute"]),
+ journey(DRESSER + [TIDY], "what's in the top right drawer?", ["underwear"], tags=["dresser", "absolute"]),
+ journey(DRESSER + [TIDY], "what's directly left of the jeans?", ["pajamas"], tags=["dresser", "adjacency"]),
+ journey(CABINETS + [TIDY], "which cabinet are the glasses in, counting from the left?", ["fourth|4th|far right|last|rightmost|right end"], tags=["cabinets", "absolute"]),
+ journey(CABINETS + [TIDY], "what's in the cabinet right next to the plates?", ["bowls"], tags=["cabinets", "adjacency"]),
+ journey(BOOKSHELF + [TIDY, "I swapped the photo albums and the board games", TIDY], "which shelf from the top are the board games on now?", ["second|2nd", "right"], tags=["bookshelf", "after-change"]),
+]
+
 def build():
     cases = []
     for i, (said, tags, items) in enumerate(EMPTY, 1):
@@ -583,6 +630,8 @@ def build():
         cases.append({"id": f"H{i:02d}", "set": "groups", **c, "tags": ["group-items"] + c["tags"]})
     for i, c in enumerate(DUPLICATES, 1):
         cases.append({"id": f"I{i:02d}", "set": "duplicates", **c, "tags": ["duplicates", c["mode"]] + c["tags"]})
+    for i, c in enumerate(SPATIAL, 1):
+        cases.append({"id": f"K{i:02d}", "set": "spatial", **c, "tags": ["spatial"] + c["tags"]})
     for i, c in enumerate(POSITIONAL, 1):
         cases.append({"id": f"J{i:02d}", "set": "positional", **c, "tags": ["positional", c["mode"]] + c["tags"]})
     with open(os.path.join(HERE, "cases.json"), "w") as f:
@@ -621,8 +670,9 @@ def markdown(cases):
            f"**{sum(c['set'] == 'pantry' for c in cases)}** pantry shelves (set E), **{sum(c['set'] == 'lookup' for c in cases)}** simple lookups (set F), "
            f"**{sum(c['set'] == 'journey' for c in cases)}** lookups after a series of changes (set G), "
            f"**{sum(c['set'] == 'groups' for c in cases)}** asking what a group of things is (set H), "
-           f"**{sum(c['set'] == 'duplicates' for c in cases)}** telling same-named things apart (set I), and "
-           f"**{sum(c['set'] == 'positional' for c in cases)}** position words in what people say (set J).", "",
+           f"**{sum(c['set'] == 'duplicates' for c in cases)}** telling same-named things apart (set I), "
+           f"**{sum(c['set'] == 'positional' for c in cases)}** position words in what people say (set J), and "
+           f"**{sum(c['set'] == 'spatial' for c in cases)}** building a picture of the furniture (set K).", "",
            "**Questions from the agent:** in every set, if the agent asks something, a simulated person answers using only what the case says they know. "
            "Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.",
            "Generated from `build_cases.py` — edit there, then rerun it.", "",
@@ -658,6 +708,10 @@ def markdown(cases):
     out += pantry_markdown([c for c in cases if c["set"] == "pantry"])
     out += lookup_markdown([c for c in cases if c["set"] == "lookup"])
     out += journey_markdown([c for c in cases if c["set"] == "journey"])
+    out += journey_markdown([c for c in cases if c["set"] == "spatial"], title="Set K — building a picture of the furniture",
+        intro="Furniture described piece by piece, relative to each other. Then a question that needs the assembled picture "
+              "(which shelf from the top, what's directly above, what's to the left). **🧹 tidy** means the tidy-up agent runs at that point. "
+              "The reply must mention the expected phrases and must **not** mention the wrong ones.")
     out += groups_markdown([c for c in cases if c["set"] == "groups"])
     out += duplicates_markdown([c for c in cases if c["set"] == "duplicates"])
     out += duplicates_markdown([c for c in cases if c["set"] == "positional"], title="Set J — position words in what people say",
@@ -708,10 +762,10 @@ def lookup_markdown(cases):
         out.append(f"| {c['id']} | **{esc(it['name'])}**{extra} → {esc(where)} | “{esc(c['question'])}” | {esc(mentions(c['expect']['answer_mentions']))} |")
     return out + [""]
 
-def journey_markdown(cases):
-    out = ["## Set G — lookups after a series of changes", "",
-           "Each line is said in order; **🧹 tidy** means the tidy-up agent runs at that point (as if time passed). Then the question is asked. "
-           "The reply must mention the expected phrases and must **not** mention the stale ones.", ""]
+def journey_markdown(cases, title="Set G — lookups after a series of changes",
+                     intro="Each line is said in order; **🧹 tidy** means the tidy-up agent runs at that point (as if time passed). Then the question is asked. "
+                           "The reply must mention the expected phrases and must **not** mention the stale ones."):
+    out = [f"## {title}", "", intro, ""]
     for c in cases:
         out.append(f"### {c['id']} · {', '.join(c['tags'][1:])}")
         out.append("")
