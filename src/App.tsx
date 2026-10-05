@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, enqueue, flushOutbox, isOfflineError, queued, type AgentQuestion, type Captured as Obs, type Me } from './lib/api'
 import { legacyUtterances, clearLegacy } from './lib/legacy'
-import { getSpeakAnswers } from './lib/settings'
+import { getInputMode, getSpeakAnswers, setInputMode, type InputMode } from './lib/settings'
 import { isSpeechSupported, listen, speak, unlockSpeech, type Listener } from './lib/speech'
 import Captured from './components/Captured'
 import Files from './components/Files'
@@ -49,6 +49,8 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [loop, setLoop] = useState(true)
   const [pendingOffline, setPendingOffline] = useState(queued().length)
   const [legacy, setLegacy] = useState(() => legacyUtterances())
+  const [mode, setMode] = useState<InputMode>(() => (isSpeechSupported() ? getInputMode() : 'type'))
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const listenerRef = useRef<Listener | null>(null)
   const loopRef = useRef(loop)
@@ -60,9 +62,10 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const speechOk = isSpeechSupported()
 
   const add = useCallback((l: Line) => setLines((ls) => [...ls, l]), [])
+  // Keep the newest line in view — including what you're saying right now.
   useEffect(() => {
-    transcriptEnd.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [lines])
+    transcriptEnd.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [lines, interim, status])
 
   const conversationId = () => {
     const c = conversation.current
@@ -159,7 +162,8 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   }, [])
 
   useEffect(() => {
-    if (speechOk) startListening()
+    if (speechOk && mode === 'voice') startListening()
+    else setLoop(false)
     return () => stopListening()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -195,8 +199,6 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   function submitTyped(e: React.FormEvent) {
     e.preventDefault()
     if (!typed.trim()) return
-    setLoop(false)
-    stopListening()
     process(typed)
     setTyped('')
   }
@@ -214,7 +216,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
   function goMain() {
     setView('main')
-    if (loop && speechOk) startListening()
+    if (mode === 'voice' && loop && speechOk) startListening()
   }
 
   async function importLegacy() {
@@ -227,22 +229,58 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
   const lastQuestion = [...lines].reverse().find((l) => l.who === 'agent')?.question
 
+  function chooseMode(next: InputMode) {
+    setMode(next)
+    setInputMode(next)
+    if (next === 'type') {
+      setLoop(false)
+      stopListening()
+    } else if (speechOk) {
+      setLoop(true)
+      startListening()
+    }
+  }
+
+  const VIEW_TITLES: Record<View, string> = { main: 'Where Is It', house: 'House', inspect: 'Inspect', files: 'Files', settings: 'Settings' }
+
   return (
     <div className="app">
       <header className="topbar">
-        <button className={view === 'house' ? 'tab active' : 'tab'} onClick={() => open('house')}>
-          House
+        <button className="icon-button" aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
+          <span className="hamburger" aria-hidden />
         </button>
-        <button className={view === 'inspect' ? 'tab active' : 'tab'} onClick={() => open('inspect')}>
-          Inspect
-        </button>
-        <button className={view === 'files' ? 'tab active' : 'tab'} onClick={() => open('files')}>
-          Files
-        </button>
-        <h1 className="title">Where Is It</h1>
-        <button className={view === 'settings' ? 'tab active' : 'tab'} onClick={() => open('settings')}>
+        <h1 className="title">{VIEW_TITLES[view]}</h1>
+        <button className={view === 'settings' ? 'icon-button active' : 'icon-button'} aria-label="Settings" onClick={() => open('settings')}>
           ⚙
         </button>
+        {menuOpen && (
+          <>
+            <div className="menu-scrim" onClick={() => setMenuOpen(false)} />
+            <nav className="menu" aria-label="Sections">
+              {(
+                [
+                  ['main', 'Talk', 'Tell it where things are, or ask'],
+                  ['house', 'House', 'Everything filed, room by room'],
+                  ['inspect', 'Inspect', 'Health checks and each item’s history'],
+                  ['files', 'Files', 'Download your data'],
+                ] as [View, string, string][]
+              ).map(([v, label, hint]) => (
+                <button
+                  key={v}
+                  className={view === v ? 'menu-item current' : 'menu-item'}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    if (v === 'main') goMain()
+                    else if (view !== v) open(v)
+                  }}
+                >
+                  <span className="menu-label">{label}</span>
+                  <span className="menu-hint">{hint}</span>
+                </button>
+              ))}
+            </nav>
+          </>
+        )}
       </header>
 
       {view === 'settings' && <Settings me={me} onClose={goMain} onSignOut={onSignOut} />}
@@ -269,7 +307,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       {view === 'main' && (
         <main className="main">
           <div className="transcript">
-            {lines.length === 0 && (
+            {lines.length === 0 && !interim && (
               <p className="hint transcript-empty">
                 Say where something is — “the extension cords are in the blue bin on the top garage shelf” — or ask
                 “where’s my passport?”
@@ -290,46 +328,71 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                 ))}
               </div>
             )}
-            {interim && <p className="line you interim">“{interim}”</p>}
+            {/* What you're saying right now, as the newest line of the conversation. */}
+            {interim && (
+              <div className="turn you">
+                <p className="line you live" aria-live="polite">
+                  {interim}
+                </p>
+              </div>
+            )}
+            {status === 'thinking' && <p className="line agent thinking">…</p>}
             <div ref={transcriptEnd} />
           </div>
 
-          <div className="stage">
-            <button
-              className={`mic ${status}`}
-              onClick={toggleMic}
-              disabled={status === 'thinking'}
-              aria-label={status === 'listening' ? (interim ? 'Send' : 'Stop listening') : 'Start listening'}
-            >
-              <span className="mic-glyph">{status === 'thinking' ? '…' : status === 'listening' && interim ? '➤' : '🎤'}</span>
-              {status === 'listening' && <span className="pulse" />}
-            </button>
-            <p className="status-line">
-              {status === 'listening' && (interim ? 'Pause for a moment or tap the mic to send.' : 'Listening…')}
-              {status === 'thinking' && 'Thinking…'}
-              {status === 'speaking' && 'Tap the mic to skip.'}
-              {status === 'idle' && (speechOk ? 'Tap the mic to talk.' : 'Type below.')}
-            </p>
+          <div className="dock">
             {pendingOffline > 0 && <p className="hint">{pendingOffline} waiting to send (offline)</p>}
             {legacy.length > 0 && (
               <button className="ghost setup-cta" onClick={importLegacy} disabled={status === 'thinking'}>
-                Bring in what you saved in the old version of the app →
+                Bring in what you saved in the old version of the app
               </button>
             )}
             {error && <p className="error">{error}</p>}
-          </div>
 
-          <form className="typebar" onSubmit={submitTyped}>
-            <input
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              placeholder='e.g. "where is my phone charger?"'
-              aria-label="Type a statement or question"
-            />
-            <button className="primary" type="submit">
-              Send
-            </button>
-          </form>
+            {mode === 'voice' ? (
+              <div className="voice-row">
+                <p className="status-line">
+                  {status === 'listening' && (interim ? 'Pause, or tap to send' : 'Listening…')}
+                  {status === 'thinking' && 'Thinking…'}
+                  {status === 'speaking' && 'Tap to skip'}
+                  {status === 'idle' && (speechOk ? 'Tap to talk' : 'Voice isn’t available here — switch to Type')}
+                </p>
+                <button
+                  className={`mic ${status}`}
+                  onClick={toggleMic}
+                  disabled={status === 'thinking' || !speechOk}
+                  aria-label={status === 'listening' ? (interim ? 'Send' : 'Stop listening') : 'Start listening'}
+                >
+                  <span className="mic-glyph" aria-hidden>
+                    {status === 'thinking' ? '…' : status === 'listening' && interim ? '➤' : '🎤'}
+                  </span>
+                  {status === 'listening' && <span className="pulse" />}
+                </button>
+              </div>
+            ) : (
+              <form className="typebar" onSubmit={submitTyped}>
+                <input
+                  value={typed}
+                  autoFocus
+                  onChange={(e) => setTyped(e.target.value)}
+                  placeholder="Where something is, or a question"
+                  aria-label="Type a statement or question"
+                />
+                <button className="primary" type="submit" disabled={!typed.trim() || status === 'thinking'}>
+                  Send
+                </button>
+              </form>
+            )}
+
+            <div className="mode-switch" role="tablist" aria-label="How to talk to it">
+              <button role="tab" aria-selected={mode === 'voice'} className={mode === 'voice' ? 'on' : ''} onClick={() => chooseMode('voice')}>
+                Voice
+              </button>
+              <button role="tab" aria-selected={mode === 'type'} className={mode === 'type' ? 'on' : ''} onClick={() => chooseMode('type')}>
+                Type
+              </button>
+            </div>
+          </div>
         </main>
       )}
     </div>

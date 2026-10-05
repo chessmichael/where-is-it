@@ -8,3 +8,13 @@ export function getSpeakAnswers(): boolean {
 export function setSpeakAnswers(v: boolean): void {
   localStorage.setItem(KEY_SPEAK, String(v))
 }
+
+const KEY_MODE = 'whi.inputMode'
+export type InputMode = 'voice' | 'type'
+
+export function getInputMode(): InputMode {
+  return localStorage.getItem(KEY_MODE) === 'type' ? 'type' : 'voice'
+}
+export function setInputMode(m: InputMode): void {
+  localStorage.setItem(KEY_MODE, m)
+}

@@ -34,19 +34,116 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  height: 100dvh; /* the visible height on phones, not including Safari's toolbars */
+  position: relative;
   max-width: 560px;
   margin: 0 auto;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Top bar */
+/* Top bar: menu · title · settings */
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--bg-3);
+  position: relative;
+  z-index: 20;
+}
+.topbar .title {
+  text-align: center;
+}
+.icon-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.icon-button:hover,
+.icon-button.active {
+  background: var(--bg-2);
+}
+.icon-button:focus-visible,
+.menu-item:focus-visible,
+.mode-switch button:focus-visible,
+.mic:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.hamburger,
+.hamburger::before,
+.hamburger::after {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  position: relative;
+}
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+.hamburger::before {
+  top: -6px;
+}
+.hamburger::after {
+  top: 6px;
+}
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.5);
+  z-index: 1;
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 8px;
+  z-index: 2;
+  width: min(300px, calc(100vw - 32px));
+  background: var(--bg-2);
+  border: 1px solid var(--bg-3);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover,
+.menu-item.current {
+  background: var(--bg-3);
+}
+.menu-label {
+  font-weight: 600;
+  font-size: 16px;
+}
+.menu-hint {
+  font-size: 13px;
+  color: var(--muted);
 }
 .title {
   font-size: 17px;
@@ -591,4 +688,80 @@ button.danger {
 .tree-node-type.position {
   color: var(--accent);
   border-color: var(--accent-2);
+}
+
+/* ── conversation dock: voice or type, never over the conversation ───────── */
+.dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--bg-3);
+  background: var(--bg);
+}
+.voice-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.dock .mic {
+  width: 76px;
+  height: 76px;
+}
+.dock .mic-glyph {
+  font-size: 32px;
+}
+.dock .status-line {
+  font-size: 14px;
+  min-height: 21px;
+}
+.dock .typebar {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.mode-switch {
+  display: inline-flex;
+  background: var(--bg-2);
+  border: 1px solid var(--bg-3);
+  border-radius: 999px;
+  padding: 3px;
+}
+.mode-switch button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.mode-switch button.on {
+  background: var(--bg-3);
+  color: var(--fg);
+}
+.line.live {
+  border: 1px dashed var(--accent-2);
+  background: transparent;
+  font-style: italic;
+}
+.line.thinking {
+  color: var(--muted);
+  letter-spacing: 3px;
+}
+.transcript {
+  scroll-padding-bottom: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+  .line {
+    animation: none;
+  }
 }
