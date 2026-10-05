@@ -14,7 +14,8 @@
     "eval:selftest": "npm run eval:build && node evals/capture/.build/selftest.mjs",
     "eval:capture": "npm run eval:build && npm run inspect:build && node evals/capture/run.mjs",
     "inspect:build": "esbuild scripts/inspect.ts --bundle --platform=node --format=esm --outdir=scripts/.build --out-extension:.js=.mjs --packages=external --log-level=warning",
-    "inspect": "npm run inspect:build && node scripts/.build/inspect.mjs"
+    "inspect": "npm run inspect:build && node scripts/.build/inspect.mjs",
+    "eval:audit-person": "esbuild evals/capture/audit-person.ts --bundle --platform=node --format=esm --outfile=evals/capture/.build/audit-person.mjs --packages=external --log-level=warning && node --env-file=.env evals/capture/.build/audit-person.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

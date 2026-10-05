@@ -17,6 +17,7 @@
 //                                version (or that were flaky or unrun there) get the other N-1
 //   --against <variant>          the reference for --reps (default: the latest earlier variant)
 //   --full-reps                  run all N repeats for every case (no adaptive skipping)
+//   --concurrency N              cases at a time (default 10 on OpenAI, 3 on Bedrock's lower quotas)
 //   --fast-model <model>         route short, plain turns to this cheaper model (as LLM_FAST_MODEL does in
 //                                the app); everything else, and all of tidy-up, uses --model
 //   --no-open                    don't open the results page in the browser afterwards
@@ -41,7 +42,7 @@ const reps = Number(flag('--reps') ?? 1)
 const only = flag('--only')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against', '--fast-model'].includes(extra[i])) { i++; continue }
+  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against', '--fast-model', '--concurrency'].includes(extra[i])) { i++; continue }
   if (['--no-open', '--full-reps'].includes(extra[i])) continue
   passThrough.push(extra[i])
 }
@@ -129,7 +130,7 @@ if (codeCommit) {
 const runEval = (n, only) =>
   spawnSync(
     process.execPath,
-    ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', model.startsWith('bedrock:') ? '3' : '6', '--timeout-s', '600', '--reps', String(n), ...passThrough],
+    ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', flag('--concurrency') ?? (model.startsWith('bedrock:') ? '3' : '10'), '--timeout-s', '600', '--reps', String(n), ...passThrough],
     { stdio: 'inherit', env: only ? { ...env, EVAL_ONLY: only.join(',') } : env },
   )
 
