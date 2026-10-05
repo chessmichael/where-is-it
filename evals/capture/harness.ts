@@ -85,11 +85,15 @@ const MAX_FOLLOW_UPS = 3 // questions the agent may ask about one utterance befo
 
 export async function runCase(c: Case, file: CaseFile, opts: { model: string; personModel: string; env: Record<string, string | undefined> }): Promise<CaseRun> {
   // "bedrock:<model id>" runs the agent on AWS Bedrock; anything else is an OpenAI model.
-  const [provider, model] = opts.model.startsWith('bedrock:') ? ['bedrock', opts.model.slice(8)] : ['openai', opts.model]
+  const spec = (m: string) => (m.startsWith('bedrock:') ? ['bedrock', m.slice(8)] : ['openai', m])
+  const [provider, model] = spec(opts.model)
   const agent = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: provider, LLM_MODEL: model }))
+  // EVAL_FAST_MODEL: route short, plain turns to a cheaper model, as the app does with LLM_FAST_MODEL.
+  const fastSpec = opts.env.EVAL_FAST_MODEL ? spec(opts.env.EVAL_FAST_MODEL) : null
+  const fast = fastSpec ? new Metered(createProvider({ ...opts.env, LLM_PROVIDER: fastSpec[0], LLM_MODEL: fastSpec[1] })) : null
   const person = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: 'openai', LLM_MODEL: opts.personModel }))
   const { db } = memoryDb()
-  const session = new Session(c, db, agent, person)
+  const session = new Session(c, db, agent, person, fast)
 
   const seed = c.seed ? file.seed_houses[c.seed] : c.seed_inline
   if (seed) seedHouse(db, seed)
@@ -169,7 +173,8 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
     stop_reason: 'end_turn',
     ...(person.calls ? { judge_model: person.servedModel, judge_usage: { input_tokens: person.usage.inputTokens, output_tokens: person.usage.outputTokens } } : {}),
     ...checks.result(),
-    agent_calls: agent.calls,
+    agent_calls: agent.calls + (fast?.calls ?? 0),
+    ...(fast ? { fast_model: opts.env.EVAL_FAST_MODEL, fast_calls: fast.calls, fast_usage: { input_tokens: fast.usage.inputTokens, output_tokens: fast.usage.outputTokens, cache_read_input_tokens: fast.usage.cachedInputTokens } } : {}),
     questions_asked: session.questionsAsked,
   }
 }
@@ -211,6 +216,7 @@ class Session {
     private db: HouseDb,
     private agent: LLMProvider,
     private person: LLMProvider,
+    private fast: LLMProvider | null = null,
   ) {}
 
   note(text: string) {
@@ -264,7 +270,7 @@ class Session {
 
   private async hear(text: string, who: string): Promise<Heard> {
     this.transcript.push({ role: 'user', name: who, content: text })
-    const heard = await hearUtterance(this.agent, this.db, this.conversationId, text)
+    const heard = await hearUtterance(this.agent, this.db, this.conversationId, text, this.fast)
     if (!heard.result) throw Object.assign(new Error(`agent failed: ${heard.error}`), { failure_class: 'harness_or_serving_error' })
     this.addSteps(heard.result.steps, 'conversation agent')
     this.observations.push(...heard.result.observations)

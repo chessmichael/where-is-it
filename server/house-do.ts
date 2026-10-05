@@ -5,7 +5,7 @@ import { HouseDb } from './db/house'
 import { houseTree, renderExport, type ExportName } from './db/export'
 import { inspectHouse } from './db/inspect'
 import { renderInspector } from './db/inspect-html'
-import { createProvider } from './llm'
+import { createFastProvider, createProvider } from './llm'
 import { appendConversationTrace, getTrace, listTraces, writeCompactionTrace } from './trace'
 
 // One instance per account: owns that account's SQLite database and runs its
@@ -32,7 +32,7 @@ export class HouseDO extends DurableObject<Env> {
   async converse(account: Account, conversationId: string, text: string) {
     this.remember(account)
     const llm = createProvider(this.env)
-    const heard = await hearUtterance(llm, this.db, conversationId, text)
+    const heard = await hearUtterance(llm, this.db, conversationId, text, createFastProvider(this.env))
     const { entry, result, error } = heard
 
     appendConversationTrace(this.db, conversationId, { provider: llm.provider, model: llm.model }, {

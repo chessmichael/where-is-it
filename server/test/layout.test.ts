@@ -103,3 +103,20 @@ describe('house check', () => {
     expect(houseCheck(db, since)).toEqual([])
   })
 })
+
+describe('routing to a fast model', () => {
+  it('keeps structural, long and answering turns on the strong model', async () => {
+    const { needsStrongModel } = await import('../agent/route')
+    const { db } = memoryDb()
+    expect(needsStrongModel('the drill is in the garage', db, 'c')).toBe(false)
+    expect(needsStrongModel("where's my passport", db, 'c')).toBe(false)
+    expect(needsStrongModel('the photos box is on top of the stack now', db, 'c')).toBe(true)
+    expect(needsStrongModel('the left one has the bike helmets', db, 'c')).toBe(true)
+    expect(needsStrongModel('the power tools are in the garage', db, 'c')).toBe(false) // a group alone is fine…
+    expect(needsStrongModel('all the baking stuff is in the cabinet', db, 'c')).toBe(true) // …"stuff"/"all the" isn't
+    expect(needsStrongModel('word '.repeat(30), db, 'c')).toBe(true)
+    db.questions.ask({ conversation: 'c', inbox_ids: [], question: 'Which drawer?', options: [] })
+    expect(needsStrongModel('the top one', db, 'c')).toBe(true)
+    expect(needsStrongModel('the passport is in the desk', db, 'other conversation')).toBe(false)
+  })
+})

@@ -186,6 +186,8 @@ function perfFrom(run) {
     questions_asked: run.questions_asked,
     in_tokens: run.usage.input_tokens,
     out_tokens: run.usage.output_tokens,
+    // Routed runs (EVAL_FAST_MODEL): what the cheaper model handled.
+    ...(run.fast_model ? { fast_model: run.fast_model, fast_calls: run.fast_calls, fast_usage: run.fast_usage } : {}),
   };
 }
 
