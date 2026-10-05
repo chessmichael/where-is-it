@@ -84,7 +84,9 @@ const MAX_FOLLOW_UPS = 3 // questions the agent may ask about one utterance befo
 // ── Running a case ─────────────────────────────────────────────────────────
 
 export async function runCase(c: Case, file: CaseFile, opts: { model: string; personModel: string; env: Record<string, string | undefined> }): Promise<CaseRun> {
-  const agent = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: 'openai', LLM_MODEL: opts.model }))
+  // "bedrock:<model id>" runs the agent on AWS Bedrock; anything else is an OpenAI model.
+  const [provider, model] = opts.model.startsWith('bedrock:') ? ['bedrock', opts.model.slice(8)] : ['openai', opts.model]
+  const agent = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: provider, LLM_MODEL: model }))
   const person = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: 'openai', LLM_MODEL: opts.personModel }))
   const { db } = memoryDb()
   const session = new Session(c, db, agent, person)
@@ -162,7 +164,7 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
   return {
     output: session.lastReply,
     transcript: session.transcript,
-    model: agent.servedModel ?? opts.model,
+    model: provider === 'bedrock' ? opts.model : (agent.servedModel ?? opts.model), // Bedrock echoes no snapshot id
     usage: { input_tokens: usage.inputTokens, output_tokens: usage.outputTokens, cache_read_input_tokens: usage.cachedInputTokens },
     stop_reason: 'end_turn',
     ...(person.calls ? { judge_model: person.servedModel, judge_usage: { input_tokens: person.usage.inputTokens, output_tokens: person.usage.outputTokens } } : {}),
