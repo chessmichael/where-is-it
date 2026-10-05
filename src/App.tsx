@@ -392,6 +392,7 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
             {lines.map((l, i) => (
               <div key={i} className={`turn ${l.who}`}>
                 <p className={`line ${l.who}`}>{l.text}</p>
+                {l.question?.diagram && <pre className="diagram" aria-label="Sketch with this question">{l.question.diagram}</pre>}
                 {l.captured && <Captured items={l.captured} />}
               </div>
             ))}

@@ -1,5 +1,7 @@
 import { ITEM_STATUSES, LOCATION_KINDS, type Detail, type HouseDb, type InboxEntry, type PathStep } from '../db/house'
 import type { LLMProvider, Msg } from '../llm/types'
+import { houseCheck } from '../db/check'
+import { diagramField, gridField, gridOrNull, showLayoutTool } from './layout-tools'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { RELATIONS } from './observations'
 import { COMPACT_SYSTEM } from './prompts'
@@ -18,6 +20,8 @@ interface RunState {
   pendingIds: Set<string> // the entries this run was given
   finished: { ids: string[]; summary: string } | null
   questionsAsked: string[]
+  startedAt: string // places and items touched since then get the house check
+  checked: boolean // the house check runs once, on the first finish
 }
 
 // A location path as the agent writes it: [{name: "Garage"}, {name: "Top shelf", kind: "shelf"}, ...]
@@ -37,6 +41,7 @@ const upsertLocation: AgentTool<RunState> = {
       path: locationPath,
       description: nullable(text),
       position: nullable(textWith('Where it sits among its neighbors: "left", "top of the stack", "closest to the door".')),
+      grid: gridField,
       aliases: listOf(text),
       also_an_item: boolean,
       inbox_id: nullable(text),
@@ -46,7 +51,7 @@ const upsertLocation: AgentTool<RunState> = {
     db.sql.tx(() => {
       const id = db.locations.ensurePath(input.path as PathStep[])
       const inboxId = textOrNull(input.inbox_id)
-      db.locations.update(id, { description: textOrNull(input.description), position: textOrNull(input.position), aliases: textList(input.aliases) }, inboxId)
+      db.locations.update(id, { description: textOrNull(input.description), position: textOrNull(input.position), grid: gridOrNull(input.grid), aliases: textList(input.aliases) }, inboxId)
       if (input.also_an_item) linkItemToPlace(db, id, inboxId)
       return { id, path: db.locations.describedPath(id) }
     }),
@@ -88,7 +93,7 @@ const moveLocation: AgentTool<RunState> = {
 const updateLocation: AgentTool<RunState> = {
   def: {
     name: 'update_location',
-    description: 'Rename, re-describe or re-position an existing location by id (e.g. a reordered stack: set each box\'s new position). Null fields are left unchanged.',
+    description: 'Rename, re-describe or re-position an existing location by id (e.g. a reordered stack: set each box\'s new position; a bookcase part: set its grid cell). Null fields are left unchanged.',
     parameters: object({
       location_id: text,
       name: nullable(text),
@@ -96,6 +101,7 @@ const updateLocation: AgentTool<RunState> = {
       preposition: nullable(text),
       description: nullable(text),
       position: nullable(text),
+      grid: gridField,
       aliases: listOf(text),
       inbox_id: nullable(text),
     }),
@@ -111,6 +117,7 @@ const updateLocation: AgentTool<RunState> = {
           preposition: textOrNull(input.preposition),
           description: textOrNull(input.description),
           position: textOrNull(input.position),
+          grid: gridOrNull(input.grid),
           aliases: textList(input.aliases),
         },
         textOrNull(input.inbox_id),
@@ -232,7 +239,7 @@ const askUser: AgentTool<RunState> = {
   def: {
     name: 'ask_user',
     description: "Raise a question for the person when entries can't be filed safely. Those entries stay pending until answered.",
-    parameters: object({ question: text, options: listOf(text), inbox_ids: listOf(text) }),
+    parameters: object({ question: text, options: listOf(text), diagram: diagramField, inbox_ids: listOf(text) }),
   },
   run: (input, state) =>
     state.db.sql.tx(() => {
@@ -245,6 +252,7 @@ const askUser: AgentTool<RunState> = {
         inbox_ids: heldBack,
         question: String(input.question),
         options: textList(input.options).slice(0, 4),
+        diagram: textOrNull(input.diagram),
       })
       for (const id of heldBack) state.db.inbox.update(id, { status: 'needs_clarification', note: `waiting on ${question.id}` })
       state.questionsAsked.push(question.id)
@@ -260,13 +268,23 @@ const finish: AgentTool<RunState> = {
   },
   endsTurn: true,
   run: (input, state) => {
+    // Once per run, before finishing: anything touched that a person couldn't tell apart or find.
+    if (!state.checked) {
+      state.checked = true
+      const findings = houseCheck(state.db, state.startedAt)
+      if (findings.length)
+        throw new Error(
+          `Not finished yet — the house check found:\n- ${findings.join('\n- ')}\n` +
+            'Fix each one (update_location / upsert_location / upsert_item) or ask the person (ask_user) and leave the entries involved pending. Then call finish again; it will be accepted.',
+        )
+    }
     const filed = textList(input.compacted_inbox_ids).filter((id) => state.pendingIds.has(id))
     state.finished = { ids: filed, summary: String(input.summary) }
     return { compacted: filed.length }
   },
 }
 
-const TOOLS = [upsertLocation, updateLocation, moveLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, askUser, finish]
+const TOOLS = [upsertLocation, updateLocation, moveLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, showLayoutTool<RunState>(), askUser, finish]
 
 // ── The run ────────────────────────────────────────────────────────────────
 
@@ -280,7 +298,7 @@ export interface CompactResult {
 }
 
 export async function compact(llm: LLMProvider, db: HouseDb, entries: InboxEntry[]): Promise<CompactResult> {
-  const state: RunState = { db, pendingIds: new Set(entries.map((e) => e.id)), finished: null, questionsAsked: [] }
+  const state: RunState = { db, pendingIds: new Set(entries.map((e) => e.id)), finished: null, questionsAsked: [], startedAt: new Date().toISOString(), checked: false }
 
   const result = await runLoop({
     llm,
@@ -289,7 +307,7 @@ export async function compact(llm: LLMProvider, db: HouseDb, entries: InboxEntry
     tools: TOOLS,
     ctx: state,
     effort: 'medium',
-    maxSteps: 30,
+    maxSteps: 40,
   })
 
   // Only entries the agent explicitly finished are marked compacted.

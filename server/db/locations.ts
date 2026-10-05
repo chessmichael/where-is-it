@@ -1,5 +1,6 @@
 import { normalize, rank } from './search'
 import { now, type Sql } from './sql'
+import { checkGrid, drawLayout, gridText, layoutOf, type GridCell, type Layout } from './layout'
 import type { Item, Location, PathStep } from './types'
 
 // Layer 2: the places in the home, as a tree.
@@ -66,7 +67,7 @@ export class Locations {
   /** Rename / re-describe / re-position a location. Null fields are left as they are. */
   update(
     id: string,
-    changes: { name?: string | null; kind?: string | null; preposition?: string | null; description?: string | null; position?: string | null; aliases?: string[] | null },
+    changes: { name?: string | null; kind?: string | null; preposition?: string | null; description?: string | null; position?: string | null; grid?: GridCell | null; aliases?: string[] | null },
     inboxId?: string | null,
   ): void {
     const before = this.get(id)
@@ -74,6 +75,13 @@ export class Locations {
     if (changes.position && changes.position !== before.position) {
       this.sql.run('UPDATE locations SET position = ? WHERE id = ?', changes.position, id)
       this.logHistory(id, 'repositioned', before.parent_id, before.parent_id, before.position, changes.position, inboxId)
+    }
+    if (changes.grid) {
+      const grid = JSON.stringify(checkGrid(changes.grid))
+      if (grid !== before.grid) {
+        this.sql.run('UPDATE locations SET grid = ? WHERE id = ?', grid, id)
+        this.logHistory(id, 'repositioned', before.parent_id, before.parent_id, gridText(before.grid), gridText(grid), inboxId)
+      }
     }
     this.sql.run(
       `UPDATE locations
@@ -142,6 +150,27 @@ export class Locations {
     this.sql.run('DELETE FROM locations WHERE id = ?', removeId)
   }
 
+  /** How a place's parts are laid out (from their grid cells), or null if none has a cell. */
+  layout(id: string): Layout | null {
+    return layoutOf(this.childrenOf(id), (childId) =>
+      this.sql
+        .all<{ name: string }>(
+          `WITH RECURSIVE inside(id) AS (SELECT ? UNION ALL SELECT l.id FROM locations l JOIN inside ON l.parent_id = inside.id)
+           SELECT i.name FROM items i JOIN inside ON i.location_id = inside.id
+           WHERE i.status != 'gone' AND (i.place_id IS NULL OR i.place_id != ?) ORDER BY i.name`,
+          childId, childId,
+        )
+        .map((row) => row.name),
+    )
+  }
+
+  /** The fixed-width drawing of a place's layout, or null if it has none. */
+  drawing(id: string): string | null {
+    const place = this.get(id)
+    const layout = place ? this.layout(id) : null
+    return place && layout ? drawLayout(place.name, layout) : null
+  }
+
   /** Look a location up by id, by path ("Garage › Shelf"), or by fuzzy name. */
   resolve(reference: string): Location | null {
     const byId = this.get(reference) ?? this.get(slug(reference))
@@ -176,6 +205,7 @@ export class Locations {
       kind: location.kind,
       preposition: location.preposition,
       position: location.position,
+      ...(location.grid ? { grid: gridText(location.grid) } : {}),
       description: location.description,
       items: this.sql
         .all<Item>(`SELECT * FROM items WHERE location_id = ? AND status != 'gone' ORDER BY name`, location.id)

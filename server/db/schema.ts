@@ -9,7 +9,7 @@
 // Statements are separated by blank-line-free `;\n` so they can be run one by
 // one and re-emitted verbatim in the house.sql export.
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (
@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS questions (
   inbox_ids     TEXT NOT NULL DEFAULT '[]', -- JSON array of related inbox entries
   question      TEXT NOT NULL,
   options       TEXT NOT NULL DEFAULT '[]', -- JSON array of suggested answers
+  diagram       TEXT,                       -- a fixed-width sketch shown with the question (e.g. a bookcase layout)
   status        TEXT NOT NULL,              -- open | answered | dismissed
   answer        TEXT,
   answered_by   TEXT                        -- inbox id of the answering utterance
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS locations (
   parent_id    TEXT REFERENCES locations(id),
   preposition  TEXT NOT NULL DEFAULT 'in',  -- how things sit there: in / on / under / by
   position     TEXT,                        -- where it sits among its neighbors: left / top of the stack / closest to the door
+  grid         TEXT,                        -- its cell in the parent's layout, JSON {"row":1,"col":2,"rows":1,"cols":1}; rows count from the top, columns from the left
   description  TEXT,
   created_at   TEXT NOT NULL,
   updated_at   TEXT NOT NULL
@@ -153,4 +155,6 @@ export const HOUSE_TABLES = [
 export const ADDED_COLUMNS: [string, string, string][] = [
   ['locations', 'position', 'TEXT'],
   ['items', 'place_id', 'TEXT REFERENCES locations(id)'],
+  ['locations', 'grid', 'TEXT'],
+  ['questions', 'diagram', 'TEXT'],
 ]

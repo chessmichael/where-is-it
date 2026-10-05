@@ -1,5 +1,6 @@
 import type { HouseDb, InboxEntry, Question } from '../db/house'
 import type { LLMProvider, Msg } from '../llm/types'
+import { diagramField, showLayoutTool } from './layout-tools'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { OBSERVATION_SCHEMA, type Observation } from './observations'
 import { CONVERSE_SYSTEM } from './prompts'
@@ -81,6 +82,7 @@ const askUser: AgentTool<TurnState> = {
     parameters: object({
       question: textWith('Short, spoken-style question.'),
       options: listOf(text, '0-4 short suggested answers.'),
+      diagram: diagramField,
     }),
   },
   endsTurn: true,
@@ -93,12 +95,13 @@ const askUser: AgentTool<TurnState> = {
       inbox_ids: [turn.entry.id],
       question: String(input.question),
       options: textList(input.options).slice(0, 4),
+      diagram: textOrNull(input.diagram),
     })
     return { asked: turn.asked.id }
   },
 }
 
-const TOOLS = [searchHouse, getLocation, recordObservations, resolveQuestion, askUser]
+const TOOLS = [searchHouse, getLocation, showLayoutTool<TurnState>(), recordObservations, resolveQuestion, askUser]
 
 // ── The turn ───────────────────────────────────────────────────────────────
 

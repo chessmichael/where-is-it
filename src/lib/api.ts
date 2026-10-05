@@ -23,6 +23,7 @@ export interface AgentQuestion {
   id: string
   text: string
   options: string[]
+  diagram?: string | null // a fixed-width sketch shown with the question
 }
 
 export interface ConverseReply {
@@ -68,6 +69,7 @@ export interface HouseNode {
   kind: string
   preposition: string
   position?: string
+  grid?: { row: number; col: number; rows: number; cols: number } // its cell in the parent's layout
   description?: string
   aliases?: string[]
   items: HouseItem[]
@@ -78,6 +80,7 @@ export interface OpenQuestion {
   id: string
   question: string
   options: string[]
+  diagram?: string | null
   conversation: string | null
 }
 

@@ -1,5 +1,6 @@
 import type { HouseDb, Location } from './house'
 import { inspectHouse } from './inspect'
+import { parseGrid } from './layout'
 import { sqlGuide } from './sql-guide'
 import { renderInspector } from './inspect-html'
 import { HOUSE_TABLES, SCHEMA_STATEMENTS } from './schema'
@@ -46,6 +47,7 @@ export function houseTree(db: HouseDb) {
     kind: l.kind,
     preposition: l.preposition,
     ...(l.position ? { position: l.position } : {}),
+    ...(parseGrid(l.grid) ? { grid: parseGrid(l.grid) } : {}),
     ...(l.description ? { description: l.description } : {}),
     ...(db.locations.aliases(l.id).length ? { aliases: db.locations.aliases(l.id) } : {}),
     items: items.filter((i) => i.location_id === l.id).map((i) => itemJson(db, i.id)),
@@ -88,6 +90,8 @@ export function houseMarkdown(db: HouseDb): string {
     for (const l of locs.filter((x) => x.parent_id === parent)) {
       out.push(`${'  '.repeat(depth)}- **${l.name}** _(${l.kind}${l.position ? `, ${l.position}` : ''})_${l.description ? ` — ${l.description}` : ''}`)
       for (const i of items.filter((x) => x.location_id === l.id)) out.push(`${'  '.repeat(depth + 1)}- ${itemLine(i)}`)
+      const drawing = db.locations.drawing(l.id)
+      if (drawing) out.push('', ...['```', ...drawing.split('\n'), '```'].map((line) => `${'  '.repeat(depth + 1)}${line}`), '')
       walk(l.id, depth + 1)
     }
   }

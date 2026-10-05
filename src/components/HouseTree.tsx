@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
+import LayoutDrawing from './LayoutDrawing'
 
 // Read-only view of the compacted house (layer 2), plus what's still waiting
 // in the inbox and any open questions from the agent.
@@ -64,6 +65,7 @@ function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; 
       {isOpen && (
         <div className="place-inside">
           {node.description && <p className="tree-node-desc">{node.description}</p>}
+          <LayoutDrawing node={node} />
           {items.length > 0 && (
             <ul className="tree-items">
               {items.map((it) => (
@@ -153,6 +155,7 @@ export default function HouseTree() {
                 <span className="tree-item-name">
                   {q.question}
                   {q.options.length > 0 && <span className="tree-item-loc"> ({q.options.join(' / ')})</span>}
+                  {q.diagram && <pre className="diagram">{q.diagram}</pre>}
                 </span>
                 <button className="icon" title="Dismiss" onClick={() => api.dismissQuestion(q.id).then(load)}>
                   ✕

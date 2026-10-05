@@ -59,7 +59,7 @@ export class HouseDO extends DurableObject<Env> {
     return {
       inboxId: entry.id,
       reply: result.reply,
-      question: result.question ? { id: result.question.id, text: result.question.question, options: result.question.options } : null,
+      question: result.question ? { id: result.question.id, text: result.question.question, options: result.question.options, diagram: result.question.diagram } : null,
       stored: result.observations.length,
       observations: result.observations,
     }
