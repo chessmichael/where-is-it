@@ -32,6 +32,7 @@ export interface Question {
   inbox_ids: string[]
   question: string
   options: string[]
+  diagram: string | null
   status: 'open' | 'answered' | 'dismissed'
   answer: string | null
   answered_by: string | null
@@ -44,6 +45,7 @@ export interface Location {
   parent_id: string | null
   preposition: string
   position: string | null
+  grid: string | null // JSON GridCell, see layout.ts
   description: string | null
   created_at: string
   updated_at: string

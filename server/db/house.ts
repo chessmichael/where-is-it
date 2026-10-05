@@ -2,6 +2,7 @@ import type { Observation } from '../agent/observations'
 import { TRACE_INDEX, TRACE_SCHEMA } from '../trace'
 import { Inbox, Questions } from './inbox'
 import { Items } from './items'
+import { gridText } from './layout'
 import { Locations } from './locations'
 import { ADDED_COLUMNS, HOUSE_TABLES, SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema'
 import { rank } from './search'
@@ -124,7 +125,8 @@ export class HouseDb {
       for (const location of children) {
         const aliases = this.locations.aliases(location.id)
         const aka = aliases.length ? ` aka ${aliases.join(', ')}` : ''
-        const position = location.position ? `, position: ${location.position}` : ''
+        const grid = gridText(location.grid)
+        const position = (location.position ? `, position: ${location.position}` : '') + (grid ? `, layout: ${grid}` : '')
         lines.push(`${indent}- ${location.name} [${location.kind}, ${location.preposition}${position}] id=${location.id}${aka}`)
         for (const item of items.filter((i) => i.location_id === location.id)) lines.push(`${indent}  • ${describeItem(item)}`)
         walk(location.id, depth + 1)

@@ -2,6 +2,7 @@ import type { HouseDb, InboxEntry } from '../db/house'
 import type { LLMProvider } from '../llm/types'
 import { compact, type CompactResult } from './compact'
 import { converse, type ConverseResult } from './converse'
+import { needsStrongModel } from './route'
 
 // The two things the app does with a person's words, as plain functions so
 // the live app (house-do.ts) and the eval (evals/capture) run the exact same
@@ -17,22 +18,27 @@ export interface Heard {
   result: ConverseResult | null // null when the agent failed
   error: string | null
   ms: number
+  model: string // which model heard it (see route.ts)
 }
 
-/** Capture first (the words are saved before any model call), then interpret. */
-export async function hearUtterance(llm: LLMProvider, db: HouseDb, conversationId: string, text: string): Promise<Heard> {
+/**
+ * Capture first (the words are saved before any model call), then interpret.
+ * With a `fast` model, short plain turns go to it and the rest to `llm`.
+ */
+export async function hearUtterance(llm: LLMProvider, db: HouseDb, conversationId: string, text: string, fast?: LLMProvider | null): Promise<Heard> {
+  if (fast && !needsStrongModel(text, db, conversationId)) llm = fast
   const entry = db.inbox.add(conversationId, text)
   const started = Date.now()
   try {
     const result = await converse(llm, db, entry)
     const status = result.question ? 'needs_clarification' : result.observations.length ? 'pending_compaction' : 'nothing_to_store'
     db.inbox.update(entry.id, { observations: result.observations, agent_reply: result.reply, status })
-    return { entry, result, error: null, ms: Date.now() - started }
+    return { entry, result, error: null, ms: Date.now() - started, model: llm.model }
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e)
     // Keep the raw words; tidy-up can still interpret `said` later.
     db.inbox.update(entry.id, { status: 'error', note: error.slice(0, 500) })
-    return { entry, result: null, error, ms: Date.now() - started }
+    return { entry, result: null, error, ms: Date.now() - started, model: llm.model }
   }
 }
 

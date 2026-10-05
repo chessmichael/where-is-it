@@ -25,6 +25,15 @@ const DEFAULT_MODEL: Record<string, string> = {
   bedrock: 'us.amazon.nova-pro-v1:0',
 }
 
+/**
+ * The optional cheaper model for short, plain turns (see agent/route.ts):
+ * LLM_FAST_MODEL, on LLM_FAST_PROVIDER (default: the main provider). Null when unset.
+ */
+export function createFastProvider(env: LLMEnv & { LLM_FAST_MODEL?: string; LLM_FAST_PROVIDER?: string }): LLMProvider | null {
+  if (!env.LLM_FAST_MODEL) return null
+  return createProvider({ ...env, LLM_PROVIDER: env.LLM_FAST_PROVIDER || env.LLM_PROVIDER, LLM_MODEL: env.LLM_FAST_MODEL })
+}
+
 // Builds the configured provider. LLM_API_KEY overrides the vendor-specific
 // key, which is how keyed OpenAI-compatible hosts (OpenRouter, Gemini) work.
 export function createProvider(env: LLMEnv): LLMProvider {

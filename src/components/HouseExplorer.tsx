@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
+import LayoutDrawing from './LayoutDrawing'
 
 // The house on a computer: the tree on the left, the selected place on the
 // right, and "Find anything" across every item. Reads the same /api/house
@@ -204,6 +205,7 @@ export default function HouseExplorer() {
                 {place.aliases?.length ? ` · also called ${place.aliases.join(', ')}` : ''}
                 {place.description ? ` · ${place.description}` : ''}
               </p>
+              <LayoutDrawing node={place} onPick={select} />
               <h3>{visibleItems(place).length ? 'In it' : 'Nothing directly in it'}</h3>
               {visibleItems(place).length > 0 && (
                 <table className="xitems">

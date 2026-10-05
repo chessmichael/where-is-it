@@ -17,6 +17,8 @@
 //                                version (or that were flaky or unrun there) get the other N-1
 //   --against <variant>          the reference for --reps (default: the latest earlier variant)
 //   --full-reps                  run all N repeats for every case (no adaptive skipping)
+//   --fast-model <model>         route short, plain turns to this cheaper model (as LLM_FAST_MODEL does in
+//                                the app); everything else, and all of tidy-up, uses --model
 //   --no-open                    don't open the results page in the browser afterwards
 //
 // Afterwards: appends approval/run lines to evals/capture/ledger.jsonl, saves any uncommitted
@@ -39,7 +41,7 @@ const reps = Number(flag('--reps') ?? 1)
 const only = flag('--only')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against'].includes(extra[i])) { i++; continue }
+  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against', '--fast-model'].includes(extra[i])) { i++; continue }
   if (['--no-open', '--full-reps'].includes(extra[i])) continue
   passThrough.push(extra[i])
 }
@@ -48,8 +50,10 @@ const startedAt = new Date().toISOString()
 const code = codeState()
 const shaBefore = harnessSha()
 const env = { ...process.env, EVAL_DB_DIR: join(FLOW, variant, 'dbs') }
+const fastModel = flag('--fast-model')
+if (fastModel) env.EVAL_FAST_MODEL = fastModel
 // --model bedrock:<id>: borrow the AWS CLI's credentials (kept in memory only) unless a Bedrock key is set.
-if (model.startsWith('bedrock:') && !env.AWS_BEARER_TOKEN_BEDROCK && !env.AWS_ACCESS_KEY_ID) {
+if ([model, fastModel ?? ''].some((m) => m.startsWith('bedrock:')) && !env.AWS_BEARER_TOKEN_BEDROCK && !env.AWS_ACCESS_KEY_ID) {
   const c = JSON.parse(execFileSync('aws', ['configure', 'export-credentials', '--format', 'process'], { encoding: 'utf8' }))
   Object.assign(env, { AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, ...(c.SessionToken ? { AWS_SESSION_TOKEN: c.SessionToken } : {}) })
   env.AWS_REGION ??= execFileSync('aws', ['configure', 'get', 'region'], { encoding: 'utf8' }).trim() || 'us-east-1'
@@ -178,6 +182,7 @@ append({
   by: who(),
   variant,
   requested_model: model,
+  ...(fastModel ? { fast_model: fastModel } : {}),
   git_commit: agentCommit,
   ...(codeCommit ? { agent_code_from: agentCommit, harness_from: code.commit } : {}),
   git_dirty: code.dirty,

@@ -74,12 +74,12 @@ export class Questions {
   constructor(private sql: Sql) {}
 
   /** Record a question. Ids read like q_0003. */
-  ask(q: { conversation: string | null; inbox_ids: string[]; question: string; options: string[] }): Question {
+  ask(q: { conversation: string | null; inbox_ids: string[]; question: string; options: string[]; diagram?: string | null }): Question {
     const id = `q_${String(this.sql.nextNumber('seq:question')).padStart(4, '0')}`
     this.sql.run(
-      `INSERT INTO questions (id, at, conversation, inbox_ids, question, options, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'open')`,
-      id, now(), q.conversation, JSON.stringify(q.inbox_ids), q.question, JSON.stringify(q.options),
+      `INSERT INTO questions (id, at, conversation, inbox_ids, question, options, diagram, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'open')`,
+      id, now(), q.conversation, JSON.stringify(q.inbox_ids), q.question, JSON.stringify(q.options), q.diagram?.trimEnd() || null,
     )
     return this.get(id)!
   }
