@@ -21,26 +21,58 @@ function ItemRow({ item }: { item: HouseItem & { location_note?: string } }) {
   )
 }
 
-function NodeBlock({ node }: { node: HouseNode }) {
+/** Everything inside a place, counted all the way down (for "Garage · 23 things"). */
+function countInside(node: HouseNode): number {
+  return visibleItems(node).length + node.children.reduce((n, c) => n + countInside(c), 0)
+}
+
+/** Items that are also a place (a toolbox, a tote) show as the place itself, not twice. */
+function visibleItems(node: HouseNode) {
+  return node.items.filter((it) => !it.also_a_place)
+}
+
+const OPEN_KEY = 'whi.house.open'
+function loadOpen(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(OPEN_KEY) ?? '[]'))
+  } catch {
+    return new Set()
+  }
+}
+
+function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; open: Set<string>; toggle: (id: string) => void }) {
+  const isOpen = open.has(node.id)
+  const items = visibleItems(node)
+  const count = countInside(node)
+  const hasInside = items.length + node.children.length > 0
+  const Heading = depth === 0 ? 'h3' : 'div'
   return (
-    <div className="tree-node">
-      <div className="tree-node-head">
-        <span className="tree-node-name">{node.name}</span>
-        <span className="tree-node-type">{node.kind}</span>
-        {node.position && <span className="tree-node-type position">{node.position}</span>}
-      </div>
-      {node.description && <p className="tree-node-desc">{node.description}</p>}
-      {(node.items.length > 0 || node.children.length > 0) && (
-        <div className="tree-children">
-          {node.items.length > 0 && (
+    <div className={depth === 0 ? 'place room' : 'place'}>
+      <Heading className="place-heading">
+        <button
+          className="place-toggle"
+          aria-expanded={hasInside ? isOpen : undefined}
+          disabled={!hasInside}
+          onClick={() => toggle(node.id)}
+        >
+          <span className={`chevron${hasInside ? ' has' : ''}${isOpen ? ' open' : ''}`} aria-hidden />
+          <span className="place-name">{node.name}</span>
+          {node.position && <span className="tree-node-type position">{node.position}</span>}
+          <span className="place-count">{count === 0 ? 'empty' : `${count} ${count === 1 ? 'thing' : 'things'}`}</span>
+        </button>
+      </Heading>
+      {isOpen && (
+        <div className="place-inside">
+          {node.description && <p className="tree-node-desc">{node.description}</p>}
+          {items.length > 0 && (
             <ul className="tree-items">
-              {node.items.map((it) => (
+              {items.map((it) => (
                 <ItemRow key={it.id} item={it} />
               ))}
             </ul>
           )}
           {node.children.map((c) => (
-            <NodeBlock key={c.id} node={c} />
+            <Place key={c.id} node={c} depth={depth + 1} open={open} toggle={toggle} />
           ))}
         </div>
       )}
@@ -48,11 +80,31 @@ function NodeBlock({ node }: { node: HouseNode }) {
   )
 }
 
+function allIds(nodes: HouseNode[]): string[] {
+  return nodes.flatMap((n) => [n.id, ...allIds(n.children)])
+}
+
 export default function HouseTree() {
   const [house, setHouse] = useState<House | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tidying, setTidying] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
+  const [open, setOpen] = useState<Set<string>>(loadOpen)
+
+  const remember = (next: Set<string>) => {
+    setOpen(next)
+    try {
+      localStorage.setItem(OPEN_KEY, JSON.stringify([...next]))
+    } catch {
+      // Not remembering which places were open is fine.
+    }
+  }
+  const toggle = (id: string) => {
+    const next = new Set(open)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    remember(next)
+  }
 
   const load = useCallback(() => {
     api.house().then(setHouse, (e) => setError(String(e.message ?? e)))
@@ -118,20 +170,19 @@ export default function HouseTree() {
         </p>
       )}
 
+      {house.rooms.length > 0 && (
+        <div className="tree-controls">
+          <button className="link-button" onClick={() => remember(new Set(allIds(house.rooms)))}>
+            Expand all
+          </button>
+          <button className="link-button" onClick={() => remember(new Set())}>
+            Collapse all
+          </button>
+        </div>
+      )}
+
       {house.rooms.map((room) => (
-        <section key={room.id} className="tree-room">
-          <h3 className="tree-room-name">{room.name}</h3>
-          {room.items.length > 0 && (
-            <ul className="tree-items">
-              {room.items.map((it) => (
-                <ItemRow key={it.id} item={it} />
-              ))}
-            </ul>
-          )}
-          {room.children.map((c) => (
-            <NodeBlock key={c.id} node={c} />
-          ))}
-        </section>
+        <Place key={room.id} node={room} depth={0} open={open} toggle={toggle} />
       ))}
 
       {house.elsewhere.length > 0 && (
