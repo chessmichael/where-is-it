@@ -59,6 +59,7 @@ export interface HouseItem {
   category?: string
   aliases?: string[]
   details?: { key: string; value: string }[]
+  also_a_place?: string // set when this item is also a place (shown as the place)
 }
 
 export interface HouseNode {
