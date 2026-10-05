@@ -8,16 +8,22 @@
 //   --rerun <ids|set:D|all>      supersede these cases' existing rows (archived, noted in the ledger)
 //                                and run them again; "set:D" means every case in set D
 //   --reason "…"                 why rows are being re-run (goes in the ledger)
-//   --suite capability|regression  run only that suite (see suites.json / make_suites.py)
+//   --suite capability|regression|all  which cases (see suites.json / make_suites.py). With no
+//                                --suite, --only or --rerun, the CAPABILITY suite runs: the cases
+//                                that still tell versions apart. Use regression before a deploy.
 //   --only <ids|set:X>           run (or resume) only these cases, keeping their existing rows
-//   --reps N                     repeats per case (existing reps are reused; only missing ones run)
+//   --reps N                     up to N repeats per case (existing reps are reused). ADAPTIVE: every
+//                                case runs once; only cases whose result differs from the reference
+//                                version (or that were flaky or unrun there) get the other N-1
+//   --against <variant>          the reference for --reps (default: the latest earlier variant)
+//   --full-reps                  run all N repeats for every case (no adaptive skipping)
 //   --no-open                    don't open the results page in the browser afterwards
 //
 // Afterwards: appends approval/run lines to evals/capture/ledger.jsonl, saves any uncommitted
 // diff beside the results, commits the ledger and the small result files, builds an inspector
 // page per case, and rebuilds cases.html.
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { append, codeState, commitPaths, FLOW, harnessSha, LEDGER, saveDiff, sha256, summarize, who } from './ledger.mjs'
 
@@ -28,12 +34,13 @@ const model = flag('--model') ?? 'gpt-5.5'
 const codeCommit = flag('--code')
 const rerun = flag('--rerun')
 const reason = flag('--reason') ?? 'grader or harness fix'
-const suite = flag('--suite')
+const suite = flag('--suite') ?? (flag('--only') || flag('--rerun') ? undefined : 'capability')
+const reps = Number(flag('--reps') ?? 1)
 const only = flag('--only')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only'].includes(extra[i])) { i++; continue }
-  if (extra[i] === '--no-open') continue
+  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against'].includes(extra[i])) { i++; continue }
+  if (['--no-open', '--full-reps'].includes(extra[i])) continue
   passThrough.push(extra[i])
 }
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim()
@@ -51,11 +58,11 @@ if (suitesText) {
   if (lastDefined?.suites_sha256 !== sha256(suitesText)) {
     append({ event: 'suites_defined', at: startedAt, by: who(), suites_sha256: sha256(suitesText), rule: suites.rule, regression: suites.regression.length, capability: suites.capability.length, by_set: suites.by_set, computed_from: suites.computed_from })
   }
-  if (suite) {
-    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability`)
+  if (suite && suite !== 'all') {
+    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, all`)
     env.EVAL_ONLY = suites[suite].join(',')
   }
-} else if (suite) throw new Error('no evals/capture/suites.json yet — run make_suites.py')
+} else if (suite && suite !== 'all') throw new Error('no evals/capture/suites.json yet — run make_suites.py')
 
 // ── --only: narrow the run to some cases without touching their existing rows ──
 const expand = (spec) => {
@@ -109,11 +116,45 @@ if (codeCommit) {
   env.EVAL_HARNESS_BUNDLE = join(process.cwd(), bundle)
 }
 
-const run = spawnSync(
-  process.execPath,
-  ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', '6', '--timeout-s', '600', ...passThrough],
-  { stdio: 'inherit', env },
-)
+const runEval = (n, only) =>
+  spawnSync(
+    process.execPath,
+    ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', '6', '--timeout-s', '600', '--reps', String(n), ...passThrough],
+    { stdio: 'inherit', env: only ? { ...env, EVAL_ONLY: only.join(',') } : env },
+  )
+
+// ── adaptive repeats: one pass of everything, then repeats only where they can change a verdict ──
+const passes = (v) => {
+  const path = join(FLOW, v, 'results.jsonl')
+  const by = {}
+  if (existsSync(path)) for (const l of readFileSync(path, 'utf8').split('\n')) if (l.trim()) { const r = JSON.parse(l); (by[r.prompt_id] ??= []).push(r.grade.pass === 1) }
+  return by
+}
+const against =
+  flag('--against') ??
+  readdirSync(FLOW)
+    .filter((d) => existsSync(join(FLOW, d, 'results.jsonl')) && d !== variant && d !== 'archive')
+    .sort((a, b) => (a === 'baseline' ? -1 : b === 'baseline' ? 1 : Number(a.slice(1)) - Number(b.slice(1))))
+    .filter((d) => variant === 'baseline' || d === 'baseline' || Number(d.slice(1)) < Number(variant.slice(1)))
+    .at(-1)
+let run = runEval(1)
+let adaptive
+if (reps > 1 && run.status !== 2) {
+  const ids = env.EVAL_ONLY ? env.EVAL_ONLY.split(',') : JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases.map((c) => c.id)
+  const mine = passes(variant)
+  const ref = against ? passes(against) : {}
+  const repeat = extra.includes('--full-reps')
+    ? ids
+    : ids.filter((id) => {
+        const before = ref[id]
+        if (!before?.length || !mine[id]?.length) return true // nothing to compare against
+        if (before.some((p) => p !== before[0])) return true // flaky there: needs repeats here too
+        return mine[id].some((p) => p !== before[0]) // differs from the reference
+      })
+  adaptive = { against: against ?? null, cases: ids.length, repeated: repeat.length, skipped: ids.length - repeat.length }
+  console.error(`adaptive reps: ${repeat.length} of ${ids.length} case(s) differ from ${against ?? '(no reference)'} or were flaky there — repeating those to ${reps}`)
+  if (repeat.length) run = runEval(reps, repeat)
+}
 const finishedAt = new Date().toISOString()
 const shaAfter = harnessSha()
 if (extra.includes('--approve-harness') && shaAfter && shaAfter !== shaBefore) {
@@ -139,7 +180,8 @@ append({
   ...(rerun ? { rerun: env.EVAL_ONLY.split(','), reason } : {}),
   ...(suite ? { suite } : {}),
   ...(only ? { only } : {}),
-  ...(flag('--reps') ? { reps: Number(flag('--reps')) } : {}),
+  ...(flag('--reps') ? { reps } : {}),
+  ...(adaptive ? { adaptive } : {}),
   ...after,
 })
 const committed = commitPaths(

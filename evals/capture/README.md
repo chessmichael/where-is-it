@@ -16,13 +16,18 @@ simulated person answering any questions, then checks the database and the spoke
 
 ```bash
 npm run eval:selftest                                              # free: grader passes right answers, fails wrong ones
-npm run eval:capture -- --variant v4 --suite capability --reps 3   # an experiment: the discriminating cases, 3 repeats
+npm run eval:capture -- --variant v4 --reps 3                      # an experiment: the capability suite (the default), adaptive repeats
+npm run eval:capture -- --variant v4 --only set:C --reps 3         # cheaper: just the sets a change targets
 npm run eval:capture -- --variant v4 --suite regression            # before deploying: nothing that worked is broken
-npm run eval:capture -- --variant v4                               # everything
+npm run eval:capture -- --variant v4 --suite all                   # everything (rarely needed)
 npm run inspect -- --eval v4 D06                                   # look at one case's final database
 ```
 
 - Re-running the same command **resumes**: only missing (case, repeat) pairs run.
+- **Keeping cost down.** With no `--suite`/`--only`/`--rerun`, only the capability suite runs. `--reps N` is
+  adaptive: every case runs once, and only cases that differ from the reference version (the latest earlier
+  one, or `--against vX`), or were flaky or unrun there, get the other N−1 repeats. The ledger records how
+  many were skipped. `--full-reps` turns this off. Set K (long descriptions) costs ~10× a lookup case.
 - `--approve-harness` is needed (once) after the grader or harness changes; it's recorded in the ledger.
 - `--code <commit>` runs an earlier version's agent code under today's grader (to keep comparisons fair
   after a grader fix); `--rerun <ids|set:X|all> --reason "…"` supersedes existing rows (archived, logged).
