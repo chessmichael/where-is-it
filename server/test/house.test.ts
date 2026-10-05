@@ -112,6 +112,9 @@ describe('exports', () => {
     ])
     expect(fresh.prepare('SELECT said FROM inbox').get()).toMatchObject({ said: "it's in the kid's drawer" })
     expect(houseMarkdown(db)).toContain("Sam's passport (expires: 2031)")
+    // Running it again on the same database replaces rather than collides.
+    fresh.exec(sqlDump(db))
+    expect(fresh.prepare('SELECT COUNT(*) AS n FROM items').get()).toMatchObject({ n: 1 })
   })
 })
 
