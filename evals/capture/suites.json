@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-05T20:21:56+00:00",
+  "generated_at": "2026-10-05T21:00:51+00:00",
   "rule": "regression = passed in every version that ran it, seen in >= 2 versions; capability = everything else",
   "computed_from": {
     "baseline": {
@@ -15,12 +15,12 @@
       "results_sha256": "41302adbc567fd2f1df227ce2eb353a2a0d9103162cf37fb835219b7e253148b"
     },
     "v3": {
-      "rows": 334,
-      "results_sha256": "a1e820dd06770368da114144a2d5bdef5d866b7273a5e9a3b6d14002e3219eef"
+      "rows": 361,
+      "results_sha256": "cd8a4d1685b5a2e935aadca7f0ee94ea3cd4fa8d01ffe82471ffd961f69a701a"
     },
     "v4": {
-      "rows": 33,
-      "results_sha256": "0addbd327092d67f080f24da455841e260eba276b75820f8d6713ddabc933064"
+      "rows": 76,
+      "results_sha256": "c95aec1a0edec581b1f7c382abedd471ec8a4450c9636fdc438c46e0bb90733f"
     }
   },
   "regression": [
@@ -201,6 +201,14 @@
     "K09",
     "K10",
     "K11",
+    "K13",
+    "K14",
+    "K15",
+    "K16",
+    "K17",
+    "K18",
+    "K19",
+    "K20",
     "J05"
   ],
   "capability": [
@@ -214,6 +222,9 @@
     "C03",
     "C05",
     "C09",
+    "C11",
+    "C12",
+    "C13",
     "D01",
     "D02",
     "D03",
@@ -245,14 +256,6 @@
     "I14",
     "K01",
     "K12",
-    "K13",
-    "K14",
-    "K15",
-    "K16",
-    "K17",
-    "K18",
-    "K19",
-    "K20",
     "J01",
     "J02",
     "J03",
@@ -269,8 +272,11 @@
     "A45": "passes in some versions, fails in others",
     "C02": "passes in some versions, fails in others",
     "C03": "passes in some versions, fails in others",
-    "C05": "failed in every version",
+    "C05": "passes in some versions, fails in others",
     "C09": "passes in some versions, fails in others",
+    "C11": "not yet run in 2 versions",
+    "C12": "not yet run in 2 versions",
+    "C13": "not yet run in 2 versions",
     "D01": "passes in some versions, fails in others",
     "D02": "passes in some versions, fails in others",
     "D03": "passes in some versions, fails in others",
@@ -301,15 +307,7 @@
     "I08": "passes in some versions, fails in others",
     "I14": "passes in some versions, fails in others",
     "K01": "passes in some versions, fails in others",
-    "K12": "not yet run in 2 versions",
-    "K13": "not yet run in 2 versions",
-    "K14": "not yet run in 2 versions",
-    "K15": "not yet run in 2 versions",
-    "K16": "not yet run in 2 versions",
-    "K17": "not yet run in 2 versions",
-    "K18": "not yet run in 2 versions",
-    "K19": "not yet run in 2 versions",
-    "K20": "not yet run in 2 versions",
+    "K12": "failed in every version",
     "J01": "passes in some versions, fails in others",
     "J02": "passes in some versions, fails in others",
     "J03": "passes in some versions, fails in others",
@@ -327,17 +325,17 @@
       "journey": 12,
       "groups": 4,
       "duplicates": 9,
-      "spatial": 10,
+      "spatial": 18,
       "positional": 1
     },
     "capability": {
       "empty": 6,
-      "shelving": 4,
+      "shelving": 7,
       "stack": 12,
       "journey": 4,
       "groups": 8,
       "duplicates": 5,
-      "spatial": 10,
+      "spatial": 2,
       "positional": 6
     }
   }
