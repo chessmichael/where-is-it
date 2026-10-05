@@ -44,7 +44,8 @@ export class BedrockProvider implements LLMProvider {
       this.send = (url, init) => fetch(url, { ...init, headers: { ...(init.headers as Record<string, string>), authorization: `Bearer ${auth.apiKey}` } })
     } else {
       const aws = new AwsClient({ ...auth, service: 'bedrock', region, retries: 0 })
-      this.send = (url, init) => aws.fetch(url, init)
+      // Sign, then fetch ourselves: aws4fetch doesn't pass the abort signal on, so a stalled connection would hang forever.
+      this.send = async (url, init) => fetch(await aws.sign(url, init), { signal: init.signal })
     }
   }
 
