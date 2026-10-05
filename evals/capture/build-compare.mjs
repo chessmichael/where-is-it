@@ -106,6 +106,8 @@ td.text{white-space:normal;min-width:260px;color:var(--muted);font-size:14px}
 a{color:inherit}
 tr.total td{font-weight:600;border-top:2px solid var(--line)}
 .legend{font-size:13px;color:var(--muted);margin:8px 0 0}
+.bar{height:6px;width:120px;max-width:100%;background:var(--line);border-radius:3px;overflow:hidden;margin:4px 0 2px}
+.bar div{height:100%;background:var(--up);border-radius:3px}
 </style></head>
 <body><main>
 <h1>Version by version</h1>
@@ -134,7 +136,15 @@ function significant(p1, n1, p2, n2) {
   var se = Math.sqrt(pooled * (1 - pooled) * (1 / n1 + 1 / n2));
   return se === 0 ? a !== b : Math.abs(a - b) > 1.96 * se;
 }
-function visibleCases() { return DATA.cases.filter(function (c) { return suite === 'all' || c.suite === suite; }); }
+// A case "changed" if its pass rate differs between any two versions that ran it.
+function changed(c) {
+  var rates = DATA.versions.map(function (v) { var r = c.results[v.id]; return r ? r.passes / r.reps : null; }).filter(function (x) { return x !== null; });
+  return rates.some(function (x) { return x !== rates[0]; });
+}
+function visibleCases() {
+  var onlyChanged = document.getElementById('changed').checked;
+  return DATA.cases.filter(function (c) { return (suite === 'all' || c.suite === suite) && (!onlyChanged || changed(c)); });
+}
 function header(table, first, extra) {
   var tr = el('tr'); tr.appendChild(el('th', '', first)); if (extra) tr.appendChild(el('th', '', extra));
   DATA.versions.forEach(function (v) { var th = el('th', '', v.id); th.appendChild(el('span', 'commit', (v.commit ? v.commit + ' · ' : '') + v.subject)); tr.appendChild(th); });
@@ -153,7 +163,8 @@ function renderSets() {
   header(table, 'Set');
   var body = el('tbody'); var cs = visibleCases();
   var rows = Object.keys(DATA.sets).filter(function (k) { return cs.some(function (c) { return c.set === k; }); }).map(function (k) { return [DATA.sets[k], cs.filter(function (c) { return c.set === k; }), false]; });
-  rows.push(['All shown', cs, true]);
+  rows.push([document.getElementById('changed').checked ? 'All shown (changed cases only)' : 'All shown', cs, true]);
+  if (!cs.length) { var none = el('tr'); none.appendChild(el('td', '', 'No cases match these filters.')); body.appendChild(none); table.appendChild(body); return; }
   rows.forEach(function (row) {
     var tr = el('tr', row[2] ? 'total' : ''); tr.appendChild(el('td', '', row[0]));
     var prev = null;
@@ -164,6 +175,8 @@ function renderSets() {
       if (n) {
         var rate = el('span', 'rate', pct(p, n) + '%'); rate.title = p + ' of ' + n + ' runs passed (' + cases + ' cases)'; td.appendChild(rate);
         var badge = deltaBadge(prev, { p: p, n: n }); if (badge) td.appendChild(badge);
+        var bar = el('div', 'bar'); bar.title = p + ' of ' + n + ' runs passed';
+        var fill = el('div'); fill.style.width = pct(p, n) + '%'; bar.appendChild(fill); td.appendChild(bar);
         td.appendChild(el('span', 'runs', p + '/' + n + ' runs'));
         prev = { p: p, n: n };
       } else td.appendChild(el('span', 'runs', 'not run'));
@@ -176,10 +189,9 @@ function renderSets() {
 function renderCases() {
   var table = document.getElementById('byCase'); table.textContent = '';
   header(table, 'Case', 'What it asks');
-  var onlyChanged = document.getElementById('changed').checked;
   var body = el('tbody');
   visibleCases().forEach(function (c) {
-    var cells = [], prev = null, changed = false;
+    var cells = [], prev = null;
     DATA.versions.forEach(function (v) {
       var r = c.results[v.id]; var td = el('td');
       if (r) {
@@ -187,12 +199,11 @@ function renderCases() {
         var chip = el('span', 'cellv', r.passes + '/' + r.reps);
         chip.style.background = 'color-mix(in srgb, var(--up-bg) ' + Math.round(rate * 100) + '%, var(--down-bg))';
         var a = el('a'); a.href = 'cases-' + v.id + '.html#' + c.id; a.appendChild(chip); td.appendChild(a);
-        if (prev !== null && rate !== prev) { changed = true; td.appendChild(el('span', 'mark ' + (rate > prev ? 'up' : 'down'), rate > prev ? '▲' : '▼')); }
+        if (prev !== null && rate !== prev) { td.appendChild(el('span', 'mark ' + (rate > prev ? 'up' : 'down'), rate > prev ? '▲' : '▼')); }
         prev = rate;
       } else td.appendChild(el('span', 'runs', '—'));
       cells.push(td);
     });
-    if (onlyChanged && !changed) return;
     var tr = el('tr'); tr.appendChild(el('td', '', c.id)); tr.appendChild(el('td', 'text', c.text));
     cells.forEach(function (td) { tr.appendChild(td); }); body.appendChild(tr);
   });
@@ -205,7 +216,7 @@ document.getElementById('suites').addEventListener('click', function (e) {
   document.querySelectorAll('#suites button').forEach(function (x) { x.classList.toggle('on', x === b); });
   render();
 });
-document.getElementById('changed').addEventListener('change', renderCases);
+document.getElementById('changed').addEventListener('change', render);
 render();
 </script>
 </body></html>
