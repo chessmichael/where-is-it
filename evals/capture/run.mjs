@@ -48,6 +48,12 @@ const startedAt = new Date().toISOString()
 const code = codeState()
 const shaBefore = harnessSha()
 const env = { ...process.env, EVAL_DB_DIR: join(FLOW, variant, 'dbs') }
+// --model bedrock:<id>: borrow the AWS CLI's credentials (kept in memory only) unless a Bedrock key is set.
+if (model.startsWith('bedrock:') && !env.AWS_BEARER_TOKEN_BEDROCK && !env.AWS_ACCESS_KEY_ID) {
+  const c = JSON.parse(execFileSync('aws', ['configure', 'export-credentials', '--format', 'process'], { encoding: 'utf8' }))
+  Object.assign(env, { AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, ...(c.SessionToken ? { AWS_SESSION_TOKEN: c.SessionToken } : {}) })
+  env.AWS_REGION ??= execFileSync('aws', ['configure', 'get', 'region'], { encoding: 'utf8' }).trim() || 'us-east-1'
+}
 const archived = []
 
 // ── suites: record a new or changed split once in the ledger; --suite narrows the run ──

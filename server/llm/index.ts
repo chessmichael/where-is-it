@@ -13,6 +13,9 @@ export interface LLMEnv {
   OPENAI_API_KEY?: string
   ANTHROPIC_API_KEY?: string
   AWS_BEARER_TOKEN_BEDROCK?: string
+  AWS_ACCESS_KEY_ID?: string
+  AWS_SECRET_ACCESS_KEY?: string
+  AWS_SESSION_TOKEN?: string
   AWS_REGION?: string
 }
 
@@ -45,8 +48,11 @@ export function createProvider(env: LLMEnv): LLMProvider {
     }
     case 'bedrock': {
       const key = env.LLM_API_KEY || env.AWS_BEARER_TOKEN_BEDROCK
-      if (!key) throw new Error('AWS_BEARER_TOKEN_BEDROCK (a Bedrock API key) is not set')
-      return new BedrockProvider(key, model, env.AWS_REGION || 'us-east-1')
+      const region = env.AWS_REGION || 'us-east-1'
+      if (key) return new BedrockProvider({ apiKey: key }, model, region)
+      if (env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY)
+        return new BedrockProvider({ accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY, sessionToken: env.AWS_SESSION_TOKEN }, model, region)
+      throw new Error('Bedrock needs AWS_BEARER_TOKEN_BEDROCK or AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY')
     }
     default:
       throw new Error(`Unknown LLM_PROVIDER "${provider}" (use "anthropic", "openai" or "bedrock")`)

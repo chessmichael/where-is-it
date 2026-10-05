@@ -1,12 +1,13 @@
+import { AwsClient } from 'aws4fetch'
 import type { ChatRequest, ChatResponse, LLMProvider, Msg, StopReason } from './types'
 
 // AWS Bedrock's Converse API — one request shape for every Bedrock model with
 // tool use (Amazon Nova, Llama, Mistral, DeepSeek, Qwen, gpt-oss, Claude, ...).
-// Authenticates with a Bedrock API key (Authorization: Bearer), so no AWS SDK
-// or request signing is needed and it runs in a Worker as-is.
+// Authenticates with either a Bedrock API key (Authorization: Bearer) or IAM
+// access keys (SigV4-signed with aws4fetch, which runs in a Worker as-is).
 //
-//   LLM_PROVIDER=bedrock  LLM_MODEL=us.amazon.nova-pro-v1:0
-//   AWS_BEARER_TOKEN_BEDROCK=…   AWS_REGION=us-east-1
+//   LLM_PROVIDER=bedrock  LLM_MODEL=us.amazon.nova-pro-v1:0  AWS_REGION=us-east-1
+//   AWS_BEARER_TOKEN_BEDROCK=…   or   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (/ AWS_SESSION_TOKEN)
 
 type Block =
   | { text: string }
@@ -28,14 +29,24 @@ export class BedrockError extends Error {
   }
 }
 
+export type BedrockAuth = { apiKey: string } | { accessKeyId: string; secretAccessKey: string; sessionToken?: string }
+
 export class BedrockProvider implements LLMProvider {
   readonly provider = 'bedrock'
+  private send: (url: string, init: RequestInit) => Promise<Response>
 
   constructor(
-    private apiKey: string,
+    auth: BedrockAuth,
     readonly model: string,
     private region = 'us-east-1',
-  ) {}
+  ) {
+    if ('apiKey' in auth) {
+      this.send = (url, init) => fetch(url, { ...init, headers: { ...(init.headers as Record<string, string>), authorization: `Bearer ${auth.apiKey}` } })
+    } else {
+      const aws = new AwsClient({ ...auth, service: 'bedrock', region, retries: 0 })
+      this.send = (url, init) => aws.fetch(url, init)
+    }
+  }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
     const url = `https://bedrock-runtime.${this.region}.amazonaws.com/model/${encodeURIComponent(this.model)}/converse`
@@ -47,9 +58,9 @@ export class BedrockProvider implements LLMProvider {
         : {}),
       inferenceConfig: { maxTokens: req.maxTokens ?? 8192 },
     }
-    const res = await fetch(url, {
+    const res = await this.send(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(120_000),
     })
