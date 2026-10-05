@@ -58,12 +58,19 @@ export class BedrockProvider implements LLMProvider {
         : {}),
       inferenceConfig: { maxTokens: req.maxTokens ?? 8192 },
     }
-    const res = await this.send(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(120_000),
-    })
+    // New accounts get low per-model request quotas: back off and retry on
+    // throttling and transient errors instead of failing the turn.
+    let res: Response
+    for (let attempt = 0; ; attempt++) {
+      res = await this.send(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120_000),
+      })
+      if (![429, 500, 502, 503].includes(res.status) || attempt >= 7) break
+      await new Promise((r) => setTimeout(r, Math.min(30_000, 1000 * 2 ** attempt) * (0.5 + Math.random())))
+    }
     const text = await res.text()
     if (!res.ok) throw new BedrockError(res.status, `${res.status} Bedrock ${this.model}: ${text.slice(0, 500)}`)
     const data = JSON.parse(text) as {

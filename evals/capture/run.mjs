@@ -125,7 +125,7 @@ if (codeCommit) {
 const runEval = (n, only) =>
   spawnSync(
     process.execPath,
-    ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', '6', '--timeout-s', '600', '--reps', String(n), ...passThrough],
+    ['--env-file=.env', 'evals/capture/run-eval.mjs', '--flow', FLOW, '--model', model, '--concurrency', model.startsWith('bedrock:') ? '3' : '6', '--timeout-s', '600', '--reps', String(n), ...passThrough],
     { stdio: 'inherit', env: only ? { ...env, EVAL_ONLY: only.join(',') } : env },
   )
 
