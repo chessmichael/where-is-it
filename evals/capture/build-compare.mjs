@@ -26,8 +26,8 @@ const git = (...a) => {
 
 // Versions in order: baseline, v1, v2, …
 const variants = readdirSync(FLOW)
-  .filter((d) => /^(baseline|v[1-9]\d*)$/.test(d) && existsSync(join(FLOW, d, 'results.jsonl')))
-  .sort((a, b) => (a === 'baseline' ? -1 : b === 'baseline' ? 1 : Number(a.slice(1)) - Number(b.slice(1))))
+  .filter((d) => /^(baseline|v[1-9]\d*(-[a-z0-9.]+)?)$/.test(d) && existsSync(join(FLOW, d, 'results.jsonl'))) // v4-mini: v4 on another model
+  .sort((a, b) => (a === 'baseline' ? -1 : b === 'baseline' ? 1 : parseInt(a.slice(1)) - parseInt(b.slice(1)) || a.localeCompare(b)))
 
 // What each version was: the agent code commit from its latest run in the ledger.
 const ledger = readFileSync(join(ROOT, 'evals', 'capture', 'ledger.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l))
