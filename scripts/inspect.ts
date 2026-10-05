@@ -29,7 +29,7 @@ function pageFor(sqlFile: string, title: string, subtitle: string): string {
 const args = process.argv.slice(2)
 if (args[0] === '--eval') {
   const [, variant, which] = args
-  if (!variant || !/^(baseline|v[1-9]\d*)$/.test(variant)) throw new Error('usage: --eval <baseline|vN> <case id | --all>')
+  if (!variant || !/^(baseline|v[1-9]\d*(-[a-z0-9.]+)?)$/.test(variant)) throw new Error('usage: --eval <baseline|vN> <case id | --all>')
   const dir = join(EVAL_DIR, variant, 'dbs')
   if (!existsSync(dir)) throw new Error(`no saved databases in ${dir} — runs from before this feature don't have them`)
   const cases = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases as { id: string; said?: string; update?: string; question?: string }[]

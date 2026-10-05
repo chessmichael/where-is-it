@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const FLOW = join(ROOT, '.claude', 'hillclimb', 'capture')
 const variant = process.argv[2] ?? 'baseline'
-if (!/^(baseline|v[1-9]\d*)$/.test(variant)) throw new Error(`variant must be baseline or vN, got ${variant}`)
+if (!/^(baseline|v[1-9]\d*(-[a-z0-9.]+)?)$/.test(variant)) throw new Error(`variant must be baseline or vN, got ${variant}`)
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
