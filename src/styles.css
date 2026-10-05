@@ -1172,6 +1172,7 @@ button.layout-cell:focus-visible {
   font-size: 0.9rem;
 }
 .layout-things {
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.35;
