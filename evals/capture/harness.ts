@@ -141,9 +141,11 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
     case 'lookup':
     case 'journey':
     case 'spatial': {
-      for (const step of c.steps ?? []) step === TIDY ? await session.tidy() : await session.say(step)
+      let asked = false
+      for (const step of c.steps ?? []) asked = (step === TIDY ? await session.tidy() : await session.say(step)) || asked
       await session.say(c.question!)
       checks = gradeReply(session.lastReply, c.expect)
+      if (c.ask) checks.ask(c.ask, asked) // e.g. an ambiguous real description should prompt a question
       break
     }
   }

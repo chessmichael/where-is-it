@@ -607,6 +607,49 @@ SPATIAL = [
  journey(BOOKSHELF + [TIDY, "I swapped the photo albums and the board games", TIDY], "which shelf from the top are the board games on now?", ["second|2nd", "right"], tags=["bookshelf", "after-change"]),
 ]
 
+
+# Set K, real-world: a real description of a real bookcase, word for word —
+# run-ons, self-corrections, a mishearing ("some directions" = the manuals).
+# It's genuinely ambiguous ("the next shelf to the left"), so the agent should
+# ask; the simulated person knows the true layout (confirmed by the owner):
+#
+#        LEFT           RIGHT
+#     ┌───────────┬───────────────┐
+#     │           │ records,      │
+#     │  amp,     │ stapler       │
+#     │  speaker, ├───────────────┤
+#     │  manuals, │ speaker, amp  │
+#     │  screen   │               │
+#     ├───────────┴───────────────┤
+#     │ books │ books, games      │   (one shelf, split; games at far right)
+#     └───────────────────────────┘
+REAL_BOOKCASE = ["The bookcase in the living room on the far side", "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase"]
+REAL_KNOWS = ("Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the "
+              "'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then "
+              "the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase "
+              "splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the "
+              "instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves "
+              "stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom "
+              "shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.")
+
+def real(question, mentions, not_mentions=(), ask=None, tags=()):
+    c = journey(REAL_BOOKCASE + [TIDY], question, mentions, not_mentions, knows=REAL_KNOWS, tags=["real-world"] + list(tags))
+    if ask:
+        c["ask"] = ask
+    return c
+
+SPATIAL_REAL = [
+ real("describe how the bookcase is laid out", ["left", "right", "split|middle|halves|two"], ask="must", tags=["layout", "must-ask"]),
+ real("which shelf from the top is the record collection on?", ["right"], ["left side"], tags=["row-from-top"]),
+ real("what's directly below the record collection?", ["speaker", "amp"], ["screen", "manual"], tags=["adjacency"]),
+ real("where's the screen on the bookcase?", ["left"], tags=["absolute"]),
+ real("where are my speakers?", ["left", "right"], tags=["duplicates"]),
+ real("where are the instruction manuals?", ["left"], tags=["misheard"]),
+ real("what's next to the turntable?", ["brush"], tags=["adjacency"]),
+ real("what's behind everything on top of the bookcase?", ["mirror"], tags=["front-behind"]),
+ real("what's on the far right of the bottom shelf?", ["games"], tags=["absolute"]),
+]
+
 def build():
     cases = []
     for i, (said, tags, items) in enumerate(EMPTY, 1):
@@ -631,6 +674,8 @@ def build():
     for i, c in enumerate(DUPLICATES, 1):
         cases.append({"id": f"I{i:02d}", "set": "duplicates", **c, "tags": ["duplicates", c["mode"]] + c["tags"]})
     for i, c in enumerate(SPATIAL, 1):
+        cases.append({"id": f"K{i:02d}", "set": "spatial", **c, "tags": ["spatial"] + c["tags"]})
+    for i, c in enumerate(SPATIAL_REAL, len(SPATIAL) + 1):
         cases.append({"id": f"K{i:02d}", "set": "spatial", **c, "tags": ["spatial"] + c["tags"]})
     for i, c in enumerate(POSITIONAL, 1):
         cases.append({"id": f"J{i:02d}", "set": "positional", **c, "tags": ["positional", c["mode"]] + c["tags"]})
@@ -771,6 +816,8 @@ def journey_markdown(cases, title="Set G — lookups after a series of changes",
         out.append("")
         for st in c["steps"]:
             out.append("- 🧹 tidy" if st == TIDY else f"- “{st}”")
+        if c.get("ask"):
+            out.append(f"- *while describing:* {ASK_LABEL[c['ask']]}")
         out.append(f"- **ask:** “{c['question']}”")
         if c.get("knows"):
             out.append(f"- *the person knows:* “{c['knows']}”")

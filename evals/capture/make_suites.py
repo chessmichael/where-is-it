@@ -16,7 +16,7 @@ from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FLOW = os.path.join(HERE, "..", "..", ".claude", "hillclimb", "capture")
-VARIANTS = ["baseline", "v1", "v2", "v3"]
+VARIANTS = ["baseline", "v1", "v2", "v3", "v4"]
 
 cases = json.load(open(os.path.join(HERE, "cases.json")))["cases"]
 results, sources = {}, {}

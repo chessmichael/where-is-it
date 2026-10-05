@@ -6542,6 +6542,215 @@
       ]
     },
     {
+      "id": "K12",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "describe how the bookcase is laid out",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "left",
+          "right",
+          "split|middle|halves|two"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "layout",
+        "must-ask"
+      ],
+      "ask": "must"
+    },
+    {
+      "id": "K13",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "which shelf from the top is the record collection on?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "right"
+        ],
+        "answer_not_mentions": [
+          "left side"
+        ]
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "row-from-top"
+      ]
+    },
+    {
+      "id": "K14",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "what's directly below the record collection?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "speaker",
+          "amp"
+        ],
+        "answer_not_mentions": [
+          "screen",
+          "manual"
+        ]
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K15",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "where's the screen on the bookcase?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "left"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "absolute"
+      ]
+    },
+    {
+      "id": "K16",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "where are my speakers?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "left",
+          "right"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "duplicates"
+      ]
+    },
+    {
+      "id": "K17",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "where are the instruction manuals?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "left"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "misheard"
+      ]
+    },
+    {
+      "id": "K18",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "what's next to the turntable?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "brush"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "adjacency"
+      ]
+    },
+    {
+      "id": "K19",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "what's behind everything on top of the bookcase?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "mirror"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "front-behind"
+      ]
+    },
+    {
+      "id": "K20",
+      "set": "spatial",
+      "steps": [
+        "The bookcase in the living room on the far side",
+        "All right I'm looking at the bookshelf in my living room on top of the bookshelf is my homemade guitar amplifier that's on the left side of the topNext to that is the book printing for pleasure next to that is thePrinting press on the printing press are all of my little human figurinesIn front of the printing press is my brick tap device on the far right of the top of the bookshelf is the turntable next to which is theRecord brush behind all of this is theBig mirror which is also sitting on top of theShelf just behind the stuff that's onSorry also in front of itSo the mirrors behind the rest of the stuff is in frontOn the next shelf down in the upper right corner that's the shelf is the upper right corner is my record collection and my vintage stapler the shelf directly below that has a speaker in my amplifier and then the next shelf to the leftHas another amplifier some directions one other speaker and my screen the two shelves on the bottom which are split down the middle sorry it's one shelf that is split two down the middle has books on the left side some more books on the right and games on the far right sideThat's all of the shelves on the bookcase",
+        "<tidy>"
+      ],
+      "question": "what's on the far right of the bottom shelf?",
+      "knows": "Layout of the living room bookcase, top to bottom. The top surface: homemade guitar amplifier at the far left, then the 'Printing for Pleasure' book, then the printing press (little human figurines on it, the brick tap device in front of it), then the record brush, and the turntable at the far right; the big mirror stands behind everything on top. Below the top, the bookcase splits: on the LEFT there is one TALL shelf (as tall as the two right shelves together) holding an amplifier, a speaker, the instruction manuals (the 'directions' was misheard - it's the manuals) and the screen; on the RIGHT there are two short shelves stacked: the upper one has the record collection and the vintage stapler, the lower one has a speaker and an amplifier. The bottom shelf is one shelf split down the middle: books on the left half; more books and the games on the right half, games at the far right.",
+      "expect": {
+        "answer_mentions": [
+          "games"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "spatial",
+        "real-world",
+        "absolute"
+      ]
+    },
+    {
       "id": "J01",
       "set": "positional",
       "seed_inline": {

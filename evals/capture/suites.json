@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-04T21:25:08+00:00",
+  "generated_at": "2026-10-05T20:21:56+00:00",
   "rule": "regression = passed in every version that ran it, seen in >= 2 versions; capability = everything else",
   "computed_from": {
     "baseline": {
@@ -11,12 +11,16 @@
       "results_sha256": "38f780a8a2d98a5224117c6be5c707cb0e10cac26e57c03661040f06f60e2ae9"
     },
     "v2": {
-      "rows": 171,
-      "results_sha256": "66450149ad39b2ec2d4e0d0281687434ea25bdcdf3ac79561d476684cc8b437c"
+      "rows": 271,
+      "results_sha256": "41302adbc567fd2f1df227ce2eb353a2a0d9103162cf37fb835219b7e253148b"
     },
     "v3": {
-      "rows": 135,
-      "results_sha256": "042a8f30b956debf255792f207ef7ea2d0c31685fcb56f49ca1b4156f93384b4"
+      "rows": 334,
+      "results_sha256": "a1e820dd06770368da114144a2d5bdef5d866b7273a5e9a3b6d14002e3219eef"
+    },
+    "v4": {
+      "rows": 33,
+      "results_sha256": "0addbd327092d67f080f24da455841e260eba276b75820f8d6713ddabc933064"
     }
   },
   "regression": [
@@ -182,12 +186,21 @@
     "I02",
     "I04",
     "I07",
-    "I08",
     "I09",
     "I10",
     "I11",
     "I12",
     "I13",
+    "K02",
+    "K03",
+    "K04",
+    "K05",
+    "K06",
+    "K07",
+    "K08",
+    "K09",
+    "K10",
+    "K11",
     "J05"
   ],
   "capability": [
@@ -228,7 +241,18 @@
     "I03",
     "I05",
     "I06",
+    "I08",
     "I14",
+    "K01",
+    "K12",
+    "K13",
+    "K14",
+    "K15",
+    "K16",
+    "K17",
+    "K18",
+    "K19",
+    "K20",
     "J01",
     "J02",
     "J03",
@@ -238,12 +262,12 @@
   ],
   "capability_reasons": {
     "A19": "passes in some versions, fails in others",
-    "A24": "failed in every version",
+    "A24": "passes in some versions, fails in others",
     "A29": "passes in some versions, fails in others",
     "A30": "passes in some versions, fails in others",
     "A34": "passes in some versions, fails in others",
     "A45": "passes in some versions, fails in others",
-    "C02": "failed in every version",
+    "C02": "passes in some versions, fails in others",
     "C03": "passes in some versions, fails in others",
     "C05": "failed in every version",
     "C09": "passes in some versions, fails in others",
@@ -258,28 +282,39 @@
     "D09": "passes in some versions, fails in others",
     "D10": "passes in some versions, fails in others",
     "D11": "passes in some versions, fails in others",
-    "D12": "not yet run in 2 versions",
+    "D12": "passes in some versions, fails in others",
     "G08": "passes in some versions, fails in others",
     "G09": "passes in some versions, fails in others",
     "G10": "passes in some versions, fails in others",
     "G12": "failed in every version",
-    "H01": "failed in every version",
+    "H01": "passes in some versions, fails in others",
     "H02": "passes in some versions, fails in others",
     "H03": "failed in every version",
     "H04": "failed in every version",
-    "H05": "failed in every version",
+    "H05": "passes in some versions, fails in others",
     "H06": "failed in every version",
     "H07": "failed in every version",
     "H12": "passes in some versions, fails in others",
     "I03": "passes in some versions, fails in others",
     "I05": "passes in some versions, fails in others",
-    "I06": "failed in every version",
+    "I06": "passes in some versions, fails in others",
+    "I08": "passes in some versions, fails in others",
     "I14": "passes in some versions, fails in others",
+    "K01": "passes in some versions, fails in others",
+    "K12": "not yet run in 2 versions",
+    "K13": "not yet run in 2 versions",
+    "K14": "not yet run in 2 versions",
+    "K15": "not yet run in 2 versions",
+    "K16": "not yet run in 2 versions",
+    "K17": "not yet run in 2 versions",
+    "K18": "not yet run in 2 versions",
+    "K19": "not yet run in 2 versions",
+    "K20": "not yet run in 2 versions",
     "J01": "passes in some versions, fails in others",
     "J02": "passes in some versions, fails in others",
-    "J03": "failed in every version",
-    "J04": "failed in every version",
-    "J06": "failed in every version",
+    "J03": "passes in some versions, fails in others",
+    "J04": "passes in some versions, fails in others",
+    "J06": "passes in some versions, fails in others",
     "J07": "passes in some versions, fails in others"
   },
   "by_set": {
@@ -291,7 +326,8 @@
       "lookup": 50,
       "journey": 12,
       "groups": 4,
-      "duplicates": 10,
+      "duplicates": 9,
+      "spatial": 10,
       "positional": 1
     },
     "capability": {
@@ -300,7 +336,8 @@
       "stack": 12,
       "journey": 4,
       "groups": 8,
-      "duplicates": 4,
+      "duplicates": 5,
+      "spatial": 10,
       "positional": 6
     }
   }
