@@ -5,6 +5,7 @@ import { getInputMode, getSpeakAnswers, setInputMode, type InputMode } from './l
 import { isSpeechSupported, listen, speak, unlockSpeech, type Listener } from './lib/speech'
 import Captured from './components/Captured'
 import Files from './components/Files'
+import HouseExplorer from './components/HouseExplorer'
 import HouseTree from './components/HouseTree'
 import Settings from './components/Settings'
 import SignIn from './components/SignIn'
@@ -25,6 +26,7 @@ const CONVERSATION_IDLE_MS = 20 * 60_000
 const newConversationId = () => `c_${new Date().toISOString().slice(0, 10)}_${Math.random().toString(36).slice(2, 8)}`
 
 export default function App() {
+  const wide = useWide()
   const [me, setMe] = useState<Me | null>(null)
   const [bootError, setBootError] = useState<string | null>(null)
 
@@ -36,10 +38,81 @@ export default function App() {
   if (bootError) return <p className="error boot">Can't reach the server: {bootError}</p>
   if (!me) return <p className="hint boot">Loading…</p>
   if (!me.account) return <SignIn me={me} onSignedIn={refreshMe} />
-  return <Main me={me} onSignOut={() => api.signOut().finally(refreshMe)} />
+  const signOut = () => api.signOut().finally(refreshMe)
+  return wide ? <Desktop me={me} onSignOut={signOut} /> : <Main me={me} onSignOut={signOut} />
 }
 
-function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
+/** True on screens wide enough for the computer layout (a sidebar and two panes). */
+function useWide(): boolean {
+  const query = '(min-width: 900px)'
+  const [wide, setWide] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const m = window.matchMedia(query)
+    const onChange = () => setWide(m.matches)
+    m.addEventListener('change', onChange)
+    return () => m.removeEventListener('change', onChange)
+  }, [])
+  return wide
+}
+
+type DesktopView = 'house' | 'inspect' | 'files' | 'talk' | 'settings'
+
+/**
+ * The computer layout: a sidebar and wide panes, for looking through and
+ * pulling down what was captured on the phone. Opens on House.
+ */
+function Desktop({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
+  const [view, setView] = useState<DesktopView>('house')
+  const nav: [DesktopView, string, string][] = [
+    ['house', 'House', 'Browse and find everything'],
+    ['inspect', 'Inspect', 'Health checks and each item’s history'],
+    ['files', 'Files', 'Download your data'],
+    ['talk', 'Talk', 'Add or ask by typing or speaking'],
+  ]
+  return (
+    <div className="desk">
+      <aside className="desk-side">
+        <div className="desk-brand">Where Is It</div>
+        <nav aria-label="Sections">
+          {nav.map(([v, label, hint]) => (
+            <button key={v} className={view === v ? 'desk-nav current' : 'desk-nav'} aria-current={view === v} onClick={() => setView(v)}>
+              <span className="menu-label">{label}</span>
+              <span className="menu-hint">{hint}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="desk-foot">
+          <button className={view === 'settings' ? 'desk-nav current' : 'desk-nav'} onClick={() => setView('settings')}>
+            <span className="menu-label">Settings</span>
+            <span className="menu-hint">Signed in as {me.account?.name}</span>
+          </button>
+        </div>
+      </aside>
+      <main className={`desk-main desk-${view}`}>
+        {view === 'house' && <HouseExplorer />}
+        {view === 'inspect' && <iframe className="inspector" src="/api/inspect" sandbox="" title="House inspector" />}
+        {view === 'files' && (
+          <div className="desk-column">
+            <h1 className="desk-title">Files</h1>
+            <Files />
+          </div>
+        )}
+        {view === 'talk' && (
+          <div className="desk-talk">
+            <Main me={me} onSignOut={onSignOut} embedded />
+          </div>
+        )}
+        {view === 'settings' && (
+          <div className="desk-column">
+            <Settings me={me} onClose={() => setView('house')} onSignOut={onSignOut} />
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => void; embedded?: boolean }) {
   const [status, setStatus] = useState<Status>('idle')
   const [interim, setInterim] = useState('')
   const [lines, setLines] = useState<Line[]>([])
@@ -49,7 +122,8 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [loop, setLoop] = useState(true)
   const [pendingOffline, setPendingOffline] = useState(queued().length)
   const [legacy, setLegacy] = useState(() => legacyUtterances())
-  const [mode, setMode] = useState<InputMode>(() => (isSpeechSupported() ? getInputMode() : 'type'))
+  // On a computer (embedded in the wide layout) typing is the default; the phone remembers your choice.
+  const [mode, setMode] = useState<InputMode>(() => (!isSpeechSupported() ? 'type' : embedded ? 'type' : getInputMode()))
   const [menuOpen, setMenuOpen] = useState(false)
 
   const listenerRef = useRef<Listener | null>(null)
@@ -231,7 +305,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
   function chooseMode(next: InputMode) {
     setMode(next)
-    setInputMode(next)
+    if (!embedded) setInputMode(next)
     if (next === 'type') {
       setLoop(false)
       stopListening()
@@ -244,7 +318,8 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const VIEW_TITLES: Record<View, string> = { main: 'Where Is It', house: 'House', inspect: 'Inspect', files: 'Files', settings: 'Settings' }
 
   return (
-    <div className="app">
+    <div className={embedded ? 'app embedded' : 'app'}>
+      {!embedded && (
       <header className="topbar">
         <button className="icon-button" aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
           <span className="hamburger" aria-hidden />
@@ -282,6 +357,7 @@ function Main({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           </>
         )}
       </header>
+      )}
 
       {view === 'settings' && <Settings me={me} onClose={goMain} onSignOut={onSignOut} />}
 
