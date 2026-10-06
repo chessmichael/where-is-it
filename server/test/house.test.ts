@@ -376,3 +376,20 @@ describe('database guide', () => {
     for (const sql of queries) expect(() => loaded.prepare(sql).all()).not.toThrow()
   })
 })
+
+describe('merging a place into one inside it', () => {
+  it('lifts the kept place instead of making it its own parent', () => {
+    const { db } = memoryDb()
+    const box = db.locations.ensurePath([{ name: 'Basement' }, { name: 'Closet' }, { name: 'Box of photos' }])
+    db.locations.merge(box, 'basement/closet') // "the closet and the box are the same place"
+    expect(db.locations.get(box)?.parent_id).toBe('basement')
+    expect(db.locations.describedPath(box)).toBe('Basement › Box of photos')
+  })
+  it('walks up the tree safely even if a cycle exists', () => {
+    const { db, raw } = memoryDb()
+    const a = db.locations.ensurePath([{ name: 'Garage' }, { name: 'Shelf' }])
+    raw.exec(`UPDATE locations SET parent_id = '${a}' WHERE id = '${a}'`)
+    expect(db.locations.describedPath(a)).toBe('Shelf')
+    expect(db.locations.isWithin(a, 'garage')).toBe(false)
+  })
+})
