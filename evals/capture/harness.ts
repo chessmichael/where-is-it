@@ -180,6 +180,7 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
     agent_calls: agent.calls + (fast?.calls ?? 0),
     ...(fast ? { fast_model: opts.env.EVAL_FAST_MODEL, fast_calls: fast.calls, fast_usage: { input_tokens: fast.usage.inputTokens, output_tokens: fast.usage.outputTokens, cache_read_input_tokens: fast.usage.cachedInputTokens } } : {}),
     questions_asked: session.questionsAsked,
+    person_corrections: session.personCorrections,
   }
 }
 
@@ -215,6 +216,7 @@ class Session {
   observations: Observation[] = []
   lastReply = ''
   questionsAsked = 0
+  personCorrections = 0 // simulated answers the fact-check caught and regenerated
   private conversationId = 'eval'
   private spoken: string[] = [] // what the simulated person has said so far, for context
 
@@ -297,8 +299,48 @@ class Session {
     }
   }
 
-  /** The simulated person answers using only what the case says they know. */
+  /**
+   * The simulated person answers using only what the case says they know. Each answer is then
+   * fact-checked against those facts; a contradiction is regenerated (up to twice) so the eval
+   * measures the agent, not a person who misremembers their own house.
+   */
   private async answer(question: string, options: string[], diagram?: string | null): Promise<string> {
+    let answer = await this.answerOnce(question, options, diagram, null)
+    for (let attempt = 0; attempt < 2 && this.c.knows?.trim(); attempt++) {
+      const problem = await this.contradiction(question, diagram, answer)
+      if (!problem) break
+      this.personCorrections++
+      this.note(`Simulated person's answer “${answer}” contradicted its facts (${problem}); answering again.`)
+      answer = await this.answerOnce(question, options, diagram, `Your previous answer "${answer}" was wrong: ${problem}. Answer again, consistent with the facts.`)
+    }
+    return answer
+  }
+
+  /** Null if the answer is consistent with the case's facts and what the person already said; otherwise why not. */
+  private async contradiction(question: string, diagram: string | null | undefined, answer: string): Promise<string | null> {
+    const res = await this.person.chat({
+      system:
+        'You check a simulated person in an eval. Given the facts they know, what they already said, the question they were asked (and any sketch shown), and their answer: ' +
+        'does the answer state or agree to something that CONTRADICTS the facts? Saying "not sure", answering only part of the question, or being terse is fine. ' +
+        'Reply with JSON only: {"contradicts": true|false, "why": "one short sentence"}.',
+      messages: [
+        {
+          role: 'user',
+          content: JSON.stringify({ facts: this.c.knows, said_earlier: this.spoken, question, sketch: diagram ?? null, answer }),
+        },
+      ],
+      tools: [],
+      effort: 'low',
+    })
+    try {
+      const v = JSON.parse(res.text.replace(/^```(json)?|```$/g, '').trim()) as { contradicts?: boolean; why?: string }
+      return v.contradicts ? v.why || 'it contradicts the facts' : null
+    } catch {
+      return null // an unreadable verdict never blocks the answer
+    }
+  }
+
+  private async answerOnce(question: string, options: string[], diagram: string | null | undefined, correction: string | null): Promise<string> {
     const knows = this.c.knows?.trim() || "Nothing specific — you don't remember more than you already said."
     const style =
       this.c.person === 'terse'
@@ -321,7 +363,8 @@ class Session {
           role: 'user',
           content:
             `The app asks: "${question}"${options.length ? ` (it suggests: ${options.join(' / ')})` : ''}` +
-            (diagram ? `\nIt also shows this sketch on screen — compare it with the facts you know:\n${diagram}` : ''),
+            (diagram ? `\nIt also shows this sketch on screen — compare it with the facts you know:\n${diagram}` : '') +
+            (correction ? `\n${correction}` : ''),
         },
       ],
       tools: [],

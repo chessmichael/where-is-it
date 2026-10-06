@@ -184,6 +184,7 @@ function perfFrom(run) {
   return {
     agent_calls: run.agent_calls,
     questions_asked: run.questions_asked,
+    person_corrections: run.person_corrections,
     in_tokens: run.usage.input_tokens,
     out_tokens: run.usage.output_tokens,
     // Routed runs (EVAL_FAST_MODEL): what the cheaper model handled.

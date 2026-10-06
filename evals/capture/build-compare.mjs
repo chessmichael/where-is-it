@@ -37,7 +37,14 @@ const versions = variants.map((v) => {
   const tested = run?.agent_code_from ?? run?.git_commit ?? ''
   // Name the version by the latest change to the agent's code as of that commit (not the eval-run commit).
   const [commit = '', subject = ''] = tested ? git('log', '-1', '--format=%h%x09%s', tested, '--', 'server/agent', 'server/db', 'server/llm').split('\t') : []
-  return { id: v, commit, subject }
+  // How often the simulated person's answer contradicted its facts and was redone (fact-checked runs only).
+  let corrections = 0, checkedRuns = 0
+  for (const line of readFileSync(join(FLOW, v, 'results.jsonl'), 'utf8').split('\n')) {
+    if (!line.trim()) continue
+    const r = JSON.parse(line)
+    if (r.person_corrections !== undefined) { checkedRuns++; corrections += r.person_corrections }
+  }
+  return { id: v, commit, subject, corrections, checkedRuns }
 })
 
 const cases = JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'cases.json'), 'utf8')).cases
@@ -197,7 +204,7 @@ td.none{color:var(--muted)}
 <p class="sub">Failing runs sorted by cause, from the grader’s explanation (a run can count under more than one). Read this before changing a prompt: the biggest row is usually the next thing to fix — and rows that are really the simulated person’s or the grader’s fault belong in <code>evals/capture/failure-labels.json</code>, not in a prompt change.</p>
 <div class="wrap"><table id="causes"></table></div>
 <h2>Reliability</h2>
-<p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
+<p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. “Simulated person corrected” counts answers the fact-check caught contradicting the case’s facts and had redone — high numbers mean a noisy test. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
 <div class="wrap"><table id="reliability"></table></div>
 
 <h2>By case</h2>
@@ -444,7 +451,7 @@ function renderCauses() {
 }
 function renderReliability() {
   var table = document.getElementById('reliability'); table.textContent = '';
-  var head = el('tr'); ['Version', 'pass@1 (all cases)', '95% interval', 'pass^3', 'Cases with 3+ runs'].forEach(function (h) { head.appendChild(el('th', '', h)); });
+  var head = el('tr'); ['Version', 'pass@1 (all cases)', '95% interval', 'pass^3', 'Cases with 3+ runs', 'Simulated person corrected'].forEach(function (h) { head.appendChild(el('th', '', h)); });
   var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
   var body = el('tbody'); var cs = visibleCases();
   DATA.versions.forEach(function (v) {
@@ -458,6 +465,7 @@ function renderReliability() {
     tr.appendChild(el('td', '', ci ? Math.round(ci[0] * 100) + '–' + Math.round(ci[1] * 100) + '%' : '—'));
     tr.appendChild(el('td', 'rate', hats.length ? Math.round(100 * hats.reduce(function (s, x) { return s + x; }, 0) / hats.length) + '%' : '—'));
     tr.appendChild(el('td', '', hats.length + ' of ' + rates.length));
+    tr.appendChild(el('td', v.checkedRuns ? '' : 'none', v.checkedRuns ? v.corrections + ' times in ' + v.checkedRuns + ' runs' : 'not checked'));
     body.appendChild(tr);
   });
   table.appendChild(body);
