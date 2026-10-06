@@ -1210,3 +1210,57 @@ button.layout-cell:focus-visible {
   font: 0.8rem/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre;
 }
+
+/* How to use (Help.tsx): a readable single column. */
+.help {
+  max-width: 62ch;
+  line-height: 1.5;
+}
+.help-lede {
+  font-size: 17px;
+  margin: 0 0 20px;
+}
+.help section {
+  margin-bottom: 22px;
+}
+.help h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.help p {
+  margin: 0 0 8px;
+  color: var(--fg);
+}
+.help ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.help li {
+  margin-bottom: 4px;
+}
+.help-examples {
+  list-style: none;
+  padding-left: 0 !important;
+}
+.help-examples li {
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border-left: 3px solid var(--accent-2);
+  border-radius: 0 8px 8px 0;
+  color: var(--fg);
+}
+.help-places {
+  margin: 0 0 8px;
+}
+.help-places dt {
+  font-weight: 600;
+  margin-top: 8px;
+}
+.help-places dd {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+.transcript-empty .link-button {
+  display: block;
+  margin-top: 10px;
+}

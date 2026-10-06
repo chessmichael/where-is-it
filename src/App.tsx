@@ -5,13 +5,14 @@ import { getInputMode, getSpeakAnswers, setInputMode, type InputMode } from './l
 import { isSpeechSupported, listen, speak, unlockSpeech, type Listener } from './lib/speech'
 import Captured from './components/Captured'
 import Files from './components/Files'
+import Help from './components/Help'
 import HouseExplorer from './components/HouseExplorer'
 import HouseTree from './components/HouseTree'
 import Settings from './components/Settings'
 import SignIn from './components/SignIn'
 
 type Status = 'idle' | 'listening' | 'thinking' | 'speaking'
-type View = 'main' | 'house' | 'inspect' | 'files' | 'settings'
+type View = 'main' | 'house' | 'inspect' | 'files' | 'settings' | 'help'
 
 interface Line {
   who: 'you' | 'agent' | 'system'
@@ -55,7 +56,7 @@ function useWide(): boolean {
   return wide
 }
 
-type DesktopView = 'house' | 'inspect' | 'files' | 'talk' | 'settings'
+type DesktopView = 'house' | 'inspect' | 'files' | 'talk' | 'settings' | 'help'
 
 /**
  * The computer layout: a sidebar and wide panes, for looking through and
@@ -82,6 +83,10 @@ function Desktop({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           ))}
         </nav>
         <div className="desk-foot">
+          <button className={view === 'help' ? 'desk-nav current' : 'desk-nav'} aria-current={view === 'help'} onClick={() => setView('help')}>
+            <span className="menu-label">How to use</span>
+            <span className="menu-hint">What it does and how to talk to it</span>
+          </button>
           <button className={view === 'settings' ? 'desk-nav current' : 'desk-nav'} onClick={() => setView('settings')}>
             <span className="menu-label">Settings</span>
             <span className="menu-hint">Signed in as {me.account?.name}</span>
@@ -100,6 +105,12 @@ function Desktop({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         {view === 'talk' && (
           <div className="desk-talk">
             <Main me={me} onSignOut={onSignOut} embedded />
+          </div>
+        )}
+        {view === 'help' && (
+          <div className="desk-column">
+            <h1 className="desk-title">How to use Where Is It</h1>
+            <Help onStart={() => setView('talk')} />
           </div>
         )}
         {view === 'settings' && (
@@ -315,7 +326,7 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
     }
   }
 
-  const VIEW_TITLES: Record<View, string> = { main: 'Where Is It', house: 'House', inspect: 'Inspect', files: 'Files', settings: 'Settings' }
+  const VIEW_TITLES: Record<View, string> = { main: 'Where Is It', house: 'House', inspect: 'Inspect', files: 'Files', settings: 'Settings', help: 'How to use' }
 
   return (
     <div className={embedded ? 'app embedded' : 'app'}>
@@ -338,6 +349,7 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
                   ['house', 'House', 'Everything filed, room by room'],
                   ['inspect', 'Inspect', 'Health checks and each item’s history'],
                   ['files', 'Files', 'Download your data'],
+                  ['help', 'How to use', 'What it does and how to talk to it'],
                 ] as [View, string, string][]
               ).map(([v, label, hint]) => (
                 <button
@@ -380,6 +392,12 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
         </div>
       )}
 
+      {view === 'help' && (
+        <div className="panel">
+          <Help onStart={goMain} />
+        </div>
+      )}
+
       {view === 'main' && (
         <main className="main">
           <div className="transcript">
@@ -387,6 +405,14 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
               <p className="hint transcript-empty">
                 Say where something is — “the extension cords are in the blue bin on the top garage shelf” — or ask
                 “where’s my passport?”
+                {!embedded && (
+                  <>
+                    {' '}
+                    <button className="link-button" onClick={() => open('help')}>
+                      New here? How to use it
+                    </button>
+                  </>
+                )}
               </p>
             )}
             {lines.map((l, i) => (
