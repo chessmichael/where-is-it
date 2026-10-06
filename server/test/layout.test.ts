@@ -170,3 +170,61 @@ describe('container feedback (v7)', () => {
     await compact(llm, db, db.inbox.list('pending_compaction'))
   })
 })
+
+describe('stack tools (v8)', () => {
+  async function tidy(db: ReturnType<typeof memoryDb>['db'], said: string, calls: { name: string; input: Record<string, unknown> }[]) {
+    const { compact } = await import('../agent/compact')
+    const { ScriptedLLM } = await import('./helpers')
+    const e = db.inbox.add('c', said)
+    db.inbox.update(e.id, { status: 'pending_compaction' })
+    const results: string[] = []
+    const llm = new ScriptedLLM([
+      () => ({ calls: calls.map((c) => ({ ...c, input: { ...c.input, inbox_id: e.id } })) }),
+      (req) => {
+        const last = req.messages.at(-1)
+        if (last?.role === 'tool') results.push(...last.results.map((r) => r.content))
+        return { calls: [{ name: 'finish', input: { compacted_inbox_ids: [e.id], summary: 'done' } }] }
+      },
+      () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [e.id], summary: 'done' } }] }),
+    ])
+    await compact(llm, db, db.inbox.list('pending_compaction'))
+    return results
+  }
+  const CLOSET = [{ name: 'Basement', kind: null, preposition: null }, { name: 'Closet', kind: 'storage', preposition: null }]
+  const BOXES = [
+    { name: 'Box of winter clothes', contents: ['winter clothes'] },
+    { name: 'Box of books', contents: ['books'] },
+    { name: 'Box of old photos', contents: ['old photos'] },
+  ]
+
+  it('files a stack: boxes as places, contents inside, every position set', async () => {
+    const { db } = memoryDb()
+    await tidy(db, 'stack of three boxes', [{ name: 'file_stack', input: { stack_path: CLOSET, boxes_top_to_bottom: BOXES } }])
+    const box = (n: string) => db.locations.all().find((l) => l.name === n)!
+    expect(box('Box of winter clothes').position).toBe('top of the stack')
+    expect(box('Box of books').position).toBe('2nd from the top (middle of the stack)')
+    expect(box('Box of old photos').position).toBe('bottom of the stack')
+    expect(db.items.all().find((i) => i.name === 'books')?.location_id).toBe(box('Box of books').id)
+    expect(db.items.all().some((i) => i.place_id === box('Box of books').id)).toBe(true) // the box can be asked for by name
+  })
+
+  it('reorders every box at once, contents staying put', async () => {
+    const { db } = memoryDb()
+    await tidy(db, 'stack of three boxes', [{ name: 'file_stack', input: { stack_path: CLOSET, boxes_top_to_bottom: BOXES } }])
+    const id = (n: string) => db.locations.all().find((l) => l.name === n)!.id
+    await tidy(db, 'flipped the stack', [{ name: 'reorder_stack', input: { box_ids_top_to_bottom: [id('Box of old photos'), id('Box of books'), id('Box of winter clothes')] } }])
+    expect(db.locations.get(id('Box of old photos'))?.position).toBe('top of the stack')
+    expect(db.locations.get(id('Box of winter clothes'))?.position).toBe('bottom of the stack')
+    expect(db.items.all().find((i) => i.name === 'winter clothes')?.location_id).toBe(id('Box of winter clothes'))
+  })
+
+  it('refuses position-only names and partial reorders, saying why', async () => {
+    const { db } = memoryDb()
+    const r1 = await tidy(db, 'two boxes', [{ name: 'file_stack', input: { stack_path: CLOSET, boxes_top_to_bottom: [{ name: 'Top box', contents: ['a'] }, { name: 'Bottom box', contents: ['b'] }] } }])
+    expect(r1[0]).toMatch(/name boxes by what they are/)
+    await tidy(db, 'stack', [{ name: 'file_stack', input: { stack_path: CLOSET, boxes_top_to_bottom: BOXES } }])
+    const id = (n: string) => db.locations.all().find((l) => l.name === n)!.id
+    const r2 = await tidy(db, 'photos on top', [{ name: 'reorder_stack', input: { box_ids_top_to_bottom: [id('Box of old photos'), id('Box of books')] } }])
+    expect(r2[0]).toMatch(/also has .*give every box/)
+  })
+})

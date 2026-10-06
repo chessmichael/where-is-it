@@ -189,6 +189,77 @@ const upsertItem: AgentTool<RunState> = {
     }),
 }
 
+// ── Stacks of boxes or bins (v8) ──
+// A stack is the commonest place a weaker model gets the structure wrong: contents filed beside
+// their boxes instead of in them, boxes named "Top box", positions never set. These two tools build
+// it right by construction.
+
+const POSITION_ONLY_NAME = /^(the )?(top|middle|bottom|upper|lower|first|second|third|fourth|last|\d+(st|nd|rd|th))( one)?( (box|bin|tote|tub|crate|container))?$/i
+
+function stackPosition(i: number, n: number): string {
+  if (i === 0) return 'top of the stack'
+  if (i === n - 1) return 'bottom of the stack'
+  const ordinal = ['1st', '2nd', '3rd'][i] ?? `${i + 1}th`
+  return n === 3 ? `${ordinal} from the top (middle of the stack)` : `${ordinal} from the top`
+}
+
+const fileStack: AgentTool<RunState> = {
+  def: {
+    name: 'file_stack',
+    description:
+      'Record a stack of boxes, bins or totes in one call: where the stack is, then each box from TOP to BOTTOM with what is in it. Creates each box as a place (and an item, so it can be asked for), files its contents inside it, and sets every position ("top of the stack", "2nd from the top", "bottom of the stack"). Name boxes by what they are or hold ("Box of winter clothes", "Red bin"), never by where they sit. Use reorder_stack when the order changes later.',
+    parameters: object({
+      stack_path: locationPath,
+      boxes_top_to_bottom: listOf(object({ name: text, contents: listOf(text) })),
+      inbox_id: nullable(text),
+    }),
+  },
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      const boxes = input.boxes_top_to_bottom as { name: string; contents: string[] }[]
+      if (boxes.length < 2) throw new Error('a stack needs at least two boxes, top to bottom')
+      const bad = boxes.filter((b) => POSITION_ONLY_NAME.test(b.name.trim()))
+      if (bad.length) throw new Error(`name boxes by what they are or hold, not where they sit (${bad.map((b) => `"${b.name}"`).join(', ')}) — e.g. "Box of winter clothes"; this tool sets their positions`)
+      const inboxId = textOrNull(input.inbox_id)
+      const stackId = db.locations.ensurePath(input.stack_path as PathStep[])
+      const filed = boxes.map((box, i) => {
+        const boxId = db.locations.ensurePath([...(input.stack_path as PathStep[]), { name: box.name, kind: 'container', preposition: 'in' }])
+        db.locations.update(boxId, { position: stackPosition(i, boxes.length) }, inboxId)
+        linkItemToPlace(db, boxId, inboxId)
+        for (const name of box.contents) {
+          // Reuse an item already filed by that name (e.g. beside the box) rather than making a second one.
+          const existing = db.items.all().find((it) => !it.place_id && it.name.toLowerCase() === name.trim().toLowerCase())
+          db.items.save(existing?.id ?? null, { name: existing?.name ?? name, location_id: boxId, inbox_id: inboxId })
+        }
+        return db.locations.describedPath(boxId)
+      })
+      return { stack: db.locations.describedPath(stackId), boxes: filed }
+    }),
+}
+
+const reorderStack: AgentTool<RunState> = {
+  def: {
+    name: 'reorder_stack',
+    description:
+      'The order of a stack changed: give every box in the stack, by location id, in its NEW order from TOP to BOTTOM. Sets all their positions at once; the contents stay in their boxes. If the new full order isn\'t clear from what was said, ask first.',
+    parameters: object({ box_ids_top_to_bottom: listOf(text), inbox_id: nullable(text) }),
+  },
+  run: (input, { db }) =>
+    db.sql.tx(() => {
+      const ids = textList(input.box_ids_top_to_bottom)
+      if (ids.length < 2) throw new Error('give every box in the stack, top to bottom')
+      ids.forEach((id) => requirePlace(db, id))
+      const parents = new Set(ids.map((id) => db.locations.get(id)!.parent_id))
+      if (parents.size > 1) throw new Error('those boxes are not all in the same place — a stack is boxes in one place')
+      const siblings = db.locations.childrenOf([...parents][0] ?? null).filter((l) => l.position && /stack/i.test(l.position)).map((l) => l.id)
+      const missing = siblings.filter((id) => !ids.includes(id))
+      if (missing.length) throw new Error(`the stack also has ${missing.join(', ')} — give every box in its new order`)
+      const inboxId = textOrNull(input.inbox_id)
+      ids.forEach((id, i) => db.locations.update(id, { position: stackPosition(i, ids.length) }, inboxId))
+      return { order: ids.map((id) => db.locations.describedPath(id)) }
+    }),
+}
+
 const relate: AgentTool<RunState> = {
   def: {
     name: 'relate',
@@ -302,7 +373,7 @@ const finish: AgentTool<RunState> = {
   },
 }
 
-const TOOLS = [upsertLocation, updateLocation, moveLocation, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, showLayoutTool<RunState>(), askUser, finish]
+const TOOLS = [upsertLocation, updateLocation, moveLocation, fileStack, reorderStack, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, showLayoutTool<RunState>(), askUser, finish]
 
 // ── The run ────────────────────────────────────────────────────────────────
 
