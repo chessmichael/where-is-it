@@ -162,9 +162,13 @@ td.none{color:var(--muted)}
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
 <h2>Each model across versions</h2>
-<p class="sub">The same 50 capability cases for every point, so lines are comparable: a line is one model running each version of the agent’s code (prompts and tools as they were at that version). Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
+<p class="sub">A line is one model running each version of the agent’s code (prompts and tools as they were at that version). It follows the filter above; pick <strong>Capability suite</strong> to compare every model on the same 50 cases. Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
+<p class="legend" id="mvNote"></p>
 <div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg></div>
 <div class="wrap"><table id="mvTable"></table></div>
+<h2>By set, version by version</h2>
+<div class="wrap"><table id="bySet"></table></div>
+<p class="legend">Hover a number for the exact runs. A set only shows a version once that version has run its cases.</p>
 <h2>Head to head</h2>
 <p class="sub">Each version against the one before it (a model variant like v4-kimi3 against its own version, v4), on the cases <em>both</em> ran — a paired comparison, which is far more sensitive than comparing two percentages. “Better/worse” counts cases whose pass rate went up or down. The interval is a 95% bootstrap over cases (cases resampled, not runs, since runs of one case aren’t independent); the sign test asks whether that many more cases got better than worse could be chance.</p>
 <div class="wrap"><table id="pairs"></table></div>
@@ -177,9 +181,7 @@ td.none{color:var(--muted)}
 <h2>Reliability</h2>
 <p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
 <div class="wrap"><table id="reliability"></table></div>
-<h2>By set</h2>
-<div class="wrap"><table id="bySet"></table></div>
-<p class="legend">Hover a number for the exact runs. A set only shows a version once that version has run its cases.</p>
+
 <h2>By case</h2>
 <p class="legend" id="heldNote" hidden>The held-out test set shows totals only. Looking at individual test cases while changing prompts turns them into dev cases — see evals/capture/test_cases.py.</p>
 <div class="wrap" id="byCaseWrap"><table id="byCase"></table></div>
@@ -204,7 +206,7 @@ function changed(c) {
 function visibleCases() {
   var onlyChanged = document.getElementById('changed').checked;
   return DATA.cases.filter(function (c) {
-    var inSuite = suite === 'all' ? c.suite !== 'test' : c.suite === suite; // "all" = every dev case
+    var inSuite = suite === 'all' ? c.suite !== 'test' && c.suite !== 'robustness' : c.suite === suite; // "all" = every dev case
     return inSuite && (!onlyChanged || changed(c));
   });
 }
@@ -234,16 +236,31 @@ var MAIN_MODEL = 'gpt-5.5';
 function split(id) { var i = id.indexOf('-'); return i < 0 ? { version: id, model: MAIN_MODEL } : { version: id.slice(0, i), model: id.slice(i + 1) }; }
 function modelName(m) { return m === 'mini' ? 'gpt-5.4-mini' : m === 'kimi3' ? 'Kimi K3' : m === 'kimi25' ? 'Kimi K2.5' : m === 'glm5' ? 'GLM-5' : m === 'deepseek' ? 'DeepSeek V3.2' : m; }
 function renderModelVersion() {
-  var cap = DATA.cases.filter(function (c) { return c.suite === 'capability'; });
-  var versions = [], models = [], cell = {};
-  DATA.versions.forEach(function (v) {
-    var s = split(v.id);
-    var rates = cap.filter(function (c) { return c.results[v.id]; }).map(function (c) { var r = c.results[v.id]; return r.passes / r.reps; });
-    if (!rates.length) return;
-    if (versions.indexOf(s.version) < 0) versions.push(s.version);
-    if (models.indexOf(s.model) < 0) models.push(s.model);
-    cell[s.version + '|' + s.model] = { mean: rates.reduce(function (a, b) { return a + b; }, 0) / rates.length, ci: bootstrap(rates), n: rates.length, of: cap.length };
+  // The filter's cases. Each model's line uses only the cases that EVERY version on that line ran, so its points are comparable.
+  var pool = visibleCases();
+  var byModel = {};
+  DATA.versions.forEach(function (v) { var s = split(v.id); (byModel[s.model] = byModel[s.model] || []).push(v.id); });
+  var versions = [], models = [], cell = {}, lineCases = {};
+  Object.keys(byModel).forEach(function (m) {
+    var ids = byModel[m].filter(function (id) { return pool.some(function (c) { return c.results[id]; }); });
+    lineCases[m] = 0;
+    ids.forEach(function (id) {
+      var s = split(id);
+      var ran = pool.filter(function (c) { return c.results[id]; });
+      lineCases[m] = Math.max(lineCases[m], ran.length);
+      var rates = ran.map(function (c) { var r = c.results[id]; return r.passes / r.reps; });
+      if (!rates.length) return;
+      if (models.indexOf(m) < 0) models.push(m);
+      cell[s.version + '|' + m] = { mean: rates.reduce(function (a, b) { return a + b; }, 0) / rates.length, ci: bootstrap(rates), n: rates.length, of: pool.length };
+    });
   });
+  DATA.versions.forEach(function (v) { var s = split(v.id); if (Object.keys(cell).some(function (k) { return k.indexOf(s.version + '|') === 0; }) && versions.indexOf(s.version) < 0) versions.push(s.version); });
+  // A point that ran well under its line's widest point covers different cases: drawn hollow, not directly comparable.
+  var widest = Math.max.apply(null, Object.keys(cell).map(function (k) { return cell[k].n; }).concat([0]));
+  Object.keys(cell).forEach(function (k) { cell[k].partial = cell[k].n < 0.6 * widest; });
+  document.getElementById('mvNote').textContent = pool.length
+    ? 'Each point is the cases that version ran in this filter (' + pool.length + ' cases); counts are in the table. A hollow point ran far fewer of these cases than the widest point, so it isn’t directly comparable — pick Capability suite to compare everything on the same 50.'
+    : 'No cases in this filter.';
   // Lines for models with 2+ versions; the rest are points.
   var lineModels = models.filter(function (m) { return versions.filter(function (v) { return cell[v + '|' + m]; }).length > 1; });
   var colors = ['var(--m1)', 'var(--m2)'];
@@ -261,15 +278,15 @@ function renderModelVersion() {
     s('polyline', { points: pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: color, 'stroke-width': 2 });
     pts.forEach(function (p) {
       if (p[2].ci) s('line', { x1: p[0], x2: p[0], y1: y(p[2].ci[1]), y2: y(p[2].ci[0]), stroke: color, 'stroke-width': 1.5, opacity: 0.5 });
-      var dot = s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
-      var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + p[3] + ': ' + Math.round(p[2].mean * 100) + '% (' + (p[2].ci ? Math.round(p[2].ci[0] * 100) + '–' + Math.round(p[2].ci[1] * 100) + '%, ' : '') + p[2].n + ' cases)'; dot.appendChild(tip);
+      var dot = p[2].partial ? s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
+      var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + p[3] + ': ' + Math.round(p[2].mean * 100) + '% (' + (p[2].ci ? Math.round(p[2].ci[0] * 100) + '–' + Math.round(p[2].ci[1] * 100) + '%, ' : '') + p[2].n + ' cases' + (p[2].partial ? ' — fewer cases than the rest of this line' : '') + ')'; dot.appendChild(tip);
     });
     var last = pts[pts.length - 1]; if (last) s('text', { x: W - R + 10, y: last[1] + 4, fill: color, style: 'fill:' + color + ';font-weight:600' }, modelName(m));
   });
   models.filter(function (m) { return lineModels.indexOf(m) < 0; }).forEach(function (m) {
     versions.forEach(function (v, i) {
       var c = cell[v + '|' + m]; if (!c) return;
-      var dot = s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--m3)' });
+      var dot = c.partial ? s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--card)', stroke: 'var(--m3)', 'stroke-width': 1.5 }) : s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--m3)' });
       var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + v + ': ' + Math.round(c.mean * 100) + '% (' + c.n + ' cases)'; dot.appendChild(tip);
       s('text', { x: x(i) + 17, y: y(c.mean) + 4, class: 'muted' }, modelName(m));
     });
@@ -284,7 +301,7 @@ function renderModelVersion() {
     var tr = el('tr'); tr.appendChild(el('td', '', v));
     models.forEach(function (m) {
       var c = cell[v + '|' + m], td = el('td');
-      if (c) { td.appendChild(el('span', 'rate', Math.round(c.mean * 100) + '%')); td.appendChild(el('span', 'runs', (c.ci ? Math.round(c.ci[0] * 100) + '–' + Math.round(c.ci[1] * 100) + '% · ' : '') + c.n + ' of ' + c.of + ' cases')); }
+      if (c) { td.appendChild(el('span', 'rate', Math.round(c.mean * 100) + '%')); td.appendChild(el('span', 'runs', (c.ci ? Math.round(c.ci[0] * 100) + '–' + Math.round(c.ci[1] * 100) + '% · ' : '') + c.n + ' cases')); }
       else td.appendChild(el('span', 'none', '·'));
       tr.appendChild(td);
     });
