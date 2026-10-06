@@ -102,11 +102,10 @@ function Desktop({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             <Files />
           </div>
         )}
-        {view === 'talk' && (
-          <div className="desk-talk">
-            <Main me={me} onSignOut={onSignOut} embedded />
-          </div>
-        )}
+        {/* Talk stays mounted while you look at other sections, so the conversation is still there when you come back. */}
+        <div className="desk-talk" style={view === 'talk' ? undefined : { display: 'none' }}>
+          <Main me={me} onSignOut={onSignOut} embedded active={view === 'talk'} />
+        </div>
         {view === 'help' && (
           <div className="desk-column">
             <h1 className="desk-title">How to use Where Is It</h1>
@@ -123,7 +122,7 @@ function Desktop({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   )
 }
 
-function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => void; embedded?: boolean }) {
+function Main({ me, onSignOut, embedded = false, active = true }: { me: Me; onSignOut: () => void; embedded?: boolean; active?: boolean }) {
   const [status, setStatus] = useState<Status>('idle')
   const [interim, setInterim] = useState('')
   const [lines, setLines] = useState<Line[]>([])
@@ -164,6 +163,14 @@ function Main({ me, onSignOut, embedded = false }: { me: Me; onSignOut: () => vo
     listenerRef.current = null
     setStatus('idle')
   }, [])
+
+  // Hidden behind another section (computer layout): stop listening; the conversation is kept.
+  useEffect(() => {
+    if (!active) {
+      setLoop(false)
+      if (listenerRef.current) stopListening() // leave a reply that's on its way alone
+    }
+  }, [active, stopListening])
 
   const startListeningRef = useRef<() => void>(() => {})
 
