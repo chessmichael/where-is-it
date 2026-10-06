@@ -146,6 +146,10 @@ td.none{color:var(--muted)}
 #mv text{fill:var(--fg);font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 #mv .axis{stroke:var(--line)}
 #mv .muted{fill:var(--muted)}
+.rate.partial{opacity:.55}
+.modelpick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.modelpick button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
+.modelpick button.on{background:var(--fg);color:var(--bg)}
 .legend{font-size:13px;color:var(--muted);margin:8px 0 0}
 .bar{height:6px;width:120px;max-width:100%;background:var(--line);border-radius:3px;overflow:hidden;margin:4px 0 2px}
 .bar div{height:100%;background:var(--up);border-radius:3px}
@@ -167,6 +171,7 @@ td.none{color:var(--muted)}
 <div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg></div>
 <div class="wrap"><table id="mvTable"></table></div>
 <h2>By set, version by version</h2>
+<div class="modelpick" id="bsModels" role="group" aria-label="Model"></div>
 <div class="wrap"><table id="bySet"></table></div>
 <p class="legend">Hover a number for the exact runs. A set only shows a version once that version has run its cases.</p>
 <h2>Head to head</h2>
@@ -257,9 +262,9 @@ function renderModelVersion() {
   DATA.versions.forEach(function (v) { var s = split(v.id); if (Object.keys(cell).some(function (k) { return k.indexOf(s.version + '|') === 0; }) && versions.indexOf(s.version) < 0) versions.push(s.version); });
   // A point that ran well under its line's widest point covers different cases: drawn hollow, not directly comparable.
   var widest = Math.max.apply(null, Object.keys(cell).map(function (k) { return cell[k].n; }).concat([0]));
-  Object.keys(cell).forEach(function (k) { cell[k].partial = cell[k].n < 0.6 * widest; });
+  Object.keys(cell).forEach(function (k) { cell[k].partial = cell[k].n < 0.9 * widest; });
   document.getElementById('mvNote').textContent = pool.length
-    ? 'Each point is the cases that version ran in this filter (' + pool.length + ' cases); counts are in the table. A hollow point ran far fewer of these cases than the widest point, so it isn’t directly comparable — pick Capability suite to compare everything on the same 50.'
+    ? 'Each point is the cases that version ran in this filter (' + pool.length + ' cases); counts are in the table. A hollow point (and a dashed line to it) covers noticeably fewer of these cases than the widest point, so it isn’t directly comparable — pick Capability suite to compare everything on the same 50.'
     : 'No cases in this filter.';
   // Lines for models with 2+ versions; the rest are points.
   var lineModels = models.filter(function (m) { return versions.filter(function (v) { return cell[v + '|' + m]; }).length > 1; });
@@ -275,7 +280,11 @@ function renderModelVersion() {
   lineModels.forEach(function (m, k) {
     var color = colors[k] || 'var(--m3)', pts = [];
     versions.forEach(function (v, i) { var c = cell[v + '|' + m]; if (c) pts.push([x(i), y(c.mean), c, v]); });
-    s('polyline', { points: pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: color, 'stroke-width': 2 });
+    // Solid between comparable points; dashed where either end covers far fewer cases (not a like-for-like change).
+    for (var j = 1; j < pts.length; j++) {
+      var dashed = pts[j - 1][2].partial || pts[j][2].partial;
+      s('line', { x1: pts[j - 1][0], y1: pts[j - 1][1], x2: pts[j][0], y2: pts[j][1], stroke: color, 'stroke-width': 2, 'stroke-dasharray': dashed ? '5 5' : 'none', opacity: dashed ? 0.6 : 1 });
+    }
     pts.forEach(function (p) {
       if (p[2].ci) s('line', { x1: p[0], x2: p[0], y1: y(p[2].ci[1]), y2: y(p[2].ci[0]), stroke: color, 'stroke-width': 1.5, opacity: 0.5 });
       var dot = p[2].partial ? s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
@@ -293,15 +302,16 @@ function renderModelVersion() {
   });
   // The same numbers as a table.
   var table = document.getElementById('mvTable'); table.textContent = '';
-  var head = el('tr'); head.appendChild(el('th', '', 'Version'));
-  models.forEach(function (m) { head.appendChild(el('th', '', modelName(m))); });
+  // Versions run left to right, like the graph; one row per model.
+  var head = el('tr'); head.appendChild(el('th', '', 'Model'));
+  versions.forEach(function (v) { head.appendChild(el('th', '', v)); });
   var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
   var body = el('tbody');
-  versions.forEach(function (v) {
-    var tr = el('tr'); tr.appendChild(el('td', '', v));
-    models.forEach(function (m) {
+  models.forEach(function (m) {
+    var tr = el('tr'); tr.appendChild(el('td', '', modelName(m)));
+    versions.forEach(function (v) {
       var c = cell[v + '|' + m], td = el('td');
-      if (c) { td.appendChild(el('span', 'rate', Math.round(c.mean * 100) + '%')); td.appendChild(el('span', 'runs', (c.ci ? Math.round(c.ci[0] * 100) + '–' + Math.round(c.ci[1] * 100) + '% · ' : '') + c.n + ' cases')); }
+      if (c) { td.appendChild(el('span', 'rate' + (c.partial ? ' partial' : ''), Math.round(c.mean * 100) + '%')); td.appendChild(el('span', 'runs', (c.ci ? Math.round(c.ci[0] * 100) + '–' + Math.round(c.ci[1] * 100) + '% · ' : '') + c.n + ' cases')); }
       else td.appendChild(el('span', 'none', '·'));
       tr.appendChild(td);
     });
@@ -421,9 +431,9 @@ function renderReliability() {
   });
   table.appendChild(body);
 }
-function header(table, first, extra, compact) {
+function header(table, first, extra, compact, shortNames) {
   var tr = el('tr'); tr.appendChild(el('th', '', first)); if (extra) tr.appendChild(el('th', '', extra));
-  DATA.versions.forEach(function (v) { var th = el('th', '', v.id); if (compact) th.title = (v.commit ? v.commit + ' · ' : '') + v.subject; else th.appendChild(el('span', 'commit', (v.commit ? v.commit + ' · ' : '') + v.subject)); tr.appendChild(th); });
+  DATA.versions.forEach(function (v) { var th = el('th', '', shortNames ? split(v.id).version : v.id); if (compact) th.title = (v.commit ? v.commit + ' · ' : '') + v.subject; else th.appendChild(el('span', 'commit', (v.commit ? v.commit + ' · ' : '') + v.subject)); tr.appendChild(th); });
   var thead = el('thead'); thead.appendChild(tr); table.appendChild(thead);
 }
 function deltaBadge(prev, cur) {
@@ -434,9 +444,25 @@ function deltaBadge(prev, cur) {
   b.title = sig ? 'Bigger than run-to-run noise' : 'Within run-to-run noise';
   return b;
 }
+var bsModel = MAIN_MODEL;
+function renderSetsPicker() {
+  var box = document.getElementById('bsModels'); box.textContent = '';
+  var ms = []; DATA.versions.forEach(function (v) { var m = split(v.id).model; if (ms.indexOf(m) < 0) ms.push(m); });
+  ms.concat(['*']).forEach(function (m) {
+    var b = el('button', m === bsModel ? 'on' : '', m === '*' ? 'Every model and version' : modelName(m));
+    b.addEventListener('click', function () { bsModel = m; renderSetsPicker(); renderSets(); });
+    box.appendChild(b);
+  });
+}
 function renderSets() {
   var table = document.getElementById('bySet'); table.textContent = '';
-  header(table, 'Set');
+  var all = DATA.versions;
+  // One model across its versions, like a line on the graph (or everything).
+  if (bsModel !== '*') DATA = Object.assign({}, DATA, { versions: all.filter(function (v) { return split(v.id).model === bsModel; }) });
+  try { renderSetsBody(table); } finally { DATA = Object.assign({}, DATA, { versions: all }); }
+}
+function renderSetsBody(table) {
+  header(table, 'Set', null, true, bsModel !== '*');
   var body = el('tbody'); var cs = visibleCases();
   var rows = Object.keys(DATA.sets).filter(function (k) { return cs.some(function (c) { return c.set === k; }); }).map(function (k) { return [DATA.sets[k], cs.filter(function (c) { return c.set === k; }), false]; });
   rows.push([document.getElementById('changed').checked ? 'All shown (changed cases only)' : 'All shown', cs, true]);
@@ -486,7 +512,7 @@ function renderCases() {
   table.appendChild(body);
 }
 function render() {
-  renderModelVersion(); renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
+  renderModelVersion(); renderSetsPicker(); renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
   var held = suite === 'test';
   document.getElementById('heldNote').hidden = !held;
   document.getElementById('byCaseWrap').hidden = held;
