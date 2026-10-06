@@ -114,7 +114,18 @@ function mapStop(reason: string | undefined, hasTools: boolean): StopReason {
 
 // Converse wants strictly alternating user/assistant turns, with tool results
 // inside a user turn — so consecutive same-role messages are merged.
-function toConverse(messages: Msg[]): ConverseMessage[] {
+// Bedrock validates every tool call we send back: names must match [a-zA-Z0-9_-]{1,64}. A model
+// occasionally garbles a tool name; that turn already got an "unknown tool" result, but replaying
+// the garbled name verbatim makes Bedrock reject the whole next request. Replay it under a valid
+// placeholder instead, so the model still sees its call failed and can retry.
+const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/
+export const safeToolName = (name: string) => (VALID_TOOL_NAME.test(name) ? name : 'invalid_tool_name')
+const safeBlock = (b: Block): Block =>
+  'toolUse' in b && b.toolUse && typeof b.toolUse === 'object'
+    ? { toolUse: { ...(b.toolUse as { toolUseId: string; name: string; input: unknown }), name: safeToolName((b.toolUse as { name: string }).name) } }
+    : b
+
+export function toConverse(messages: Msg[]): ConverseMessage[] {
   const out: ConverseMessage[] = []
   const push = (role: ConverseMessage['role'], content: Block[]) => {
     if (!content.length) content = [{ text: '(empty)' }]
@@ -129,11 +140,11 @@ function toConverse(messages: Msg[]): ConverseMessage[] {
         'user',
         m.results.map((r) => ({ toolResult: { toolUseId: r.id, content: [{ text: r.content || '(no output)' }], status: r.isError ? 'error' : 'success' } })),
       )
-    else if (m.native?.provider === 'bedrock' && Array.isArray(m.native.data)) push('assistant', m.native.data as Block[])
+    else if (m.native?.provider === 'bedrock' && Array.isArray(m.native.data)) push('assistant', (m.native.data as Block[]).map(safeBlock))
     else
       push('assistant', [
         ...(m.text ? [{ text: m.text }] : []),
-        ...m.toolCalls.map((c) => ({ toolUse: { toolUseId: c.id, name: c.name, input: c.input } })),
+        ...m.toolCalls.map((c) => ({ toolUse: { toolUseId: c.id, name: safeToolName(c.name), input: c.input } })),
       ])
   }
   return out
