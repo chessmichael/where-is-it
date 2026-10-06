@@ -11,8 +11,8 @@ Generated from `build_cases.py` — edit there, then rerun it.
 
 Split on 2026-10-05 from the results so far (regression = passed in every version that ran it, seen in >= 2 versions; capability = everything else). See `suites.json` / `make_suites.py`.
 
-- **Capability (55)** — still tells versions apart; run on every change, with repeats. **A**: A19, A24, A29, A30, A34, A45; **C**: C02, C03, C05, C09; **D**: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12; **G**: G08, G09, G10, G12; **H**: H01, H02, H03, H04, H05, H06, H07, H12; **I**: I03, I05, I06, I08, I14; **J**: J01, J02, J03, J04, J06, J07; **K**: K01, K12, K13, K14, K15, K16, K17, K18, K19, K20
-- **Regression (178)** — every version passes; run before deploying to catch breakage.
+- **Capability (50)** — still tells versions apart; run on every change, with repeats. **A**: A19, A24, A29, A30, A34, A45; **C**: C02, C03, C05, C09, C11, C12, C13; **D**: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12; **G**: G08, G09, G10, G12; **H**: H01, H02, H03, H04, H05, H06, H07, H12; **I**: I03, I05, I06, I08, I14; **J**: J01, J02, J03, J04, J06, J07; **K**: K01, K12
+- **Regression (186)** — every version passes; run before deploying to catch breakage.
 
 ## Set A — empty house
 
@@ -142,14 +142,14 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “in the garage there's a metal shelving unit, the top shelf has all the camping gear”
 - *update:* “the right shelving unit has the power tools on the middle shelf” → **Must ask**
-- *the person knows:* “no, the camping gear is on the middle one”
+- *the person knows:* “There are three shelving units side by side in the garage. The camping gear is on the middle unit. The right unit, which has the power tools, is a different unit.”
 - *expected:* the unit holding **camping gear** is marked **middle**; the unit holding **power tools** is marked **right**; **camping gear** and **power tools** on *different* units
 
 ### C03 · ambiguous, answer-same
 
 - *setup:* “in the garage there's a metal shelving unit, the top shelf has all the camping gear”
 - *update:* “the left shelving unit has the coolers on the bottom shelf” → **Must ask**
-- *the person knows:* “yes, it's the same unit, the camping one is the left one”
+- *the person knows:* “The camping gear and the coolers are on the same unit: the left shelving unit in the garage.”
 - *expected:* the unit holding **camping gear** is marked **left**; the unit holding **coolers** is marked **left**; **camping gear** and **coolers** on the *same* unit
 
 ### C04 · explicit-link
@@ -162,7 +162,7 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “the shelving unit in the basement has holiday decorations on every shelf”
 - *update:* “the middle shelving unit in the basement has the canned goods” → **Must ask**
-- *the person knows:* “the holiday one is on the left”
+- *the person knows:* “There are three shelving units in the basement. The holiday decorations are on the left unit. The canned goods are on the middle unit, which is a different unit.”
 - *expected:* the unit holding **holiday decorations** is marked **left**; the unit holding **canned goods** is marked **middle**; **holiday decorations** and **canned goods** on *different* units
 
 ### C06 · inferable
@@ -189,7 +189,7 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “the shelving unit in the garage has the camping gear on the top shelf”
 - *update:* “the left one has the bike helmets” → **Must ask**
-- *the person knows:* “there are two of them, the camping one is on the right”
+- *the person knows:* “There are two shelving units in the garage. The camping gear is on the right unit. The left unit, which has the bike helmets, is a different unit.”
 - *expected:* the unit holding **camping gear** is marked **right**; the unit holding **bike helmets** is marked **left**; **camping gear** and **bike helmets** on *different* units
 
 ### C10 · explicit-link, relative-marker
@@ -202,7 +202,7 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “in the garage there's a metal shelving unit, the top shelf has all the camping gear”
 - *update:* “the right shelving unit has the power tools on the middle shelf” → **Must ask**
-- *the person knows:* “no, the camping gear is on the middle one”
+- *the person knows:* “There are three shelving units side by side in the garage. The camping gear is on the middle unit. The right unit, which has the power tools, is a different unit.”
 - *the person answers tersely:* only what's asked, nothing volunteered
 - *expected:* the unit holding **camping gear** is marked **middle**; the unit holding **power tools** is marked **right**; **camping gear** and **power tools** on *different* units
 
@@ -210,7 +210,7 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “the shelving unit in the basement has holiday decorations on every shelf”
 - *update:* “the middle shelving unit in the basement has the canned goods” → **Must ask**
-- *the person knows:* “the holiday one is on the left”
+- *the person knows:* “There are three shelving units in the basement. The holiday decorations are on the left unit. The canned goods are on the middle unit, which is a different unit.”
 - *the person answers tersely:* only what's asked, nothing volunteered
 - *expected:* the unit holding **holiday decorations** is marked **left**; the unit holding **canned goods** is marked **middle**; **holiday decorations** and **canned goods** on *different* units
 
@@ -218,7 +218,7 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 
 - *setup:* “the shelving unit in the garage has the camping gear on the top shelf”
 - *update:* “the left one has the bike helmets” → **Must ask**
-- *the person knows:* “there are two of them, the camping one is on the right”
+- *the person knows:* “There are two shelving units in the garage. The camping gear is on the right unit. The left unit, which has the bike helmets, is a different unit.”
 - *the person answers tersely:* only what's asked, nothing volunteered
 - *expected:* the unit holding **camping gear** is marked **right**; the unit holding **bike helmets** is marked **left**; **camping gear** and **bike helmets** on *different* units
 

@@ -7,7 +7,7 @@ import type { Location } from './types'
 // for the agent, which either fixes it (a position, a layout cell, a better
 // name) or asks the person. Deliberately narrow — false alarms cost a question.
 
-const POSITION_WORDS = /\b(left|right|middle|center|top|bottom|upper|lower|front|back|first|second|third|other|another|new|\d+(st|nd|rd|th)?)\b/g
+const TELLS_APART = /\b(left|right|middle|center|top|bottom|upper|lower|front|back|near|far|closest|furthest|first|second|third)\b/
 const RELATIVE_NAME = /\b(below|above|beneath|under(neath)?|next to|beside|behind|in front of|to the (left|right))\b/
 const CATCH_ALL_ITEM = /^(the )?(other|another|second|2nd|extra) /i
 const LOOKALIKE_KINDS = new Set(['furniture', 'storage', 'container', 'shelf'])
@@ -19,15 +19,19 @@ export function houseCheck(db: HouseDb, since: string): string[] {
   const label = (l: Location) => `“${l.name}” (${l.id})`
 
   // Look-alike places side by side, at least one with nothing telling it apart.
+  // "Look-alike" = same kind of thing: "Holiday decorations shelving unit" and
+  // "Canned goods shelving unit" are both shelving units, so they're grouped by
+  // what they are (the last words of the name), not the whole name.
   const byParent = new Map<string, Location[]>()
   for (const l of locations) {
-    if (!l.parent_id || !LOOKALIKE_KINDS.has(l.kind)) continue
-    const key = `${l.parent_id}|${normalize(l.name).replace(POSITION_WORDS, '').replace(/\s+/g, ' ').trim()}`
+    if (!l.parent_id || !LOOKALIKE_KINDS.has(l.kind) || l.kind === 'shelf') continue // shelves are named by position by convention
+    const key = `${l.parent_id}|${l.kind}|${headNoun(l.name)}`
     byParent.set(key, [...(byParent.get(key) ?? []), l])
   }
   for (const group of byParent.values()) {
     if (group.length < 2 || !group.some(touched)) continue
-    const unmarked = group.filter((l) => !l.position && !l.grid)
+    // A name with a position word in it ("Left shelving unit") already tells it apart.
+    const unmarked = group.filter((l) => !l.position && !l.grid && !TELLS_APART.test(normalize(l.name)))
     if (!unmarked.length) continue
     findings.push(
       `${group.length} look-alike places in ${db.locations.describedPath(group[0].parent_id)}: ${group.map(label).join(', ')}. ` +
@@ -51,4 +55,11 @@ export function houseCheck(db: HouseDb, since: string): string[] {
       findings.push(`Item “${it.name}” (${it.id}) is named only as "the other one". Name it by what it is or where it is, so "where's the ${it.name.replace(CATCH_ALL_ITEM, '')}?" has a clear answer.`)
   }
   return findings
+}
+
+/** What a place is, from the end of its name: "Canned goods shelving unit 2" → "shelving unit". */
+function headNoun(name: string): string {
+  const words = normalize(name).replace(/\b\d+(st|nd|rd|th)?\b/g, '').split(/\s+/).filter(Boolean)
+  const last = words.at(-1) ?? ''
+  return ['unit', 'units', 'rack', 'case', 'chest', 'stand', 'bin', 'box', 'tote', 'cabinet'].includes(last) && words.length > 1 ? words.slice(-2).join(' ') : last
 }

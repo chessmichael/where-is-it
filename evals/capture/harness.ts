@@ -388,6 +388,8 @@ function sameName(expected: string, actual: string): boolean {
  *  - at most one extra level beyond what was expected
  */
 function pathMatches(expected: string[], actual: string[]): boolean {
+  // "On top of the dresser" filed on the dresser's top surface ("Dresser › Top") — a part of the place, not a different one.
+  if (actual.length > 1 && /^top( surface)?$/i.test(actual[actual.length - 1].trim()) && pathMatches(expected, actual.slice(0, -1))) return true
   const required = expected.filter((seg) => !seg.endsWith('?'))
   const optionalCount = expected.length - required.length
   if (!actual.length || !required.length) return false

@@ -64,7 +64,7 @@ Every field must be present; use null for anything that doesn't apply. Never inv
 - quantity — an integer only when they gave a count ("two paint cans" → 2, "like four strands" → 4). Otherwise null. Never put counts in details.
 - location — the path, room first, sentence case ("Hall closet", "Top shelf"). Reuse the exact names in the house map when they clearly mean the same place. Fill in the room (and any obvious parent) from the map or from earlier in the conversation when the place is unambiguous. Only real places are levels: "next to the blue bin", "behind the paint", "on the left" are not levels — put that in note. If they don't say a room and you can't infer it, ask.
 - from_location — for move only, same rules as location.
-- details — lasting attributes of the item as key/value pairs with short lowercase keys: color, brand, model, size, material, condition, contents, purpose. Not location, not quantity, not opinions. null if none.
+- details — lasting attributes of the item as key/value pairs with short lowercase keys: color, brand, model, size, material, condition, contents, purpose. Not location, not quantity, not opinions, and not what else is in the same place ("stored with: amplifier, screen") — the house already shows that. null if none.
 - relation / related_item — for relate only: part_of (charger part_of laptop), goes_with (lid goes_with pot), stored_with, replacement_for.
 - person — for lend only: who has it, as they said it ("Dave next door").
 - corrects_inbox_id / answers_question_id — only for correct / answer.

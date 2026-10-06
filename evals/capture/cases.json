@@ -1978,7 +1978,7 @@
       ],
       "update": "the right shelving unit has the power tools on the middle shelf",
       "ask": "must",
-      "knows": "no, the camping gear is on the middle one",
+      "knows": "There are three shelving units side by side in the garage. The camping gear is on the middle unit. The right unit, which has the power tools, is a different unit.",
       "expect": {
         "units": [
           {
@@ -2012,7 +2012,7 @@
       ],
       "update": "the left shelving unit has the coolers on the bottom shelf",
       "ask": "must",
-      "knows": "yes, it's the same unit, the camping one is the left one",
+      "knows": "The camping gear and the coolers are on the same unit: the left shelving unit in the garage.",
       "expect": {
         "units": [
           {
@@ -2079,7 +2079,7 @@
       ],
       "update": "the middle shelving unit in the basement has the canned goods",
       "ask": "must",
-      "knows": "the holiday one is on the left",
+      "knows": "There are three shelving units in the basement. The holiday decorations are on the left unit. The canned goods are on the middle unit, which is a different unit.",
       "expect": {
         "units": [
           {
@@ -2211,7 +2211,7 @@
       ],
       "update": "the left one has the bike helmets",
       "ask": "must",
-      "knows": "there are two of them, the camping one is on the right",
+      "knows": "There are two shelving units in the garage. The camping gear is on the right unit. The left unit, which has the bike helmets, is a different unit.",
       "expect": {
         "units": [
           {
@@ -2281,7 +2281,7 @@
       ],
       "update": "the right shelving unit has the power tools on the middle shelf",
       "ask": "must",
-      "knows": "no, the camping gear is on the middle one",
+      "knows": "There are three shelving units side by side in the garage. The camping gear is on the middle unit. The right unit, which has the power tools, is a different unit.",
       "expect": {
         "units": [
           {
@@ -2318,7 +2318,7 @@
       ],
       "update": "the middle shelving unit in the basement has the canned goods",
       "ask": "must",
-      "knows": "the holiday one is on the left",
+      "knows": "There are three shelving units in the basement. The holiday decorations are on the left unit. The canned goods are on the middle unit, which is a different unit.",
       "expect": {
         "units": [
           {
@@ -2355,7 +2355,7 @@
       ],
       "update": "the left one has the bike helmets",
       "ask": "must",
-      "knows": "there are two of them, the camping one is on the right",
+      "knows": "There are two shelving units in the garage. The camping gear is on the right unit. The left unit, which has the bike helmets, is a different unit.",
       "expect": {
         "units": [
           {

@@ -120,3 +120,21 @@ describe('routing to a fast model', () => {
     expect(needsStrongModel('the passport is in the desk', db, 'other conversation')).toBe(false)
   })
 })
+
+describe('house check — look-alikes named by contents', () => {
+  it('groups places by what they are, so content-named units still need positions', () => {
+    const { db } = memoryDb()
+    db.locations.ensurePath([{ name: 'Basement' }, { name: 'Holiday decorations shelving unit', kind: 'furniture' }])
+    const canned = db.locations.ensurePath([{ name: 'Basement' }, { name: 'Canned goods shelving unit', kind: 'furniture' }])
+    db.locations.update(canned, { position: 'middle' })
+    expect(houseCheck(db, '2000-01-01')[0]).toMatch(/“Holiday decorations shelving unit”.*has no position/)
+  })
+  it('accepts names that say where they are, and leaves shelves alone', () => {
+    const { db } = memoryDb()
+    db.locations.ensurePath([{ name: 'Garage' }, { name: 'Left shelving unit', kind: 'furniture' }])
+    db.locations.ensurePath([{ name: 'Garage' }, { name: 'Right shelving unit', kind: 'furniture' }])
+    db.locations.ensurePath([{ name: 'Garage' }, { name: 'Workbench', kind: 'furniture' }, { name: 'Top shelf', kind: 'shelf' }])
+    db.locations.ensurePath([{ name: 'Garage' }, { name: 'Workbench', kind: 'furniture' }, { name: 'Bottom shelf', kind: 'shelf' }])
+    expect(houseCheck(db, '2000-01-01')).toEqual([])
+  })
+})
