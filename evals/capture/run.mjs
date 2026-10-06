@@ -70,9 +70,8 @@ if (suitesText) {
     append({ event: 'suites_defined', at: startedAt, by: who(), suites_sha256: sha256(suitesText), rule: suites.rule, regression: suites.regression.length, capability: suites.capability.length, by_set: suites.by_set, computed_from: suites.computed_from })
   }
   if (suite === 'all') {
-    // Every dev case (robustness copies included); the held-out test set only runs when asked for by name (--suite test).
-    const held = new Set(suites.test ?? [])
-    env.EVAL_ONLY = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases.map((c) => c.id).filter((id) => !held.has(id)).join(',')
+    // Every dev case. Robustness copies (--suite robustness) and the held-out test set (--suite test) run only when asked for.
+    env.EVAL_ONLY = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases.filter((c) => !c.split).map((c) => c.id).join(',')
   } else if (suite) {
     if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, robustness, test, all`)
     env.EVAL_ONLY = suites[suite].join(',')

@@ -26,7 +26,7 @@ npm run eval:capture -- --variant v4 --only set:C --reps 3         # cheaper: ju
 npm run eval:capture -- --variant v4 --suite regression            # before deploying: nothing that worked is broken
 npm run eval:capture -- --variant v4 --suite robustness            # the noisy copies: how much does noise hurt?
 npm run eval:capture -- --variant v4 --suite test                  # held out: confirm a release, read only the total
-npm run eval:capture -- --variant v4 --suite all                   # every dev and robustness case (rarely needed)
+npm run eval:capture -- --variant v4 --suite all                   # every dev case (rarely needed)
 npm run inspect -- --eval v4 D06                                   # look at one case's final database
 ```
 
