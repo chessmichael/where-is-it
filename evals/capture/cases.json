@@ -7449,6 +7449,1291 @@
         "change",
         "unknown-positions"
       ]
+    },
+    {
+      "id": "TA01",
+      "set": "empty",
+      "split": "test",
+      "said": "the hedge trimmer is in the shed on the top shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "hedge trimmer",
+            "path": [
+              "Shed",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "nested"
+      ]
+    },
+    {
+      "id": "TA02",
+      "set": "empty",
+      "split": "test",
+      "said": "the birthday candles are in the second drawer of the kitchen island",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "birthday candles",
+            "path": [
+              "Kitchen",
+              "Kitchen island|Island",
+              "Second drawer"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "nested"
+      ]
+    },
+    {
+      "id": "TA03",
+      "set": "empty",
+      "split": "test",
+      "said": "my yoga mat is rolled up in the corner of the bedroom closet",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "yoga mat",
+            "path": [
+              "Bedroom|Master bedroom",
+              "Closet|Bedroom closet",
+              "Corner?"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "preposition"
+      ]
+    },
+    {
+      "id": "TA04",
+      "set": "empty",
+      "split": "test",
+      "said": "there are three cooler bags in the sunroom cabinet",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "cooler bags",
+            "path": [
+              "Sunroom",
+              "Cabinet"
+            ],
+            "quantity": 3
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "quantity"
+      ]
+    },
+    {
+      "id": "TA05",
+      "set": "empty",
+      "split": "test",
+      "said": "uh the binoculars are on the bookshelf in the den top shelf I think",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "binoculars",
+            "path": [
+              "Den",
+              "Bookshelf|Bookcase",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "filler",
+        "word-order"
+      ]
+    },
+    {
+      "id": "TA06",
+      "set": "empty",
+      "split": "test",
+      "said": "the ice cream maker is in the basement on the wire rack, it's a Cuisinart",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "ice cream maker",
+            "path": [
+              "Basement",
+              "Wire rack"
+            ],
+            "details": {
+              "brand": "Cuisinart"
+            }
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "detail"
+      ]
+    },
+    {
+      "id": "TA07",
+      "set": "empty",
+      "split": "test",
+      "said": "our hiking boots are on the shoe rack in the mudroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "hiking boots",
+            "path": [
+              "Mudroom",
+              "Shoe rack"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "simple"
+      ]
+    },
+    {
+      "id": "TA08",
+      "set": "empty",
+      "split": "test",
+      "said": "the glue sticks and the construction paper are in the craft cart in the playroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "glue sticks",
+            "path": [
+              "Playroom",
+              "Craft cart"
+            ]
+          },
+          {
+            "name": "construction paper",
+            "path": [
+              "Playroom",
+              "Craft cart"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "two-items"
+      ]
+    },
+    {
+      "id": "TA09",
+      "set": "empty",
+      "split": "test",
+      "said": "the spare printer ink is in the office closet in a plastic drawer",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "printer ink|spare printer ink|ink",
+            "path": [
+              "Office",
+              "Closet|Office closet",
+              "Plastic drawer"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "deep"
+      ]
+    },
+    {
+      "id": "TA10",
+      "set": "empty",
+      "split": "test",
+      "said": "the picnic blanket lives in the hall closet on the bottom shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "picnic blanket",
+            "path": [
+              "Hall closet",
+              "Bottom shelf"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "empty-house",
+        "simple"
+      ]
+    },
+    {
+      "id": "TB01",
+      "set": "existing",
+      "split": "test",
+      "said": "the glue gun is in the junk drawer",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "glue gun",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "no-room"
+      ]
+    },
+    {
+      "id": "TB02",
+      "set": "existing",
+      "split": "test",
+      "said": "I put the spare fuses in the blue bin in the garage",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "spare fuses|fuses",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "by-name"
+      ]
+    },
+    {
+      "id": "TB03",
+      "set": "existing",
+      "split": "test",
+      "said": "my checkbook is in the desk drawer with the passport",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "checkbook",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "item-reference"
+      ]
+    },
+    {
+      "id": "TB04",
+      "set": "existing",
+      "split": "test",
+      "said": "the hand mixer went in the cabinet over the fridge",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "hand mixer",
+            "path": [
+              "Kitchen",
+              "Cabinet above the fridge"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "synonym"
+      ]
+    },
+    {
+      "id": "TB05",
+      "set": "existing",
+      "split": "test",
+      "said": "there's a book of stamps in the bottom drawer of the filing cabinet",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "stamps|book of stamps",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Bottom drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "no-room"
+      ]
+    },
+    {
+      "id": "TB06",
+      "set": "existing",
+      "split": "test",
+      "said": "the sunscreen is in the medicine cabinet",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "sunscreen",
+            "path": [
+              "Bathroom",
+              "Medicine cabinet"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "tags": [
+        "test",
+        "existing-container",
+        "no-room"
+      ]
+    },
+    {
+      "id": "TC01",
+      "set": "shelving",
+      "split": "test",
+      "setup": [
+        "the shelving unit on the porch has the potting soil on the bottom shelf"
+      ],
+      "update": "the right one has the bird seed",
+      "ask": "must",
+      "knows": "There are two shelving units on the porch. The potting soil is on the left unit. The bird seed is on the right unit, which is a different unit.",
+      "expect": {
+        "units": [
+          {
+            "holding": "potting soil",
+            "position": "left"
+          },
+          {
+            "holding": "bird seed",
+            "position": "right"
+          }
+        ],
+        "different_unit": [
+          [
+            "potting soil",
+            "bird seed"
+          ]
+        ]
+      },
+      "tags": [
+        "test",
+        "ambiguous",
+        "answer-different"
+      ]
+    },
+    {
+      "id": "TC02",
+      "set": "shelving",
+      "split": "test",
+      "setup": [
+        "in the shed there's a wooden shelf with the paint brushes on it"
+      ],
+      "update": "there are two wooden shelves in the shed actually, the brushes are on the one by the window and the lawn fertilizer is on the one by the door",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "units": [
+          {
+            "holding": "paint brushes",
+            "position": "by the window|window"
+          },
+          {
+            "holding": "lawn fertilizer",
+            "position": "by the door|door"
+          }
+        ],
+        "different_unit": [
+          [
+            "paint brushes",
+            "lawn fertilizer"
+          ]
+        ]
+      },
+      "tags": [
+        "test",
+        "explicit-link",
+        "relative-marker"
+      ]
+    },
+    {
+      "id": "TC03",
+      "set": "shelving",
+      "split": "test",
+      "setup": [
+        "the metal rack in the laundry room has the detergent"
+      ],
+      "update": "the left metal rack has the dryer sheets",
+      "ask": "must",
+      "knows": "There are two metal racks in the laundry room. The detergent and the dryer sheets are both on the left rack.",
+      "expect": {
+        "units": [
+          {
+            "holding": "detergent",
+            "position": "left"
+          },
+          {
+            "holding": "dryer sheets",
+            "position": "left"
+          }
+        ],
+        "same_unit": [
+          [
+            "detergent",
+            "dryer sheets"
+          ]
+        ]
+      },
+      "tags": [
+        "test",
+        "ambiguous",
+        "answer-same"
+      ]
+    },
+    {
+      "id": "TD01",
+      "set": "stack",
+      "split": "test",
+      "setup": [
+        "in the laundry room there are three bins stacked up, the top one has beach towels, the middle one has spare sheets and the bottom one has pool toys"
+      ],
+      "update": "I swapped the top and bottom bins",
+      "ask": "no",
+      "knows": null,
+      "tags": [
+        "test",
+        "three-box",
+        "determined"
+      ],
+      "expect": {
+        "stack": [
+          "pool toys",
+          "spare sheets",
+          "beach towels"
+        ],
+        "items_keep_their_box": true
+      }
+    },
+    {
+      "id": "TD02",
+      "set": "stack",
+      "split": "test",
+      "setup": [
+        "in the laundry room there are three bins stacked up, the top one has beach towels, the middle one has spare sheets and the bottom one has pool toys"
+      ],
+      "update": "the pool toys bin is in the middle now",
+      "ask": "must",
+      "knows": "The beach towels bin is still on top, the pool toys bin is in the middle, and the spare sheets bin is on the bottom.",
+      "tags": [
+        "test",
+        "three-box",
+        "ambiguous"
+      ],
+      "expect": {
+        "stack": [
+          "beach towels",
+          "pool toys",
+          "spare sheets"
+        ],
+        "items_keep_their_box": true
+      }
+    },
+    {
+      "id": "TD03",
+      "set": "stack",
+      "split": "test",
+      "setup": [
+        "in the laundry room there are three bins stacked up, the top one has beach towels, the middle one has spare sheets and the bottom one has pool toys"
+      ],
+      "update": "I took the middle bin out and put it on top, the other two kept their order",
+      "ask": "no",
+      "knows": null,
+      "tags": [
+        "test",
+        "three-box",
+        "determined"
+      ],
+      "expect": {
+        "stack": [
+          "spare sheets",
+          "beach towels",
+          "pool toys"
+        ],
+        "items_keep_their_box": true
+      }
+    },
+    {
+      "id": "TF01",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal cabinet"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "snorkel gear",
+            "path": [
+              "Garage",
+              "Metal cabinet"
+            ]
+          }
+        ]
+      },
+      "question": "where's the snorkel gear",
+      "expect": {
+        "answer_mentions": [
+          "metal cabinet",
+          "garage"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF02",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Guest room",
+            "Nightstand",
+            "Bottom drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "sewing kit",
+            "path": [
+              "Guest room",
+              "Nightstand",
+              "Bottom drawer"
+            ]
+          }
+        ]
+      },
+      "question": "do we have a sewing kit",
+      "expect": {
+        "answer_mentions": [
+          "bottom drawer",
+          "nightstand"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF03",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Workbench",
+            "Coffee can"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "spare fuses",
+            "path": [
+              "Basement",
+              "Workbench",
+              "Coffee can"
+            ]
+          }
+        ]
+      },
+      "question": "where'd I put the spare fuses",
+      "expect": {
+        "answer_mentions": [
+          "coffee can",
+          "workbench"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF04",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Fireproof box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "birth certificates",
+            "path": [
+              "Office",
+              "Fireproof box"
+            ]
+          }
+        ]
+      },
+      "question": "where are the birth certificates",
+      "expect": {
+        "answer_mentions": [
+          "fireproof box",
+          "office"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF05",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Dining room",
+            "Sideboard",
+            "Left drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "tablecloths",
+            "path": [
+              "Dining room",
+              "Sideboard",
+              "Left drawer"
+            ],
+            "quantity": 5
+          }
+        ]
+      },
+      "question": "how many tablecloths do we have",
+      "expect": {
+        "answer_mentions": [
+          "5|five",
+          "sideboard"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF06",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [],
+        "aliases": {},
+        "items": [
+          {
+            "name": "telescope",
+            "path": null,
+            "status": "lent",
+            "lent_to": "Maria"
+          }
+        ]
+      },
+      "question": "where's the telescope",
+      "expect": {
+        "answer_mentions": [
+          "Maria"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF07",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Attic",
+            "Ski bag"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "ski goggles",
+            "path": [
+              "Attic",
+              "Ski bag"
+            ]
+          }
+        ]
+      },
+      "question": "where are my ski goggles",
+      "expect": {
+        "answer_mentions": [
+          "ski bag",
+          "attic"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TF08",
+      "set": "lookup",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Living room",
+            "TV stand",
+            "Drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "router manual",
+            "path": [
+              "Living room",
+              "TV stand",
+              "Drawer"
+            ]
+          }
+        ]
+      },
+      "question": "where's the manual for the router",
+      "expect": {
+        "answer_mentions": [
+          "TV stand",
+          "drawer"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup"
+      ]
+    },
+    {
+      "id": "TG01",
+      "set": "journey",
+      "split": "test",
+      "steps": [
+        "the bike lock is on the hook in the garage",
+        "<tidy>",
+        "I moved the bike lock into my backpack",
+        "<tidy>"
+      ],
+      "question": "where's the bike lock",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "backpack"
+        ],
+        "answer_not_mentions": [
+          "hook"
+        ]
+      },
+      "tags": [
+        "test",
+        "move"
+      ]
+    },
+    {
+      "id": "TG02",
+      "set": "journey",
+      "split": "test",
+      "steps": [
+        "the good tape is in the kitchen junk drawer",
+        "<tidy>",
+        "I lent the good tape to my neighbor Priya",
+        "<tidy>"
+      ],
+      "question": "where's the good tape",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "Priya"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "test",
+        "lend"
+      ]
+    },
+    {
+      "id": "TG03",
+      "set": "journey",
+      "split": "test",
+      "steps": [
+        "the heating pad is in the linen closet",
+        "<tidy>",
+        "actually no, the heating pad is in the bathroom cabinet"
+      ],
+      "question": "where's the heating pad",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "bathroom"
+        ],
+        "answer_not_mentions": [
+          "linen closet"
+        ]
+      },
+      "tags": [
+        "test",
+        "correction",
+        "not-yet-tidied"
+      ]
+    },
+    {
+      "id": "TG04",
+      "set": "journey",
+      "split": "test",
+      "steps": [
+        "the beach umbrella is in the garage behind the bikes",
+        "<tidy>",
+        "we threw out the beach umbrella, it was broken",
+        "<tidy>"
+      ],
+      "question": "do we still have the beach umbrella",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "threw|thrown|gone|got rid|no longer|don't have|do not have|tossed|discarded"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "test",
+        "removed"
+      ]
+    },
+    {
+      "id": "TG05",
+      "set": "journey",
+      "split": "test",
+      "steps": [
+        "the blue tote with the halloween costumes is in the basement",
+        "<tidy>",
+        "I moved the blue tote to the attic",
+        "<tidy>"
+      ],
+      "question": "where are the halloween costumes",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "attic"
+        ],
+        "answer_not_mentions": [
+          "basement"
+        ]
+      },
+      "tags": [
+        "test",
+        "container-move"
+      ]
+    },
+    {
+      "id": "TH01",
+      "set": "groups",
+      "split": "test",
+      "setup": [],
+      "said": "the gardening tools are in the shed",
+      "ask": "must",
+      "knows": "The gardening tools are a trowel, pruning shears and gardening gloves. Yes, list them individually.",
+      "expect": {
+        "items": [
+          {
+            "name": "trowel",
+            "path": [
+              "Shed"
+            ]
+          },
+          {
+            "name": "pruning shears",
+            "path": [
+              "Shed"
+            ]
+          },
+          {
+            "name": "gardening gloves|gloves",
+            "path": [
+              "Shed"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "list-them"
+      ]
+    },
+    {
+      "id": "TH02",
+      "set": "groups",
+      "split": "test",
+      "setup": [],
+      "said": "the art supplies are in the cabinet in the playroom",
+      "ask": "must",
+      "knows": "No need to list them; 'art supplies' is fine.",
+      "expect": {
+        "items": [
+          {
+            "name": "art supplies",
+            "path": [
+              "Playroom",
+              "Cabinet"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "keep-grouped"
+      ]
+    },
+    {
+      "id": "TH03",
+      "set": "groups",
+      "split": "test",
+      "setup": [],
+      "said": "the trowel, the pruning shears and the gardening gloves are in the shed",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "trowel",
+            "path": [
+              "Shed"
+            ]
+          },
+          {
+            "name": "pruning shears",
+            "path": [
+              "Shed"
+            ]
+          },
+          {
+            "name": "gardening gloves|gloves",
+            "path": [
+              "Shed"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "test",
+        "already-listed"
+      ]
+    },
+    {
+      "id": "TI01",
+      "set": "duplicates",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Office",
+            "Desk"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "scissors",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          }
+        ]
+      },
+      "mode": "lookup",
+      "said": "where are the scissors",
+      "ask": "either",
+      "knows": "The ones in the office desk.",
+      "expect": {
+        "answer_mentions_each": [
+          [
+            "kitchen|junk drawer"
+          ],
+          [
+            "office|desk"
+          ]
+        ],
+        "after_answer_mentions": [
+          "office|desk"
+        ]
+      },
+      "tags": [
+        "test",
+        "lookup",
+        "scissors"
+      ]
+    },
+    {
+      "id": "TI02",
+      "set": "duplicates",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Office",
+            "Desk"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "scissors",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I put the scissors in the craft room",
+      "ask": "must",
+      "knows": "The ones that were in the kitchen junk drawer.",
+      "expect": {
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Craft room"
+            ]
+          },
+          {
+            "name": "scissors",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          }
+        ],
+        "item_counts": {
+          "scissors": 2
+        }
+      },
+      "tags": [
+        "test",
+        "change",
+        "scissors",
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "TI03",
+      "set": "duplicates",
+      "split": "test",
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ],
+          [
+            "Office",
+            "Desk"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          },
+          {
+            "name": "scissors",
+            "path": [
+              "Office",
+              "Desk"
+            ]
+          }
+        ]
+      },
+      "mode": "change",
+      "said": "I moved the office scissors to the craft room",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Craft room"
+            ]
+          },
+          {
+            "name": "scissors",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ],
+        "item_counts": {
+          "scissors": 2
+        }
+      },
+      "tags": [
+        "test",
+        "change",
+        "scissors",
+        "control"
+      ]
+    },
+    {
+      "id": "TK01",
+      "set": "spatial",
+      "split": "test",
+      "steps": [
+        "the dresser in the guest room has three drawers, socks in the top one, sweaters in the middle one and old t-shirts in the bottom one",
+        "<tidy>"
+      ],
+      "question": "which drawer are the sweaters in",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "middle|second"
+        ],
+        "answer_not_mentions": []
+      },
+      "tags": [
+        "test",
+        "row-from-top"
+      ]
+    },
+    {
+      "id": "TK02",
+      "set": "spatial",
+      "split": "test",
+      "steps": [
+        "the dresser in the guest room has three drawers, socks in the top one, sweaters in the middle one and old t-shirts in the bottom one",
+        "<tidy>"
+      ],
+      "question": "what's in the drawer below the sweaters",
+      "knows": null,
+      "expect": {
+        "answer_mentions": [
+          "t-shirt|tshirt|tee"
+        ],
+        "answer_not_mentions": [
+          "socks"
+        ]
+      },
+      "tags": [
+        "test",
+        "adjacency"
+      ]
     }
   ]
 }

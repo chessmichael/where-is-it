@@ -69,8 +69,12 @@ if (suitesText) {
   if (lastDefined?.suites_sha256 !== sha256(suitesText)) {
     append({ event: 'suites_defined', at: startedAt, by: who(), suites_sha256: sha256(suitesText), rule: suites.rule, regression: suites.regression.length, capability: suites.capability.length, by_set: suites.by_set, computed_from: suites.computed_from })
   }
-  if (suite && suite !== 'all') {
-    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, all`)
+  if (suite === 'all') {
+    // Every DEV case; the held-out test set only runs when asked for by name (--suite test).
+    const held = new Set(suites.test ?? [])
+    env.EVAL_ONLY = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases.map((c) => c.id).filter((id) => !held.has(id)).join(',')
+  } else if (suite) {
+    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, test, all`)
     env.EVAL_ONLY = suites[suite].join(',')
   }
 } else if (suite && suite !== 'all') throw new Error('no evals/capture/suites.json yet — run make_suites.py')

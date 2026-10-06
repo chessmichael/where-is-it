@@ -51,6 +51,8 @@ export interface Case {
   knows?: string | null
   /** How the simulated person talks: chatty (default) volunteers related facts; terse answers only what's asked. */
   person?: 'chatty' | 'terse'
+  /** 'test' = the held-out set (test_cases.py); dev otherwise */
+  split?: 'test'
   expect: Record<string, any>
 }
 export interface CaseFile {

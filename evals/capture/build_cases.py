@@ -685,12 +685,16 @@ def build():
         cases.append({"id": f"K{i:02d}", "set": "spatial", **c, "tags": ["spatial"] + c["tags"]})
     for i, c in enumerate(POSITIONAL, 1):
         cases.append({"id": f"J{i:02d}", "set": "positional", **c, "tags": ["positional", c["mode"]] + c["tags"]})
+    from test_cases import test_cases  # the held-out set (test_cases.py)
+    tests = test_cases()
     with open(os.path.join(HERE, "cases.json"), "w") as f:
-        json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases}, f, indent=2)
+        json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases + tests}, f, indent=2)
         f.write("\n")
     with open(os.path.join(HERE, "cases.md"), "w") as f:
         f.write(markdown(cases))
-    return cases
+    with open(os.path.join(HERE, "test-cases.md"), "w") as f:
+        f.write(markdown(tests).replace("# Capture eval cases", "# Capture eval — held-out TEST cases\n\nNot for iterating against: see test_cases.py.", 1))
+    return cases + tests
 
 def fmt_path(p):
     return " › ".join(s.replace("|", " / ") for s in p)
@@ -903,4 +907,5 @@ def update_markdown(cases, letter, title, intro):
 if __name__ == "__main__":
     cs = build()
     from collections import Counter
-    print(dict(Counter(c["set"] for c in cs)))
+    print("dev ", dict(Counter(c["set"] for c in cs if c.get("split") != "test")))
+    print("test", dict(Counter(c["set"] for c in cs if c.get("split") == "test")))
