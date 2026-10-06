@@ -313,14 +313,15 @@ function renderModelVersion() {
   endLabels.sort(function (a, b) { return a.y - b.y; });
   for (var q = 1; q < endLabels.length; q++) if (endLabels[q].y - endLabels[q - 1].y < 15) endLabels[q].y = endLabels[q - 1].y + 15;
   endLabels.forEach(function (lb) { s('text', { x: W - R + 10, y: lb.y + 4, style: 'fill:' + lb.color + ';font-weight:600' }, lb.text); });
-  // Single-run models: colored dots on their version's tick, spread just enough not to sit on each other.
+  // Single-run models: colored dots on their version's tick.
   var singles = models.filter(function (m) { return lineModels.indexOf(m) < 0; });
   versions.forEach(function (v, i) {
     var here = singles.filter(function (m) { return cell[v + '|' + m]; });
     here.forEach(function (m, k) {
-      // Centered on the version's tick, spaced just enough to tell apart.
-      var c = cell[v + '|' + m], color = colorOf(m), cx = x(i) + (k - (here.length - 1) / 2) * 10;
-      var dot = c.partial ? s('circle', { cx: cx, cy: y(c.mean), r: 4, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: cx, cy: y(c.mean), r: 4, fill: color, stroke: 'var(--card)', 'stroke-width': 1.5 });
+      // Exactly on the version's tick, in one vertical line with that version's other points.
+      var c = cell[v + '|' + m], color = colorOf(m), cx = x(i);
+      // An outline in the card color keeps two dots at nearly the same score both visible.
+      var dot = c.partial ? s('circle', { cx: cx, cy: y(c.mean), r: 4.5, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: cx, cy: y(c.mean), r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
       var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + v + ': ' + Math.round(c.mean * 100) + '% (' + c.n + ' cases)'; dot.appendChild(tip);
     });
   });
