@@ -42,6 +42,7 @@ describe('redo from what was said', () => {
         }
       },
       () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [book.id], summary: 'renamed' } }] }),
+      () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [book.id], summary: 'renamed' } }] }),
     ])
     await compact(llm, db, db.inbox.list('pending_compaction'))
     expect(db.locations.get('living-room/bookcase/shelf-below-upper-right-shelf')?.name).toBe('Records shelf')

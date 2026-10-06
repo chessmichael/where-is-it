@@ -190,6 +190,7 @@ describe('compaction agent', () => {
         ],
       }),
       () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [e1.id, 'in_bogus'], summary: 'Filed the cords.' } }] }),
+      () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [e1.id, 'in_bogus'], summary: 'Filed the cords.' } }] }),
     ])
     const res = await compact(llm, db, db.inbox.list('pending_compaction'))
     expect(res.compacted).toEqual([e1.id])

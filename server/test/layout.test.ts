@@ -228,3 +228,27 @@ describe('stack tools (v8)', () => {
     expect(r2[0]).toMatch(/also has .*give every box/)
   })
 })
+
+describe('review before finishing (v9)', () => {
+  it('shows what was said beside what was recorded, then accepts the second finish', async () => {
+    const { compact } = await import('../agent/compact')
+    const { ScriptedLLM } = await import('./helpers')
+    const { db } = memoryDb()
+    const e = db.inbox.add('c', 'the drill is in the blue bin on the garage shelf')
+    db.inbox.update(e.id, { status: 'pending_compaction' })
+    let review = ''
+    const llm = new ScriptedLLM([
+      () => ({ calls: [{ name: 'upsert_item', input: { item_id: null, name: 'Drill', category: null, description: null, quantity: null, location_path: [{ name: 'Garage', kind: null, preposition: null }, { name: 'Shelf', kind: 'shelf', preposition: null }], location_id: null, location_note: null, status: null, lent_to: null, aliases: [], details: [], inbox_id: e.id } }] }),
+      () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [e.id], summary: 'filed' } }] }),
+      (req) => {
+        const last = req.messages.at(-1)
+        review = last?.role === 'tool' ? last.results[0].content : ''
+        return { calls: [{ name: 'finish', input: { compacted_inbox_ids: [e.id], summary: 'filed' } }] }
+      },
+    ])
+    const res = await compact(llm, db, db.inbox.list('pending_compaction'))
+    expect(review).toContain('"the drill is in the blue bin on the garage shelf"')
+    expect(review).toContain('item Drill: Garage › Shelf')
+    expect(res.compacted).toEqual([e.id])
+  })
+})
