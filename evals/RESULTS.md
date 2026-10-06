@@ -89,6 +89,38 @@ Typical time per spoken reply: ~2–4 s on gpt-5.4-mini, ~7–10 s on gpt-5.5, l
 | v10 — concise prompt (~4,850 → ~2,770 tokens) | same quality | 22% fewer input tokens | Kept; saves more on bigger models. |
 | v12 — restore group guidance cut in v10 | groups 16/36 → 24/36 runs | — | Trimming examples quietly cost the small model a behavior it only half had. |
 
+## Version by version
+
+What each step changed, why it might help, and what the evals said. **Looked good, wasn't** marks results
+that seemed like progress until a fairer comparison showed otherwise.
+
+| Step | What changed | Why it might help | Did it? |
+|---|---|---|---|
+| **baseline** | First prompt: record what's said, answer lookups. | — | 20% on the capability suite (gpt-5.5). It guessed whenever unsure. |
+| **v1** | Ask when something couldn't be found again; name containers by what they are; location inherited from the box it's in. | Guessing was the top failure. | **Yes** — 20% → 39% (capability). |
+| **v2** | A `position` field, moving whole places, things that are also places (a toolbox), a rule for groups. | Stacks and side-by-side units had nowhere to record "left" or "top". | **Yes, beyond noise** — 39% → 61%; paired +5.5 pts. |
+| **v3** | "The top box" means whatever is on top *now*, unless something is named that way. | Agents read position words as names. | **Yes, beyond noise** — 61% → 77%; paired +5.5 pts. The last clearly real gain for gpt-5.5. |
+| **v4** | One rephrased follow-up instead of repeating a question; decide on "you decide". | Real people give unhelpful answers; nagging is bad. | **Looked good, wasn't.** The shelving set jumped 0/3 → 3/3 — but the simulated person had been changed at the same time to volunteer facts. Re-run with the same simulated person, v3 → v4 was +0.7 pts: noise. |
+| **v5** | Furniture layouts (grid cells, `show_layout`, sketches in questions), a follow-up rule, a check of the house before tidy-up finishes. | The real bookcase description broke every model. | **Partly.** First pass ever on asking about a layout (1/3), +4.7 pts overall but within noise. One "regression" was the grader rejecting `Dresser › Top` — a grader bug, fixed. |
+| **v6** | The check groups look-alike units by what they are; no "stored with" details. | Units named by their contents slipped past the check. | **Yes, on its target** — the terse-answer shelving cases went 0/3 → 3/3. Passed the regression gate; **deployed**. |
+| *Kimi K3 (model)* | Same v4 agent on Kimi K3. | Scored 88% vs gpt-5.5's 80%. | **Looked good, wasn't.** +8 pts was within noise; on the hard held-out set it tied gpt-5.5 (80%) at higher cost and latency. |
+| **v7** *(mini)* | Tell the agent when it files a box as a plain item. | Two transcripts showed boxes filed as items. | **No** (+0.7, noise). Counting all stack failures showed that was a minority cause — the diagnosis came from too few examples. |
+| **v8** *(mini)* | `file_stack` / `reorder_stack` tools that build a stack correctly by construction. | Counted causes: contents filed beside boxes, positions never set. | **On its target, yes** — stacks 11/36 → 17/36 runs; overall flat. What still failed was reasoning about order, which tools can't fix. |
+| *High effort (mini)* | Let mini think longer. | Small models often gain most from reasoning. | **No** — +1.3 pts, noise, for 33% more cost. |
+| *Escalation* | Mini for simple turns, GLM-5 for hard turns and tidy-up. | Most utterances are simple. | **Yes on dev** (+6.4, beyond noise) — **but looked better than it was:** on held-out cases it was 64% vs gpt-5.5's 80%. Better than mini, not a gpt-5.5 substitute. |
+| **v9** *(mini)* | Review its own changes against what was said before finishing. | Self-checking is a standard technique. | **No** — +0.6, noise, for 67% more cost. A small model doesn't catch its own mistakes. |
+| **v10** | Condensed the main prompt (~4,850 → ~2,770 tokens). | Cheaper; less for a small model to wade through. | **Yes, for cost** — same quality, 22% fewer input tokens. **Hidden cost:** it cut the group examples, and mini's group behavior slid (found two versions later). |
+| **v11** | v10 without v9's review step. | Keep what worked. | On gpt-5.5: same quality (86% capability), ~20% cheaper than v6. |
+| *Hard held-out* | 50 new held-out cases in the capability suite's proportions. | Dev scores were rising; were the gains real? | **Revealing.** No version since v3 was better on unseen cases — gpt-5.5 flat (82 → 84 → 80), mini drifting down. **Looked worse than it was:** one run said mini fell 12 pts v3 → v11; three runs per case said −7, not significant. |
+| **v12** *(mini)* | Put back the group guidance v10 cut. | Mini's group cases had slid from 67% to 44%. | **Yes** — 16/36 → 24/36 runs. Then made moot by v13's product decision. |
+| *Simulated person* | Fact-check each simulated answer against the case's facts. | 3 of gpt-5.5's 10 held-out failures were the simulated person contradicting itself. | **Yes** — cleaner tests. Held-out scores for gpt-5.5 rose to 94–96%, mostly from this and v13's spec change, not from the agent. |
+| **v13** | Product decisions: keep a group as one item (no offer to list it), always ask the room, don't interrupt long descriptions. | What the owner wants the app to do. | **Neutral to worse.** No overall change; two side effects — "ask afterwards" made it skip a needed question, and moving a known group stopped moving its items. |
+| **v14** | Fix both side effects; a code nudge when something may be an existing look-alike. | Recover what v13 lost. | **Partly.** The group fix worked. **Looked like a fix, wasn't tested:** the nudge never fired — it looked for the position in the place's name, but the models record it in a separate field. vs the live v6 on gpt-5.5: +4 pts capability, +2 held-out, both within noise — and ~19% cheaper. |
+
+The lesson running through it: almost all real improvement came from v1–v3, before the eval had a held-out
+set or paired statistics. After that, most apparent gains were noise, a changed simulated person, or fixes
+that only helped the cases they were tuned on — exactly what those tools were added to catch.
+
 ## Bugs the evals found
 
 - **A cycle in the place tree** — merging a place into one inside it made it its own parent; later, filing
