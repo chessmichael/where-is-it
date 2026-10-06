@@ -52,6 +52,22 @@ npm run inspect -- --eval v4 D06                                   # look at one
 - **Reliability**: pass@1 with an interval, and pass^3 — the chance three runs of a case all pass.
 - **Test (held out)** shows totals only.
 
+## Two tracks
+
+- **Product track** — the model the app runs on (gpt-5.5). Changes ship only after the regression suite
+  and the held-out test set. Its evals are close to saturated: they're mostly a deploy gate now.
+- **Learning track** — gpt-5.4-mini, which still fails a lot, so changes show up as real movement.
+  Variants are named `vN-mini` and run on every dev case with full repeats (`--suite all --reps 3
+  --full-reps`), so pass^3 and the intervals are meaningful. Change one thing at a time, read
+  **Why cases fail**, and judge each change in **Head to head** (`v6-mini → v7-mini`). When a change wins
+  clearly on mini, check it carries over on gpt-5.5 before considering it for the product.
+  - `--code <commit>` runs any older version's agent on mini, which is how the **Each model across
+    versions** chart shows how much each version's prompts helped a weaker model.
+
+```bash
+npm run eval:capture -- --variant v7-mini --model gpt-5.4-mini --suite all --reps 3 --full-reps --reason "what changed"
+```
+
 ## New cases from real use
 
 Download `inbox.jsonl` from the app's Files screen, then `python3 evals/capture/harvest.py <inbox.jsonl>`.
