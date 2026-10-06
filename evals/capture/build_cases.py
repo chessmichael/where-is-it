@@ -415,6 +415,18 @@ JOURNEYS = [
 def group(said, ask, items, knows=None, setup=None, tags=()):
     return {"setup": setup or [], "said": said, "ask": ask, "knows": knows, "expect": {"items": items}, "tags": list(tags)}
 
+def groups_as_one(c):
+    """The v13 product decision (6 Oct 2026): a named group is recorded as ONE item, and the agent doesn't
+    offer to list it — people say things at the level of detail they want. So a case where the person
+    named a group (and would have listed its members if asked) now expects the group kept whole and no
+    question. Cases where the person lists the members themselves are unchanged."""
+    import re
+    if c["ask"] != "must":
+        return c
+    m = re.match(r"^(?:my |the |all the )?(.+?) (?:is|are) ", c["said"])
+    first = c["expect"]["items"][0]
+    return dict(c, ask="no", knows=None, expect={"items": [item(m.group(1), first.get("path"))]}, tags=c["tags"] + ["kept-as-one"])
+
 WB = ["Garage", "Workbench"]
 GROUPS = [
  group("the power tools are on the workbench in the garage", "must",
@@ -676,6 +688,7 @@ def build():
     for i, c in enumerate(JOURNEYS, 1):
         cases.append({"id": f"G{i:02d}", "set": "journey", **c, "tags": ["lookup-after-changes"] + c["tags"]})
     for i, c in enumerate(GROUPS, 1):
+        c = groups_as_one(c)
         cases.append({"id": f"H{i:02d}", "set": "groups", **c, "tags": ["group-items"] + c["tags"]})
     for i, c in enumerate(DUPLICATES, 1):
         cases.append({"id": f"I{i:02d}", "set": "duplicates", **c, "tags": ["duplicates", c["mode"]] + c["tags"]})

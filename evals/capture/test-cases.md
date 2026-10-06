@@ -432,17 +432,17 @@ When someone names a group (“the power tools”), the agent should ask once wh
 
 | # | What's said | Asking | The person knows | Expected in the database | Tags |
 |---|---|---|---|---|---|
-| TH01 | “the gardening tools are in the shed” | **Must ask** | The gardening tools are a trowel, pruning shears and gardening gloves. Yes, list them individually. | **trowel** → Shed<br>**pruning shears** → Shed<br>**gardening gloves / gloves** → Shed | list-them |
-| TH02 | “the art supplies are in the cabinet in the playroom” | **Must ask** | No need to list them; 'art supplies' is fine. | **art supplies** → Playroom › Cabinet | keep-grouped |
+| TH01 | “the gardening tools are in the shed” | Shouldn't need to ask | — | **gardening tools** → Shed | list-them, kept-as-one |
+| TH02 | “the art supplies are in the cabinet in the playroom” | Shouldn't need to ask | — | **art supplies** → Playroom › Cabinet | keep-grouped, kept-as-one |
 | TH03 | “the trowel, the pruning shears and the gardening gloves are in the shed” | Shouldn't need to ask | — | **trowel** → Shed<br>**pruning shears** → Shed<br>**gardening gloves / gloves** → Shed | already-listed |
-| TH04 | “the camping cookware is in the garage cabinet” | **Must ask** | It's a camp stove, a pot set and a coffee percolator. Yes, list them. | **camp stove** → Garage › Cabinet<br>**pot set / pots** → Garage › Cabinet<br>**coffee percolator / percolator** → Garage › Cabinet | hard, list-them |
-| TH05 | “the cleaning supplies are under the kitchen sink” | **Must ask** | No need to list them; 'cleaning supplies' is fine. | **cleaning supplies** → Kitchen › Sink / Under the sink / Under the kitchen sink / Sink cabinet | hard, keep-grouped |
-| TH06 | “my art stuff is in the hall closet on the top shelf” | **Must ask** | The watercolors, the sketchbooks and the brushes. Please list them. | **watercolors / watercolor paints** → Hall closet › Top shelf<br>**sketchbooks** → Hall closet › Top shelf<br>**brushes / paint brushes** → Hall closet › Top shelf | hard, list-them |
-| TH07 | “the pool stuff is in the shed” | **Must ask** | Just call it pool stuff, no need to list it. | **pool stuff** → Shed | hard, keep-grouped |
-| TH08 | “the holiday decorations are in the attic” | **Must ask** | The wreath, the string lights and the ornaments. Yes, list them individually. | **wreath** → Attic<br>**string lights** → Attic<br>**ornaments** → Attic | hard, list-them |
+| TH04 | “the camping cookware is in the garage cabinet” | Shouldn't need to ask | — | **camping cookware** → Garage › Cabinet | hard, list-them, kept-as-one |
+| TH05 | “the cleaning supplies are under the kitchen sink” | Shouldn't need to ask | — | **cleaning supplies** → Kitchen › Sink / Under the sink / Under the kitchen sink / Sink cabinet | hard, keep-grouped, kept-as-one |
+| TH06 | “my art stuff is in the hall closet on the top shelf” | Shouldn't need to ask | — | **art stuff** → Hall closet › Top shelf | hard, list-them, kept-as-one |
+| TH07 | “the pool stuff is in the shed” | Shouldn't need to ask | — | **pool stuff** → Shed | hard, keep-grouped, kept-as-one |
+| TH08 | “the holiday decorations are in the attic” | Shouldn't need to ask | — | **holiday decorations** → Attic | hard, list-them, kept-as-one |
 | TH09 | “the wreath, the string lights and the ornaments are in the attic” | Shouldn't need to ask | — | **wreath** → Attic<br>**string lights** → Attic<br>**ornaments** → Attic | hard, already-listed |
 | TH10 | *(earlier, tidied:* “the craft supplies are in the playroom closet, that's the glitter, the glue and the felt”*)*<br>“I moved the craft supplies to the dining room cabinet” | Shouldn't need to ask | — | **glitter** → Dining room › Cabinet<br>**glue** → Dining room › Cabinet<br>**felt** → Dining room › Cabinet | hard, move-listed-group |
-| TH11 | “the baby gear is in the nursery closet” | **Must ask** | Just 'baby gear' is fine. | **baby gear** → Nursery › Closet | hard, keep-grouped |
+| TH11 | “the baby gear is in the nursery closet” | Shouldn't need to ask | — | **baby gear** → Nursery › Closet | hard, keep-grouped, kept-as-one |
 
 ## Set I — telling same-named things apart
 

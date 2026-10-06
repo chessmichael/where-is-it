@@ -14,7 +14,7 @@ that. Rules (see README.md):
 Fresh items and wording throughout, but the same case types (and graders) as
 dev, so the two scores are comparable. Ids are T + the dev set letter.
 """
-from build_cases import CAR_TOP_BOX, CLOSET, PHOTOS_BOX, TIDY, dup_change, dup_lookup, group, item, journey, seed, stack_house, update
+from build_cases import CAR_TOP_BOX, CLOSET, PHOTOS_BOX, TIDY, dup_change, groups_as_one, dup_lookup, group, item, journey, seed, stack_house, update
 
 # ── TA: empty house ──
 EMPTY = [
@@ -271,7 +271,7 @@ def test_cases():
     for i, c in enumerate(JOURNEYS, 1):
         add("G", "journey", i, c)
     for i, c in enumerate(GROUPS, 1):
-        add("H", "groups", i, c)
+        add("H", "groups", i, groups_as_one(c))
     for i, c in enumerate(DUPLICATES, 1):
         add("I", "duplicates", i, {**c, "tags": [c["mode"]] + c["tags"]})
     for i, c in enumerate(SPATIAL, 1):
@@ -282,7 +282,7 @@ def test_cases():
             add(prefix, set_name, i, {**c, "tags": ["hard"] + c.get("tags", [])})
     add_hard("D", "stack", [{**{k: c[k] for k in ("setup", "update", "ask", "knows", "tags")}, "expect": dict(c["expect"], items_keep_their_box=True)} for c in HARD_STACKS], len(STACKS) + 1)
     add_hard("C", "shelving", [{k: c[k] for k in ("setup", "update", "ask", "knows", "expect", "tags") if k in c} | ({"person": c["person"]} if c.get("person") else {}) for c in HARD_SHELVING], len(SHELVING) + 1)
-    add_hard("H", "groups", HARD_GROUPS, len(GROUPS) + 1)
+    add_hard("H", "groups", [groups_as_one(c) for c in HARD_GROUPS], len(GROUPS) + 1)
     add_hard("J", "positional", [{**c, "tags": [c["mode"]] + c["tags"]} for c in HARD_POSITIONAL], 1)
     add_hard("I", "duplicates", [{**c, "tags": [c["mode"]] + c["tags"]} for c in HARD_DUPLICATES], len(DUPLICATES) + 1)
     add_hard("G", "journey", HARD_JOURNEYS, len(JOURNEYS) + 1)

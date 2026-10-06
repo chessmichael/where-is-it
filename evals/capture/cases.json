@@ -5068,45 +5068,8 @@
       "set": "groups",
       "setup": [],
       "said": "the power tools are on the workbench in the garage",
-      "ask": "must",
-      "knows": "the power tools are a drill, a circular saw and a sander, and yes, list them individually",
-      "expect": {
-        "items": [
-          {
-            "name": "drill",
-            "path": [
-              "Garage",
-              "Workbench"
-            ]
-          },
-          {
-            "name": "circular saw",
-            "path": [
-              "Garage",
-              "Workbench"
-            ]
-          },
-          {
-            "name": "sander",
-            "path": [
-              "Garage",
-              "Workbench"
-            ]
-          }
-        ]
-      },
-      "tags": [
-        "group-items",
-        "list-them"
-      ]
-    },
-    {
-      "id": "H02",
-      "set": "groups",
-      "setup": [],
-      "said": "the power tools are on the workbench in the garage",
-      "ask": "must",
-      "knows": "no need to list them, 'power tools' is fine",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -5120,7 +5083,32 @@
       },
       "tags": [
         "group-items",
-        "keep-grouped"
+        "list-them",
+        "kept-as-one"
+      ]
+    },
+    {
+      "id": "H02",
+      "set": "groups",
+      "setup": [],
+      "said": "the power tools are on the workbench in the garage",
+      "ask": "no",
+      "knows": null,
+      "expect": {
+        "items": [
+          {
+            "name": "power tools",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "tags": [
+        "group-items",
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
@@ -5128,26 +5116,12 @@
       "set": "groups",
       "setup": [],
       "said": "the baking stuff is in the cabinet next to the stove",
-      "ask": "must",
-      "knows": "the baking stuff is the mixing bowls, the measuring cups and the rolling pin; please list them",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "mixing bowls",
-            "path": [
-              "Kitchen",
-              "Cabinet next to the stove|Cabinet by the stove|Cabinet"
-            ]
-          },
-          {
-            "name": "measuring cups",
-            "path": [
-              "Kitchen",
-              "Cabinet next to the stove|Cabinet by the stove|Cabinet"
-            ]
-          },
-          {
-            "name": "rolling pin",
+            "name": "baking stuff",
             "path": [
               "Kitchen",
               "Cabinet next to the stove|Cabinet by the stove|Cabinet"
@@ -5158,7 +5132,8 @@
       "tags": [
         "group-items",
         "list-them",
-        "implied-room"
+        "implied-room",
+        "kept-as-one"
       ]
     },
     {
@@ -5166,8 +5141,8 @@
       "set": "groups",
       "setup": [],
       "said": "the camping gear is in the storage room in the basement",
-      "ask": "must",
-      "knows": "just call it camping gear, no need to list it",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -5181,7 +5156,8 @@
       },
       "tags": [
         "group-items",
-        "keep-grouped"
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
@@ -5189,28 +5165,12 @@
       "set": "groups",
       "setup": [],
       "said": "my important documents are in the fireproof safe in the bedroom closet",
-      "ask": "must",
-      "knows": "the documents are my passport, the birth certificates and the house deed; yes, list each one",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "passport",
-            "path": [
-              "Bedroom",
-              "Closet",
-              "Fireproof safe|Safe"
-            ]
-          },
-          {
-            "name": "birth certificates",
-            "path": [
-              "Bedroom",
-              "Closet",
-              "Fireproof safe|Safe"
-            ]
-          },
-          {
-            "name": "house deed|deed",
+            "name": "important documents",
             "path": [
               "Bedroom",
               "Closet",
@@ -5221,7 +5181,8 @@
       },
       "tags": [
         "group-items",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -5229,26 +5190,12 @@
       "set": "groups",
       "setup": [],
       "said": "the first aid stuff is in the bathroom closet",
-      "ask": "must",
-      "knows": "bandages, gauze and the thermometer; yes list them",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "bandages|band-aids",
-            "path": [
-              "Bathroom",
-              "Closet"
-            ]
-          },
-          {
-            "name": "gauze",
-            "path": [
-              "Bathroom",
-              "Closet"
-            ]
-          },
-          {
-            "name": "thermometer",
+            "name": "first aid stuff",
             "path": [
               "Bathroom",
               "Closet"
@@ -5258,7 +5205,8 @@
       },
       "tags": [
         "group-items",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -5266,26 +5214,12 @@
       "set": "groups",
       "setup": [],
       "said": "the electronics are in the TV stand in the living room",
-      "ask": "must",
-      "knows": "an old game console, the DVD player and a bunch of cables; list the console and the DVD player, the cables can be one entry",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "game console|old game console",
-            "path": [
-              "Living room",
-              "TV stand"
-            ]
-          },
-          {
-            "name": "DVD player",
-            "path": [
-              "Living room",
-              "TV stand"
-            ]
-          },
-          {
-            "name": "cables",
+            "name": "electronics",
             "path": [
               "Living room",
               "TV stand"
@@ -5295,7 +5229,8 @@
       },
       "tags": [
         "group-items",
-        "partial-list"
+        "partial-list",
+        "kept-as-one"
       ]
     },
     {
@@ -12424,24 +12359,12 @@
       "split": "test",
       "setup": [],
       "said": "the gardening tools are in the shed",
-      "ask": "must",
-      "knows": "The gardening tools are a trowel, pruning shears and gardening gloves. Yes, list them individually.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "trowel",
-            "path": [
-              "Shed"
-            ]
-          },
-          {
-            "name": "pruning shears",
-            "path": [
-              "Shed"
-            ]
-          },
-          {
-            "name": "gardening gloves|gloves",
+            "name": "gardening tools",
             "path": [
               "Shed"
             ]
@@ -12450,7 +12373,8 @@
       },
       "tags": [
         "test",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -12459,8 +12383,8 @@
       "split": "test",
       "setup": [],
       "said": "the art supplies are in the cabinet in the playroom",
-      "ask": "must",
-      "knows": "No need to list them; 'art supplies' is fine.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -12474,7 +12398,8 @@
       },
       "tags": [
         "test",
-        "keep-grouped"
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
@@ -13337,26 +13262,12 @@
       "split": "test",
       "setup": [],
       "said": "the camping cookware is in the garage cabinet",
-      "ask": "must",
-      "knows": "It's a camp stove, a pot set and a coffee percolator. Yes, list them.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "camp stove",
-            "path": [
-              "Garage",
-              "Cabinet"
-            ]
-          },
-          {
-            "name": "pot set|pots",
-            "path": [
-              "Garage",
-              "Cabinet"
-            ]
-          },
-          {
-            "name": "coffee percolator|percolator",
+            "name": "camping cookware",
             "path": [
               "Garage",
               "Cabinet"
@@ -13367,7 +13278,8 @@
       "tags": [
         "test",
         "hard",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -13376,8 +13288,8 @@
       "split": "test",
       "setup": [],
       "said": "the cleaning supplies are under the kitchen sink",
-      "ask": "must",
-      "knows": "No need to list them; 'cleaning supplies' is fine.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -13392,7 +13304,8 @@
       "tags": [
         "test",
         "hard",
-        "keep-grouped"
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
@@ -13401,26 +13314,12 @@
       "split": "test",
       "setup": [],
       "said": "my art stuff is in the hall closet on the top shelf",
-      "ask": "must",
-      "knows": "The watercolors, the sketchbooks and the brushes. Please list them.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "watercolors|watercolor paints",
-            "path": [
-              "Hall closet",
-              "Top shelf"
-            ]
-          },
-          {
-            "name": "sketchbooks",
-            "path": [
-              "Hall closet",
-              "Top shelf"
-            ]
-          },
-          {
-            "name": "brushes|paint brushes",
+            "name": "art stuff",
             "path": [
               "Hall closet",
               "Top shelf"
@@ -13431,7 +13330,8 @@
       "tags": [
         "test",
         "hard",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -13440,8 +13340,8 @@
       "split": "test",
       "setup": [],
       "said": "the pool stuff is in the shed",
-      "ask": "must",
-      "knows": "Just call it pool stuff, no need to list it.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -13455,7 +13355,8 @@
       "tags": [
         "test",
         "hard",
-        "keep-grouped"
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
@@ -13464,24 +13365,12 @@
       "split": "test",
       "setup": [],
       "said": "the holiday decorations are in the attic",
-      "ask": "must",
-      "knows": "The wreath, the string lights and the ornaments. Yes, list them individually.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
-            "name": "wreath",
-            "path": [
-              "Attic"
-            ]
-          },
-          {
-            "name": "string lights",
-            "path": [
-              "Attic"
-            ]
-          },
-          {
-            "name": "ornaments",
+            "name": "holiday decorations",
             "path": [
               "Attic"
             ]
@@ -13491,7 +13380,8 @@
       "tags": [
         "test",
         "hard",
-        "list-them"
+        "list-them",
+        "kept-as-one"
       ]
     },
     {
@@ -13577,8 +13467,8 @@
       "split": "test",
       "setup": [],
       "said": "the baby gear is in the nursery closet",
-      "ask": "must",
-      "knows": "Just 'baby gear' is fine.",
+      "ask": "no",
+      "knows": null,
       "expect": {
         "items": [
           {
@@ -13593,7 +13483,8 @@
       "tags": [
         "test",
         "hard",
-        "keep-grouped"
+        "keep-grouped",
+        "kept-as-one"
       ]
     },
     {
