@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
 import { shownDetails } from '../lib/details'
 import LayoutDrawing from './LayoutDrawing'
+import { RedoPlace, SavedCopies } from './Redo'
 
 // Read-only view of the compacted house (layer 2), plus what's still waiting
 // in the inbox and any open questions from the agent.
@@ -42,7 +43,7 @@ function loadOpen(): Set<string> {
   }
 }
 
-export function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; open: Set<string>; toggle: (id: string) => void }) {
+export function Place({ node, depth, open, toggle, onRedone }: { node: HouseNode; depth: number; open: Set<string>; toggle: (id: string) => void; onRedone?: (message: string) => void }) {
   const isOpen = open.has(node.id)
   const items = visibleItems(node)
   const count = countInside(node)
@@ -78,8 +79,9 @@ export function Place({ node, depth, open, toggle }: { node: HouseNode; depth: n
             </ul>
           )}
           {node.children.map((c) => (
-            <Place key={c.id} node={c} depth={depth + 1} open={open} toggle={toggle} />
+            <Place key={c.id} node={c} depth={depth + 1} open={open} toggle={toggle} onRedone={onRedone} />
           ))}
+          {onRedone && hasInside && <RedoPlace id={node.id} name={node.name} onDone={onRedone} />}
         </div>
       )}
     </div>
@@ -95,6 +97,7 @@ export default function HouseTree() {
   const [error, setError] = useState<string | null>(null)
   const [tidying, setTidying] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
+  const [redoMessage, setRedoMessage] = useState<string | null>(null)
   const [open, setOpen] = useState<Set<string>>(loadOpen)
 
   const remember = (next: Set<string>) => {
@@ -148,6 +151,14 @@ export default function HouseTree() {
         </button>
       </div>
       {summary && <p className="hint">{summary}</p>}
+      {redoMessage && <p className="notice">{redoMessage}</p>}
+      <SavedCopies
+        refreshKey={redoMessage}
+        onChanged={(m) => {
+          setRedoMessage(m)
+          load()
+        }}
+      />
 
       {house.questions.length > 0 && (
         <section className="tree-room questions">
@@ -189,7 +200,17 @@ export default function HouseTree() {
       )}
 
       {house.rooms.map((room) => (
-        <Place key={room.id} node={room} depth={0} open={open} toggle={toggle} />
+        <Place
+          key={room.id}
+          node={room}
+          depth={0}
+          open={open}
+          toggle={toggle}
+          onRedone={(m) => {
+            setRedoMessage(m)
+            load()
+          }}
+        />
       ))}
 
       {house.elsewhere.length > 0 && (

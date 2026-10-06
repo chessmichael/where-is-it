@@ -62,6 +62,34 @@ const compactNow: Route = {
   },
 }
 
+const redo: Route = {
+  method: 'POST',
+  path: '/redo',
+  signedIn: true,
+  async handle(ctx) {
+    const { location_id } = await readBody<{ location_id?: string | null }>(ctx.req)
+    return json(await houseOf(ctx).redo(ctx.account!, location_id ?? null))
+  },
+}
+
+const snapshots: Route = {
+  method: 'GET',
+  path: '/snapshots',
+  signedIn: true,
+  async handle(ctx) {
+    return json(await houseOf(ctx).snapshots())
+  },
+}
+
+const restoreSnapshot: Route = {
+  method: 'POST',
+  path: /^\/snapshots\/(s_\d+)\/restore$/,
+  signedIn: true,
+  async handle(ctx) {
+    return json(await houseOf(ctx).restoreSnapshot(ctx.account!, ctx.params[0]))
+  },
+}
+
 const passkeys: Route = {
   method: 'GET',
   path: '/passkeys',
@@ -143,7 +171,7 @@ const inspect: Route = {
   },
 }
 
-export const houseRoutes = [inspect, converse, house, dismissQuestion, compactNow, passkeys, listFiles, traceFile, exportFile, exportZip]
+export const houseRoutes = [inspect, converse, house, dismissQuestion, compactNow, redo, snapshots, restoreSnapshot, passkeys, listFiles, traceFile, exportFile, exportZip]
 
 /** The signed-in person's own HouseDO. */
 function houseOf({ env, account }: RequestContext) {

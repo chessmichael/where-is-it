@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
 import { shownDetails } from '../lib/details'
 import LayoutDrawing from './LayoutDrawing'
+import { RedoPlace, SavedCopies } from './Redo'
 
 // The house on a computer: the tree on the left, the selected place on the
 // right, and "Find anything" across every item. Reads the same /api/house
@@ -49,6 +50,7 @@ const address = (path: HouseNode[]) => path.map((p) => (p.position ? `${p.name} 
 
 export default function HouseExplorer() {
   const [house, setHouse] = useState<House | null>(null)
+  const [redoMessage, setRedoMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [open, setOpen] = useState<Set<string>>(new Set())
@@ -206,6 +208,15 @@ export default function HouseExplorer() {
                 {place.aliases?.length ? ` · also called ${place.aliases.join(', ')}` : ''}
                 {place.description ? ` · ${place.description}` : ''}
               </p>
+              <RedoPlace
+                id={place.id}
+                name={place.name}
+                onDone={(m) => {
+                  setRedoMessage(m)
+                  load()
+                }}
+              />
+              {redoMessage && <p className="notice">{redoMessage}</p>}
               <LayoutDrawing node={place} onPick={select} />
               <h3>{visibleItems(place).length ? 'In it' : 'Nothing directly in it'}</h3>
               {visibleItems(place).length > 0 && (
@@ -244,6 +255,14 @@ export default function HouseExplorer() {
             <div className="xempty">
               <h2>Pick a place, or find something</h2>
               <p className="hint">Choose a room on the left to see what’s in it, or type in Find to search every item in the house.</p>
+              {redoMessage && <p className="notice">{redoMessage}</p>}
+              <SavedCopies
+                refreshKey={redoMessage}
+                onChanged={(m) => {
+                  setRedoMessage(m)
+                  load()
+                }}
+              />
             </div>
           )}
         </section>

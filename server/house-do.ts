@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers'
 import type { Account } from './auth'
 import { fileableEntries, hearUtterance, tidyUp } from './agent/pipeline'
+import { planRedo, REDO_NOTE } from './agent/redo'
 import { HouseDb } from './db/house'
 import { houseTree, renderExport, type ExportName } from './db/export'
 import { inspectHouse } from './db/inspect'
@@ -95,6 +96,27 @@ export class HouseDO extends DurableObject<Env> {
     return this.runCompaction()
   }
 
+  /** Redo a place (or the whole house, with null) from what was said; a copy is saved first so it can be undone. */
+  async redo(account: Account, locationId: string | null) {
+    this.remember(account)
+    await this.compacting // don't redo underneath a tidy-up in progress
+    const plan = planRedo(this.db, locationId)
+    const result = await this.runCompaction()
+    return { snapshot: plan.snapshot, scope: plan.scope, entries: plan.entries, ...result }
+  }
+
+  async snapshots() {
+    return { snapshots: this.db.snapshots.list() }
+  }
+
+  /** Put the house back as it was in a saved copy (e.g. undo a redo). */
+  async restoreSnapshot(account: Account, id: string) {
+    this.remember(account)
+    await this.compacting
+    this.db.snapshots.restore(id)
+    return { ok: true, status: this.db.inbox.countByStatus() }
+  }
+
   async alarm() {
     await this.runCompaction()
   }
@@ -132,8 +154,10 @@ export class HouseDO extends DurableObject<Env> {
         steps: result.steps,
       })
     })
-    // Anything left (blocked or out of budget) gets another look later.
-    if (fileableEntries(this.db).length) await this.ctx.storage.setAlarm(Date.now() + TIDY_EVENTUALLY_MS)
+    // Anything left (blocked or out of budget) gets another look later — soon, when it's a redo in progress.
+    const left = fileableEntries(this.db)
+    const redoing = left.some((e) => e.note?.startsWith(`${REDO_NOTE}:`)) && runs.some((r) => r.result.compacted.length > 0)
+    if (left.length) await this.ctx.storage.setAlarm(Date.now() + (redoing ? 2000 : TIDY_EVENTUALLY_MS))
     return {
       runs: runs.map((r) => ({ compacted: r.result.compacted.length, questions: r.result.questions, summary: r.result.summary })),
       status: this.db.inbox.countByStatus(),

@@ -1289,3 +1289,54 @@ button.layout-cell:focus-visible {
 .help-join p {
   margin: 0 0 14px;
 }
+
+/* Redo and undo (Redo.tsx). */
+button.small {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.redo-button {
+  margin: 6px 0 10px;
+}
+.saved-copies {
+  margin: 4px 0 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--bg-3);
+  border-radius: 10px;
+}
+.saved-copies summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+.saved-copies h4 {
+  margin: 12px 0 6px;
+  font-size: 14px;
+}
+.saved-copies .hint {
+  margin: 8px 0;
+}
+.copy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.copy-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.notice {
+  margin: 6px 0 10px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--good);
+  background: var(--bg-2);
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+}

@@ -3,6 +3,7 @@ import type { LLMProvider, Msg } from '../llm/types'
 import { houseCheck } from '../db/check'
 import { diagramField, gridField, gridOrNull, showLayoutTool } from './layout-tools'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
+import { redoInstructions } from './redo'
 import { RELATIONS } from './observations'
 import { COMPACT_SYSTEM } from './prompts'
 import { boolean, integer, listOf, nullable, object, oneOf, text, textList, textOrNull, textWith } from './schema'
@@ -340,5 +341,5 @@ function describeWork(db: HouseDb, entries: InboxEntry[]): string {
     .map((e) => JSON.stringify({ id: e.id, at: e.at, said: e.said, observations: e.observations, agent_reply: e.agent_reply, status: e.status }))
     .join('\n')
 
-  return [houseMap, answers, `<pending_entries>\n${pending}\n</pending_entries>`].filter(Boolean).join('\n\n')
+  return [houseMap, answers, redoInstructions(entries), `<pending_entries>\n${pending}\n</pending_entries>`].filter(Boolean).join('\n\n')
 }

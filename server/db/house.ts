@@ -6,6 +6,7 @@ import { gridText } from './layout'
 import { Locations } from './locations'
 import { ADDED_COLUMNS, HOUSE_TABLES, SCHEMA_STATEMENTS, SCHEMA_VERSION } from './schema'
 import { rank } from './search'
+import { SNAPSHOT_SCHEMA, Snapshots } from './snapshots'
 import { Sql } from './sql'
 import type { InboxEntry, Item } from './types'
 
@@ -26,6 +27,7 @@ export class HouseDb {
   readonly questions: Questions
   readonly locations: Locations
   readonly items: Items
+  readonly snapshots: Snapshots
 
   constructor(handle: SqlStorage, transaction: <T>(fn: () => T) => T) {
     this.sql = new Sql(handle, transaction)
@@ -33,6 +35,7 @@ export class HouseDb {
     this.questions = new Questions(this.sql)
     this.locations = new Locations(this.sql)
     this.items = new Items(this.sql)
+    this.snapshots = new Snapshots(this.sql)
   }
 
   /** Create any missing tables. Safe to run on every start. */
@@ -47,6 +50,7 @@ export class HouseDb {
     }
     for (const statement of SCHEMA_STATEMENTS) this.sql.run(statement)
     // Traces live here too, but stay out of house.sql (they're exported as their own files).
+    for (const statement of SNAPSHOT_SCHEMA) this.sql.run(statement) // saved copies for undoing a redo; not exported
     this.sql.run(TRACE_SCHEMA)
     this.sql.run(TRACE_INDEX)
     this.sql.setMeta('schema_version', String(SCHEMA_VERSION))

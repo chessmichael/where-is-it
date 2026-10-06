@@ -151,6 +151,25 @@ export const api = {
   dismissQuestion: (id: string) => call<{ ok: true }>(`/questions/${id}/dismiss`, { body: {} }),
   compact: () => call<{ runs: { compacted: number; summary: string }[] }>('/compact', { body: {}, timeoutMs: 600_000 }),
   files: () => call<FileList>('/files'),
+  /** Re-file a place (or the whole house, with null) from what was said. A copy is saved first. */
+  redo: (locationId: string | null) => call<RedoResult>('/redo', { body: { location_id: locationId }, timeoutMs: 600_000 }),
+  snapshots: () => call<{ snapshots: SavedCopy[] }>('/snapshots'),
+  restoreSnapshot: (id: string) => call<{ ok: true }>(`/snapshots/${id}/restore`, { body: {} }),
+}
+
+/** A saved copy of the house, taken before a redo (kept a week). */
+export interface SavedCopy {
+  id: string
+  at: string
+  label: string
+}
+
+export interface RedoResult {
+  snapshot: SavedCopy
+  scope: { location_id: string; path: string } | 'house'
+  entries: number
+  runs: { compacted: number; questions: string[]; summary: string }[]
+  status: Record<string, number>
 }
 
 // ── offline outbox ────────────────────────────────────────────────────────
