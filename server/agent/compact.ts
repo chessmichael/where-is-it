@@ -58,6 +58,21 @@ const upsertLocation: AgentTool<RunState> = {
     }),
 }
 
+/**
+ * A place id that's really an item's id: say so, with the fix, instead of a bare "no location" —
+ * weaker models file a box as an item and then try to give it a position.
+ */
+function requirePlace(db: HouseDb, id: string) {
+  if (db.locations.get(id)) return
+  const item = db.items.get(id)
+  if (item)
+    throw new Error(
+      `${id} is an item (“${item.name}”), not a place, so it has no position and can't hold things. To give it a position or contents, ` +
+        `create it as a place first: upsert_location with its path (also_an_item: true, plus the position), then move what's in it there.`,
+    )
+  throw new Error(`no place ${id} — use an id from the house map or search_house`)
+}
+
 /** File a place as an item too (at its parent), reusing a same-named item already there. */
 function linkItemToPlace(db: HouseDb, placeId: string, inboxId: string | null) {
   const place = db.locations.get(placeId)!
@@ -83,6 +98,7 @@ const moveLocation: AgentTool<RunState> = {
   run: (input, { db }) =>
     db.sql.tx(() => {
       const id = String(input.location_id)
+      requirePlace(db, id)
       let parentId = textOrNull(input.new_parent_id)
       if (input.new_parent_path) parentId = db.locations.ensurePath(input.new_parent_path as PathStep[])
       if (!parentId) throw new Error('give new_parent_path or new_parent_id')
@@ -110,6 +126,7 @@ const updateLocation: AgentTool<RunState> = {
   run: (input, { db }) =>
     db.sql.tx(() => {
       const id = String(input.location_id)
+      requirePlace(db, id)
       db.locations.update(
         id,
         {

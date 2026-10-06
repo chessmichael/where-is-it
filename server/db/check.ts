@@ -10,6 +10,7 @@ import type { Location } from './types'
 const TELLS_APART = /\b(left|right|middle|center|top|bottom|upper|lower|front|back|near|far|closest|furthest|first|second|third)\b/
 const RELATIVE_NAME = /\b(below|above|beneath|under(neath)?|next to|beside|behind|in front of|to the (left|right))\b/
 const CATCH_ALL_ITEM = /^(the )?(other|another|second|2nd|extra) /i
+const CONTAINER = /\b(box|boxes|bin|bins|tote|totes|tub|tubs|crate|crates|basket|baskets|bucket|chest|carton|bag)\b/i
 const LOOKALIKE_KINDS = new Set(['furniture', 'storage', 'container', 'shelf'])
 
 export function houseCheck(db: HouseDb, since: string): string[] {
@@ -46,6 +47,18 @@ export function houseCheck(db: HouseDb, since: string): string[] {
     findings.push(
       `${label(l)} is named by where it is relative to another place. Give it a plain name (what it is or holds) and record where it is as a position or a layout cell (grid) in its parent — ` +
         `if how the parts are arranged isn't clear, ask, and show your understanding with a diagram.`,
+    )
+  }
+
+  // Containers filed as plain items ("Box of winter clothes" sitting in the closet): nothing can be
+  // inside them and they can't have a place in a stack. Only when the name or category says it holds things.
+  for (const it of db.items.all()) {
+    if (it.place_id || !(it.created_at >= since || it.updated_at >= since) || !CONTAINER.test(it.name)) continue
+    if (!(/\b(of|with|for)\b/i.test(it.name) || it.category === 'container')) continue
+    findings.push(
+      `Item “${it.name}” (${it.id}) is a container filed as a plain item, so nothing can be inside it and it can't have a position (like its place in a stack). ` +
+        `If it holds things the person mentioned, make it a place: upsert_location with its path and also_an_item: true (and a position if it's in a stack), ` +
+        `file what's in it inside it (upsert_item with a location_path ending at it), then merge_items the old item into the new one.`,
     )
   }
 

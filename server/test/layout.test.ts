@@ -138,3 +138,33 @@ describe('house check — look-alikes named by contents', () => {
     expect(houseCheck(db, '2000-01-01')).toEqual([])
   })
 })
+
+describe('container feedback (v7)', () => {
+  it('flags a box filed as a plain item, but not one that is already a place', () => {
+    const { db } = memoryDb()
+    const closet = db.locations.ensurePath([{ name: 'Basement' }, { name: 'Closet' }])
+    db.items.save(null, { name: 'Box of winter clothes', location_id: closet, category: 'container' })
+    db.items.save(null, { name: 'Laptop bag', location_id: closet }) // a bag you carry, nothing said about contents
+    const findings = houseCheck(db, '2000-01-01')
+    expect(findings).toHaveLength(1)
+    expect(findings[0]).toMatch(/“Box of winter clothes”.*container filed as a plain item/)
+  })
+
+  it('tells tidy-up when it tries to reposition an item as if it were a place', async () => {
+    const { compact } = await import('../agent/compact')
+    const { ScriptedLLM } = await import('./helpers')
+    const { db } = memoryDb()
+    const e = db.inbox.add('c', 'the winter clothes box is on the bottom now')
+    db.inbox.update(e.id, { status: 'pending_compaction' })
+    const box = db.items.save(null, { name: 'Box of winter clothes', location_id: db.locations.ensurePath([{ name: 'Basement' }, { name: 'Closet' }]) })
+    const llm = new ScriptedLLM([
+      () => ({ calls: [{ name: 'update_location', input: { location_id: box, name: null, kind: null, preposition: null, description: null, position: 'bottom of the stack', grid: null, aliases: [], inbox_id: e.id } }] }),
+      (req) => {
+        const last = req.messages.at(-1)
+        expect(last?.role === 'tool' && last.results[0].content).toMatch(/is an item .*not a place.*upsert_location/)
+        return { calls: [{ name: 'finish', input: { compacted_inbox_ids: [], summary: 'stopped' } }] }
+      },
+    ])
+    await compact(llm, db, db.inbox.list('pending_compaction'))
+  })
+})
