@@ -147,6 +147,8 @@ td.none{color:var(--muted)}
 #mv .axis{stroke:var(--line)}
 #mv .muted{fill:var(--muted)}
 .rate.partial{opacity:.55}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;padding:4px 10px 8px;font-size:13px;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
 .modelpick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .modelpick button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
 .modelpick button.on{background:var(--fg);color:var(--bg)}
@@ -168,7 +170,13 @@ td.none{color:var(--muted)}
 <h2>Each model across versions</h2>
 <p class="sub">A line is one model running each version of the agent’s code (prompts and tools as they were at that version). It follows the filter above; pick <strong>Capability suite</strong> to compare every model on the same 50 cases. Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
 <p class="legend" id="mvNote"></p>
-<div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg></div>
+<div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg>
+<div class="key">
+  <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="var(--muted)"/></svg> Ran (nearly) all the cases in this filter</span>
+  <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="var(--card)" stroke="var(--muted)" stroke-width="2"/></svg> Ran noticeably fewer, a different mix — not directly comparable</span>
+  <span><svg width="30" height="10" aria-hidden="true"><line x1="0" y1="5" x2="30" y2="5" stroke="var(--muted)" stroke-width="2"/></svg> Like-for-like change</span>
+  <span><svg width="30" height="10" aria-hidden="true"><line x1="0" y1="5" x2="30" y2="5" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 5"/></svg> Change across different cases — mostly not the agent</span>
+</div></div>
 <div class="wrap"><table id="mvTable"></table></div>
 <h2>By set, version by version</h2>
 <div class="modelpick" id="bsModels" role="group" aria-label="Model"></div>
