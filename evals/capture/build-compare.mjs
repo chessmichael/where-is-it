@@ -70,6 +70,7 @@ function causesOf(variant, r) {
 
 // results[case][variant] = { passes, reps, causes } — over that case's runs; causes counts failing runs by cause
 const results = {}
+const crashes = {} // crashes[case][variant] = runs that crashed with no graded result
 for (const v of variants) {
   for (const line of readFileSync(join(FLOW, v, 'results.jsonl'), 'utf8').split('\n')) {
     if (!line.trim()) continue
@@ -84,10 +85,8 @@ for (const v of variants) {
   if (existsSync(errPath)) {
     const crashed = new Map()
     for (const line of readFileSync(errPath, 'utf8').split('\n')) if (line.trim()) { const e = JSON.parse(line); crashed.set(`${e.prompt_id}/${e.rep}`, e) }
-    for (const e of crashed.values()) {
-      const cell = results[e.prompt_id]?.[v]
-      if (!cell) ((results[e.prompt_id] ??= {})[v] ??= { passes: 0, reps: 0, causes: {} }).crashed = ((results[e.prompt_id][v].crashed ?? 0) + 1)
-    }
+    // Kept apart from results, so a case whose every run crashed never shows up as a 0-run pass rate.
+    for (const e of crashed.values()) if (!results[e.prompt_id]?.[v]) ((crashes[e.prompt_id] ??= {})[v] = (crashes[e.prompt_id]?.[v] ?? 0) + 1)
   }
 }
 
@@ -100,8 +99,8 @@ const data = {
   versions,
   sets: SET_NAMES,
   cases: cases
-    .filter((c) => results[c.id])
-    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), perturbs: c.perturbs, text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] })),
+    .filter((c) => results[c.id] || crashes[c.id])
+    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), perturbs: c.perturbs, text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] ?? {}, crashes: crashes[c.id] ?? {} })),
 }
 const json = JSON.stringify(data).replace(/</g, '\\u003c')
 
@@ -111,9 +110,9 @@ const html = `<!doctype html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
 <title>Version Comparison</title>
 <style>
-:root{--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--up:#15803d;--up-bg:#dcfce7;--down:#b42318;--down-bg:#fdecea;--cell:#eef2ff;--cell-fg:#1e3a8a}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}}
-:root[data-theme="dark"]{--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}
+:root{--m1:#1d4ed8;--m2:#c2410c;--m3:#6b7280;--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--up:#15803d;--up-bg:#dcfce7;--down:#b42318;--down-bg:#fdecea;--cell:#eef2ff;--cell-fg:#1e3a8a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}}
+:root[data-theme="dark"]{--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 main{max-width:1200px;margin:0 auto;padding:24px 16px 80px}
@@ -142,6 +141,11 @@ td.text{white-space:normal;min-width:260px;color:var(--muted);font-size:14px}
 a{color:inherit}
 tr.total td{font-weight:600;border-top:2px solid var(--line)}
 td.none{color:var(--muted)}
+.chartwrap{padding:12px 8px 4px}
+#mv{display:block;width:100%;height:auto;max-width:900px}
+#mv text{fill:var(--fg);font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+#mv .axis{stroke:var(--line)}
+#mv .muted{fill:var(--muted)}
 .legend{font-size:13px;color:var(--muted);margin:8px 0 0}
 .bar{height:6px;width:120px;max-width:100%;background:var(--line);border-radius:3px;overflow:hidden;margin:4px 0 2px}
 .bar div{height:100%;background:var(--up);border-radius:3px}
@@ -157,6 +161,10 @@ td.none{color:var(--muted)}
   <button data-s="test" title="The held-out set: totals only, never individual cases">Test (held out)</button>
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
+<h2>Each model across versions</h2>
+<p class="sub">The same 50 capability cases for every point, so lines are comparable: a line is one model running each version of the agent’s code (prompts and tools as they were at that version). Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran.</p>
+<div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg></div>
+<div class="wrap"><table id="mvTable"></table></div>
 <h2>Head to head</h2>
 <p class="sub">Each version against the one before it (a model variant like v4-kimi3 against its own version, v4), on the cases <em>both</em> ran — a paired comparison, which is far more sensitive than comparing two percentages. “Better/worse” counts cases whose pass rate went up or down. The interval is a 95% bootstrap over cases (cases resampled, not runs, since runs of one case aren’t independent); the sign test asks whether that many more cases got better than worse could be chance.</p>
 <div class="wrap"><table id="pairs"></table></div>
@@ -221,6 +229,69 @@ function signTest(w, l) {
 // pass^k for one case from c passes in n runs: the chance k runs drawn from these all pass (tau-bench's estimator).
 function passHatK(c, n, k) { if (n < k) return null; var p = 1; for (var i = 0; i < k; i++) p *= (c - i) / (n - i); return Math.max(0, p); }
 function pts(x) { return (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(Math.round(x * 1000) / 10) + ' pts'; }
+// ── model × version ──
+var MAIN_MODEL = 'gpt-5.5';
+function split(id) { var i = id.indexOf('-'); return i < 0 ? { version: id, model: MAIN_MODEL } : { version: id.slice(0, i), model: id.slice(i + 1) }; }
+function modelName(m) { return m === 'mini' ? 'gpt-5.4-mini' : m === 'kimi3' ? 'Kimi K3' : m === 'kimi25' ? 'Kimi K2.5' : m === 'glm5' ? 'GLM-5' : m === 'deepseek' ? 'DeepSeek V3.2' : m; }
+function renderModelVersion() {
+  var cap = DATA.cases.filter(function (c) { return c.suite === 'capability'; });
+  var versions = [], models = [], cell = {};
+  DATA.versions.forEach(function (v) {
+    var s = split(v.id);
+    var rates = cap.filter(function (c) { return c.results[v.id]; }).map(function (c) { var r = c.results[v.id]; return r.passes / r.reps; });
+    if (!rates.length) return;
+    if (versions.indexOf(s.version) < 0) versions.push(s.version);
+    if (models.indexOf(s.model) < 0) models.push(s.model);
+    cell[s.version + '|' + s.model] = { mean: rates.reduce(function (a, b) { return a + b; }, 0) / rates.length, ci: bootstrap(rates), n: rates.length, of: cap.length };
+  });
+  // Lines for models with 2+ versions; the rest are points.
+  var lineModels = models.filter(function (m) { return versions.filter(function (v) { return cell[v + '|' + m]; }).length > 1; });
+  var colors = ['var(--m1)', 'var(--m2)'];
+  var W = 860, H = 300, L = 44, R = 150, T = 14, B = 34;
+  var x = function (i) { return L + (versions.length < 2 ? 0 : i * (W - L - R) / (versions.length - 1)); };
+  var y = function (p) { return T + (1 - p) * (H - T - B); };
+  var svg = document.getElementById('mv'); svg.textContent = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  var NS = 'http://www.w3.org/2000/svg';
+  function s(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; svg.appendChild(e); return e; }
+  [0, 0.25, 0.5, 0.75, 1].forEach(function (p) { s('line', { x1: L, x2: W - R, y1: y(p), y2: y(p), class: 'axis' }); s('text', { x: L - 8, y: y(p) + 4, 'text-anchor': 'end', class: 'muted' }, Math.round(p * 100) + '%'); });
+  versions.forEach(function (v, i) { s('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', class: 'muted' }, v); });
+  lineModels.forEach(function (m, k) {
+    var color = colors[k] || 'var(--m3)', pts = [];
+    versions.forEach(function (v, i) { var c = cell[v + '|' + m]; if (c) pts.push([x(i), y(c.mean), c, v]); });
+    s('polyline', { points: pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: color, 'stroke-width': 2 });
+    pts.forEach(function (p) {
+      if (p[2].ci) s('line', { x1: p[0], x2: p[0], y1: y(p[2].ci[1]), y2: y(p[2].ci[0]), stroke: color, 'stroke-width': 1.5, opacity: 0.5 });
+      var dot = s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
+      var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + p[3] + ': ' + Math.round(p[2].mean * 100) + '% (' + (p[2].ci ? Math.round(p[2].ci[0] * 100) + '–' + Math.round(p[2].ci[1] * 100) + '%, ' : '') + p[2].n + ' cases)'; dot.appendChild(tip);
+    });
+    var last = pts[pts.length - 1]; if (last) s('text', { x: W - R + 10, y: last[1] + 4, fill: color, style: 'fill:' + color + ';font-weight:600' }, modelName(m));
+  });
+  models.filter(function (m) { return lineModels.indexOf(m) < 0; }).forEach(function (m) {
+    versions.forEach(function (v, i) {
+      var c = cell[v + '|' + m]; if (!c) return;
+      var dot = s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--m3)' });
+      var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + v + ': ' + Math.round(c.mean * 100) + '% (' + c.n + ' cases)'; dot.appendChild(tip);
+      s('text', { x: x(i) + 17, y: y(c.mean) + 4, class: 'muted' }, modelName(m));
+    });
+  });
+  // The same numbers as a table.
+  var table = document.getElementById('mvTable'); table.textContent = '';
+  var head = el('tr'); head.appendChild(el('th', '', 'Version'));
+  models.forEach(function (m) { head.appendChild(el('th', '', modelName(m))); });
+  var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
+  var body = el('tbody');
+  versions.forEach(function (v) {
+    var tr = el('tr'); tr.appendChild(el('td', '', v));
+    models.forEach(function (m) {
+      var c = cell[v + '|' + m], td = el('td');
+      if (c) { td.appendChild(el('span', 'rate', Math.round(c.mean * 100) + '%')); td.appendChild(el('span', 'runs', (c.ci ? Math.round(c.ci[0] * 100) + '–' + Math.round(c.ci[1] * 100) + '% · ' : '') + c.n + ' of ' + c.of + ' cases')); }
+      else td.appendChild(el('span', 'none', '·'));
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+}
 function renderPairs() {
   var table = document.getElementById('pairs'); table.textContent = '';
   var head = el('tr'); ['Change', 'Cases both ran', 'Difference', '95% interval', 'Better / worse / same', 'Sign test', 'Verdict'].forEach(function (h) { head.appendChild(el('th', '', h)); });
@@ -234,6 +305,8 @@ function renderPairs() {
     var dash = b.indexOf('-');
     var a = dash > 0 ? b.slice(0, dash) : ids.slice(0, i).filter(function (x) { return x.indexOf('-') < 0; }).pop();
     if (a && ids.indexOf(a) >= 0) pairs.push([a, b]);
+    // A model's own line: v3-mini → v4-mini.
+    if (dash > 0) { var suffix = b.slice(dash); var prev = ids.slice(0, i).filter(function (x) { return x.slice(x.indexOf('-')) === suffix && x.indexOf('-') > 0; }).pop(); if (prev) pairs.push([prev, b]); }
   });
   for (var i = 0; i < pairs.length; i++) {
     var a = pairs[i][0], b = pairs[i][1];
@@ -295,7 +368,10 @@ function renderCauses() {
     cs.forEach(function (c) {
       var r = c.results[v.id]; if (!r) return;
       Object.keys(r.causes || {}).forEach(function (k) { if (names.indexOf(k) < 0) names.push(k); (totals[k] = totals[k] || {})[v.id] = ((totals[k] || {})[v.id] || 0) + r.causes[k]; });
-      if (r.crashed) { var k = 'Run crashed (API or harness)'; if (names.indexOf(k) < 0) names.push(k); (totals[k] = totals[k] || {})[v.id] = ((totals[k] || {})[v.id] || 0) + r.crashed; }
+    });
+    cs.forEach(function (c) {
+      var n = (c.crashes || {})[v.id]; if (!n) return;
+      var k = 'Run crashed (API or harness)'; if (names.indexOf(k) < 0) names.push(k); (totals[k] = totals[k] || {})[v.id] = ((totals[k] || {})[v.id] || 0) + n;
     });
   });
   var body = el('tbody');
@@ -393,7 +469,7 @@ function renderCases() {
   table.appendChild(body);
 }
 function render() {
-  renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
+  renderModelVersion(); renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
   var held = suite === 'test';
   document.getElementById('heldNote').hidden = !held;
   document.getElementById('byCaseWrap').hidden = held;
