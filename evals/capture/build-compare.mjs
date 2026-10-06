@@ -100,7 +100,7 @@ const data = {
   sets: SET_NAMES,
   cases: cases
     .filter((c) => results[c.id] || crashes[c.id])
-    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), perturbs: c.perturbs, text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] ?? {}, crashes: crashes[c.id] ?? {} })),
+    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), hard: (c.tags ?? []).includes('hard'), perturbs: c.perturbs, text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] ?? {}, crashes: crashes[c.id] ?? {} })),
 }
 const json = JSON.stringify(data).replace(/</g, '\\u003c')
 
@@ -168,6 +168,7 @@ td.none{color:var(--muted)}
   <button data-s="regression">Regression suite</button>
   <button data-s="robustness" title="Noisy copies of dev cases (perturb.py)">Robustness</button>
   <button data-s="test" title="The held-out set: totals only, never individual cases">Test (held out)</button>
+  <button data-s="test-hard" title="The hard half of the held-out set, in the capability suite's proportions: totals only">Test: hard</button>
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
 <h2>Each model across versions</h2>
@@ -223,7 +224,7 @@ function changed(c) {
 function visibleCases() {
   var onlyChanged = document.getElementById('changed').checked;
   return DATA.cases.filter(function (c) {
-    var inSuite = suite === 'all' ? c.suite !== 'test' && c.suite !== 'robustness' : c.suite === suite; // "all" = every dev case
+    var inSuite = suite === 'all' ? c.suite !== 'test' && c.suite !== 'robustness' : suite === 'test-hard' ? c.suite === 'test' && c.hard : c.suite === suite; // "all" = every dev case
     return inSuite && (!onlyChanged || changed(c));
   });
 }
@@ -541,7 +542,7 @@ function renderCases() {
 }
 function render() {
   renderModelVersion(); renderSetsPicker(); renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
-  var held = suite === 'test';
+  var held = suite === 'test' || suite === 'test-hard';
   document.getElementById('heldNote').hidden = !held;
   document.getElementById('byCaseWrap').hidden = held;
   if (!held) renderCases();

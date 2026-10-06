@@ -2,7 +2,7 @@
 
 Not for iterating against: see test_cases.py.
 
-43 cases: **10** into an empty house (set A), **6** into places that already exist (set B), **3** telling identical shelving units apart (set C), and **3** reordering box stacks (set D), **0** pantry shelves (set E), **8** simple lookups (set F), **5** lookups after a series of changes (set G), **3** asking what a group of things is (set H), **3** telling same-named things apart (set I), **0** position words in what people say (set J), and **2** building a picture of the furniture (set K).
+93 cases: **10** into an empty house (set A), **6** into places that already exist (set B), **11** telling identical shelving units apart (set C), and **15** reordering box stacks (set D), **0** pantry shelves (set E), **8** simple lookups (set F), **10** lookups after a series of changes (set G), **11** asking what a group of things is (set H), **9** telling same-named things apart (set I), **6** position words in what people say (set J), and **7** building a picture of the furniture (set K).
 
 **Questions from the agent:** in every set, if the agent asks something, a simulated person answers using only what the case says they know. Where a case says nothing, they answer “not sure, you decide” — and if asked whether to list a group's items, “not this time”.
 Generated from `build_cases.py` — edit there, then rerun it.
@@ -90,6 +90,64 @@ Setup turns are tidied into the database first (as if said days earlier). Then t
 - *the person knows:* “There are two metal racks in the laundry room. The detergent and the dryer sheets are both on the left rack.”
 - *expected:* the unit holding **detergent** is marked **left**; the unit holding **dryer sheets** is marked **left**; **detergent** and **dryer sheets** on the *same* unit
 
+### TC04 · ambiguous, answer-different
+
+- *setup:* “the shelving unit in the basement has the canning jars on the top shelf”
+- *update:* “the right one has the tool boxes” → **Must ask**
+- *the person knows:* “There are two shelving units in the basement. The canning jars are on the left unit. The tool boxes are on the right unit, which is a different unit.”
+- *expected:* the unit holding **canning jars** is marked **left**; the unit holding **tool boxes** is marked **right**; **canning jars** and **tool boxes** on *different* units
+
+### TC05 · ambiguous, answer-different, terse-person, needs-follow-up
+
+- *setup:* “the shelving unit in the basement has the canning jars on the top shelf”
+- *update:* “the right one has the tool boxes” → **Must ask**
+- *the person knows:* “There are two shelving units in the basement. The canning jars are on the left unit. The tool boxes are on the right unit, which is a different unit.”
+- *the person answers tersely:* only what's asked, nothing volunteered
+- *expected:* the unit holding **canning jars** is marked **left**; the unit holding **tool boxes** is marked **right**; **canning jars** and **tool boxes** on *different* units
+
+### TC06 · ambiguous, answer-different
+
+- *setup:* “in the shed there's a wire rack with the seed packets on it”
+- *update:* “the middle wire rack has the bird feeders” → **Must ask**
+- *the person knows:* “There are three wire racks in the shed. The seed packets are on the left rack. The bird feeders are on the middle rack, which is a different rack.”
+- *expected:* the unit holding **seed packets** is marked **left**; the unit holding **bird feeders** is marked **middle**; **seed packets** and **bird feeders** on *different* units
+
+### TC07 · ambiguous, answer-different, terse-person, needs-follow-up
+
+- *setup:* “in the shed there's a wire rack with the seed packets on it”
+- *update:* “the middle wire rack has the bird feeders” → **Must ask**
+- *the person knows:* “There are three wire racks in the shed. The seed packets are on the left rack. The bird feeders are on the middle rack, which is a different rack.”
+- *the person answers tersely:* only what's asked, nothing volunteered
+- *expected:* the unit holding **seed packets** is marked **left**; the unit holding **bird feeders** is marked **middle**; **seed packets** and **bird feeders** on *different* units
+
+### TC08 · ambiguous, answer-different, terse-person, needs-follow-up
+
+- *setup:* “the cabinet in the laundry room has the bleach”
+- *update:* “the left cabinet has the dryer sheets” → **Must ask**
+- *the person knows:* “There are two cabinets in the laundry room. The bleach is in the right cabinet. The dryer sheets are in the left cabinet, which is a different cabinet.”
+- *the person answers tersely:* only what's asked, nothing volunteered
+- *expected:* the unit holding **bleach** is marked **right**; the unit holding **dryer sheets** is marked **left**; **bleach** and **dryer sheets** on *different* units
+
+### TC09 · ambiguous, answer-same
+
+- *setup:* “the shelving unit in the garage has the car wax on it”
+- *update:* “the left shelving unit has the motor oil” → **Must ask**
+- *the person knows:* “There are two shelving units in the garage. The car wax and the motor oil are both on the left unit.”
+- *expected:* the unit holding **car wax** is marked **left**; the unit holding **motor oil** is marked **left**; **car wax** and **motor oil** on the *same* unit
+
+### TC10 · inferable
+
+- *setup:* “the bookcase in the den has the cookbooks”
+- *setup:* “I bought two more bookcases and put them to the left of the first one”
+- *update:* “the novels are on the leftmost one” → Shouldn't need to ask
+- *expected:* the unit holding **cookbooks** is marked **right**; the unit holding **novels** is marked **left**; **cookbooks** and **novels** on *different* units
+
+### TC11 · explicit-link, relative-marker
+
+- *setup:* “in the pantry there's a metal shelf with the cereal”
+- *update:* “there are two metal shelves in the pantry actually, the cereal is on the one by the door and the snacks are on the one by the window” → Shouldn't need to ask
+- *expected:* the unit holding **cereal** is marked **by the door / door**; the unit holding **snacks** is marked **by the window / window**; **cereal** and **snacks** on *different* units
+
 ## Set D — reordering a stack of boxes
 
 Same flow. Stack order is listed top first, by what each box holds. Every case also checks that each item is still in the same box it was filed in — the box moved, the contents didn't swap boxes.
@@ -112,6 +170,83 @@ Same flow. Stack order is listed top first, by what each box holds. Every case a
 - *setup:* “in the laundry room there are three bins stacked up, the top one has beach towels, the middle one has spare sheets and the bottom one has pool toys”
 - *update:* “I took the middle bin out and put it on top, the other two kept their order” → Shouldn't need to ask
 - *expected:* stack, top first: **spare sheets** → **beach towels** → **pool toys**; every item still in its original box
+
+### TD04 · two-box, determined
+
+- *setup:* “under the stairs there are two boxes stacked, the top one has the board games and the bottom one has puzzles”
+- *update:* “I swapped them” → Shouldn't need to ask
+- *expected:* stack, top first: **puzzles** → **board games**; every item still in its original box
+
+### TD05 · two-box, determined
+
+- *setup:* “under the stairs there are two boxes stacked, the top one has the board games and the bottom one has puzzles”
+- *update:* “the puzzles box is on top now” → Shouldn't need to ask
+- *expected:* stack, top first: **puzzles** → **board games**; every item still in its original box
+
+### TD06 · three-box, determined
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “I flipped the whole stack” → Shouldn't need to ask
+- *expected:* stack, top first: **baby clothes** → **old toys** → **halloween decorations**; every item still in its original box
+
+### TD07 · three-box, determined
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “I moved the halloween tub to the bottom and the other two moved up one” → Shouldn't need to ask
+- *expected:* stack, top first: **old toys** → **baby clothes** → **halloween decorations**; every item still in its original box
+
+### TD08 · three-box, ambiguous
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “the baby clothes tub is on top now” → **Must ask**
+- *the person knows:* “Old toys are in the middle and the halloween decorations are on the bottom.”
+- *expected:* stack, top first: **baby clothes** → **old toys** → **halloween decorations**; every item still in its original box
+
+### TD09 · three-box, ambiguous
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “the toys tub is on top now” → **Must ask**
+- *the person knows:* “The halloween decorations are in the middle and the baby clothes are still on the bottom.”
+- *expected:* stack, top first: **old toys** → **halloween decorations** → **baby clothes**; every item still in its original box
+
+### TD10 · three-box, ambiguous
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “I restacked the tubs in the attic” → **Must ask**
+- *the person knows:* “Baby clothes on top, then the halloween decorations, then old toys on the bottom.”
+- *expected:* stack, top first: **baby clothes** → **halloween decorations** → **old toys**; every item still in its original box
+
+### TD11 · three-box, inferable
+
+- *setup:* “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- *update:* “I took the bottom tub out to grab some baby clothes and put it back on top” → Either is fine
+- *the person knows:* “Baby clothes on top, halloween decorations in the middle, old toys on the bottom.”
+- *expected:* stack, top first: **baby clothes** → **halloween decorations** → **old toys**; every item still in its original box
+
+### TD12 · four-box, determined
+
+- *setup:* “in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper”
+- *update:* “I moved the brown crate to the top and left the rest in the same order” → Shouldn't need to ask
+- *expected:* stack, top first: **sandpaper** → **rags** → **light bulbs** → **paint brushes**; every item still in its original box
+
+### TD13 · four-box, determined
+
+- *setup:* “in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper”
+- *update:* “I swapped the bottom two crates” → Shouldn't need to ask
+- *expected:* stack, top first: **rags** → **light bulbs** → **sandpaper** → **paint brushes**; every item still in its original box
+
+### TD14 · four-box, determined
+
+- *setup:* “in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper”
+- *update:* “I reversed the order of the crates” → Shouldn't need to ask
+- *expected:* stack, top first: **sandpaper** → **paint brushes** → **light bulbs** → **rags**; every item still in its original box
+
+### TD15 · four-box, ambiguous
+
+- *setup:* “in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper”
+- *update:* “the black crate is on top now and the white one is on the bottom” → **Must ask**
+- *the person knows:* “The grey crate is second and the brown one is third.”
+- *expected:* stack, top first: **paint brushes** → **light bulbs** → **sandpaper** → **rags**; every item still in its original box
 
 ## Set E — pantry shelves
 
@@ -183,6 +318,55 @@ Each line is said in order; **🧹 tidy** means the tidy-up agent runs at that p
 - **ask:** “where are the halloween costumes”
 - *reply must mention:* “attic”; must **not** mention: “basement”
 
+### TG06 · hard, stack
+
+- “in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes”
+- 🧹 tidy
+- “I flipped the whole stack”
+- 🧹 tidy
+- **ask:** “which tub are the baby clothes in”
+- *reply must mention:* “top”
+
+### TG07 · hard, stack
+
+- “in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper”
+- 🧹 tidy
+- “I moved the brown crate to the top and left the rest in the same order”
+- 🧹 tidy
+- **ask:** “where are the light bulbs”
+- *reply must mention:* “grey / gray” + “third / 3rd / second from the bottom”
+
+### TG08 · hard, look-alike
+
+- “the shelving unit in the basement has the canning jars on the top shelf”
+- 🧹 tidy
+- “the right shelving unit has the tool boxes”
+- 🧹 tidy
+- **ask:** “where are the canning jars”
+- *the person knows:* “There are two shelving units in the basement. The canning jars are on the left one; the tool boxes are on the right one.”
+- *reply must mention:* “left”
+
+### TG09 · hard, correction, not-yet-tidied
+
+- “the drill is in the red toolbox in the garage”
+- 🧹 tidy
+- “I took the red toolbox down to the basement”
+- 🧹 tidy
+- “actually I left the drill out on the workbench in the garage”
+- **ask:** “where's the drill”
+- *reply must mention:* “workbench”; must **not** mention: “basement”
+
+### TG10 · hard, lend-and-return
+
+- “the spare car key is in the kitchen junk drawer”
+- 🧹 tidy
+- “I gave the spare car key to my sister Ana”
+- 🧹 tidy
+- “Ana gave the spare car key back, it's on the hook by the door now”
+- 🧹 tidy
+- **ask:** “where's the spare car key”
+- *reply must mention:* “hook”; must **not** mention: “Ana”
+
 ## Set K — building a picture of the furniture
 
 Furniture described piece by piece, relative to each other. Then a question that needs the assembled picture (which shelf from the top, what's directly above, what's to the left). **🧹 tidy** means the tidy-up agent runs at that point. The reply must mention the expected phrases and must **not** mention the wrong ones.
@@ -201,6 +385,47 @@ Furniture described piece by piece, relative to each other. Then a question that
 - **ask:** “what's in the drawer below the sweaters”
 - *reply must mention:* “t-shirt / tshirt / tee”; must **not** mention: “socks”
 
+### TK03 · hard, row-from-top
+
+- “ok so the tv cabinet in the living room, um, on the left side there's a tall door with the board games behind it, and on the right there's two little drawers, the top one has the batteries and below that one has the remotes, and on top of the whole thing is the router”
+- 🧹 tidy
+- **ask:** “which drawer are the remotes in”
+- *the person knows:* “The TV cabinet: the top surface has the router. Below it, the left side is one tall cupboard (as tall as both drawers) with the board games; the right side has two small drawers stacked, the upper one with batteries and the lower one with remotes.”
+- *reply must mention:* “lower / bottom / second”
+
+### TK04 · hard, adjacency
+
+- “ok so the tv cabinet in the living room, um, on the left side there's a tall door with the board games behind it, and on the right there's two little drawers, the top one has the batteries and below that one has the remotes, and on top of the whole thing is the router”
+- 🧹 tidy
+- **ask:** “what's to the left of the batteries”
+- *the person knows:* “The TV cabinet: the top surface has the router. Below it, the left side is one tall cupboard (as tall as both drawers) with the board games; the right side has two small drawers stacked, the upper one with batteries and the lower one with remotes.”
+- *reply must mention:* “board games”
+
+### TK05 · hard, top
+
+- “ok so the tv cabinet in the living room, um, on the left side there's a tall door with the board games behind it, and on the right there's two little drawers, the top one has the batteries and below that one has the remotes, and on top of the whole thing is the router”
+- 🧹 tidy
+- **ask:** “what's on top of the tv cabinet”
+- *the person knows:* “The TV cabinet: the top surface has the router. Below it, the left side is one tall cupboard (as tall as both drawers) with the board games; the right side has two small drawers stacked, the upper one with batteries and the lower one with remotes.”
+- *reply must mention:* “router”
+
+### TK06 · hard, layout, must-ask
+
+- “the dresser in the guest room, the top drawer is socks, then the one below that has sweaters, then there's the next one over with scarves, and the bottom has blankets”
+- 🧹 tidy
+- *while describing:* **Must ask**
+- **ask:** “describe how the guest room dresser is laid out”
+- *the person knows:* “The guest room dresser has two columns of small drawers over one wide bottom drawer. Left column: socks in the top drawer, sweaters below it. Right column: scarves in the top drawer (the right one below it is empty). The wide bottom drawer runs across both columns and has blankets.”
+- *reply must mention:* “left” + “right” + “bottom / wide”
+
+### TK07 · hard, adjacency
+
+- “the dresser in the guest room, the top drawer is socks, then the one below that has sweaters, then there's the next one over with scarves, and the bottom has blankets”
+- 🧹 tidy
+- **ask:** “what's in the drawer to the right of the socks”
+- *the person knows:* “The guest room dresser has two columns of small drawers over one wide bottom drawer. Left column: socks in the top drawer, sweaters below it. Right column: scarves in the top drawer (the right one below it is empty). The wide bottom drawer runs across both columns and has blankets.”
+- *reply must mention:* “scarves”
+
 ## Set H — asking what a group of things is
 
 When someone names a group (“the power tools”), the agent should ask once whether to list them individually — unless they already listed them, said not to, or named one specific thing. A simulated person answers from *knows*.
@@ -210,6 +435,14 @@ When someone names a group (“the power tools”), the agent should ask once wh
 | TH01 | “the gardening tools are in the shed” | **Must ask** | The gardening tools are a trowel, pruning shears and gardening gloves. Yes, list them individually. | **trowel** → Shed<br>**pruning shears** → Shed<br>**gardening gloves / gloves** → Shed | list-them |
 | TH02 | “the art supplies are in the cabinet in the playroom” | **Must ask** | No need to list them; 'art supplies' is fine. | **art supplies** → Playroom › Cabinet | keep-grouped |
 | TH03 | “the trowel, the pruning shears and the gardening gloves are in the shed” | Shouldn't need to ask | — | **trowel** → Shed<br>**pruning shears** → Shed<br>**gardening gloves / gloves** → Shed | already-listed |
+| TH04 | “the camping cookware is in the garage cabinet” | **Must ask** | It's a camp stove, a pot set and a coffee percolator. Yes, list them. | **camp stove** → Garage › Cabinet<br>**pot set / pots** → Garage › Cabinet<br>**coffee percolator / percolator** → Garage › Cabinet | hard, list-them |
+| TH05 | “the cleaning supplies are under the kitchen sink” | **Must ask** | No need to list them; 'cleaning supplies' is fine. | **cleaning supplies** → Kitchen › Sink / Under the sink / Under the kitchen sink / Sink cabinet | hard, keep-grouped |
+| TH06 | “my art stuff is in the hall closet on the top shelf” | **Must ask** | The watercolors, the sketchbooks and the brushes. Please list them. | **watercolors / watercolor paints** → Hall closet › Top shelf<br>**sketchbooks** → Hall closet › Top shelf<br>**brushes / paint brushes** → Hall closet › Top shelf | hard, list-them |
+| TH07 | “the pool stuff is in the shed” | **Must ask** | Just call it pool stuff, no need to list it. | **pool stuff** → Shed | hard, keep-grouped |
+| TH08 | “the holiday decorations are in the attic” | **Must ask** | The wreath, the string lights and the ornaments. Yes, list them individually. | **wreath** → Attic<br>**string lights** → Attic<br>**ornaments** → Attic | hard, list-them |
+| TH09 | “the wreath, the string lights and the ornaments are in the attic” | Shouldn't need to ask | — | **wreath** → Attic<br>**string lights** → Attic<br>**ornaments** → Attic | hard, already-listed |
+| TH10 | *(earlier, tidied:* “the craft supplies are in the playroom closet, that's the glitter, the glue and the felt”*)*<br>“I moved the craft supplies to the dining room cabinet” | Shouldn't need to ask | — | **glitter** → Dining room › Cabinet<br>**glue** → Dining room › Cabinet<br>**felt** → Dining room › Cabinet | hard, move-listed-group |
+| TH11 | “the baby gear is in the nursery closet” | **Must ask** | Just 'baby gear' is fine. | **baby gear** → Nursery › Closet | hard, keep-grouped |
 
 ## Set I — telling same-named things apart
 
@@ -220,6 +453,12 @@ The house already holds two things with the same name. *Lookups* get credit for 
 | TI01 | scissors → Kitchen › Junk drawer<br>scissors → Office › Desk | “where are the scissors” | Either is fine | The ones in the office desk. | reply names both: “kitchen / junk drawer” and “office / desk”<br>— or asks, then names “office / desk” | lookup, scissors |
 | TI02 | scissors → Kitchen › Junk drawer<br>scissors → Office › Desk | “I put the scissors in the craft room” | **Must ask** | The ones that were in the kitchen junk drawer. | **scissors** → Craft room<br>**scissors** → Office › Desk<br>count: scissors × 2 | change, scissors, ambiguous |
 | TI03 | scissors → Kitchen › Junk drawer<br>scissors → Office › Desk | “I moved the office scissors to the craft room” | Shouldn't need to ask | — | **scissors** → Craft room<br>**scissors** → Kitchen › Junk drawer<br>count: scissors × 2 | change, scissors, control |
+| TI04 | umbrella → Entryway › Closet<br>umbrella → Car › Trunk | “where's the umbrella” | Either is fine | The one in the car. | reply names both: “entryway / closet” and “car / trunk”<br>— or asks, then names “car / trunk” | hard, lookup, umbrellas |
+| TI05 | umbrella → Entryway › Closet<br>umbrella → Car › Trunk | “I put the umbrella in the mudroom” | **Must ask** | The one from the entryway closet. | **umbrella** → Mudroom<br>**umbrella** → Car › Trunk<br>count: umbrella × 2 | hard, change, umbrellas, ambiguous |
+| TI06 | umbrella → Entryway › Closet<br>umbrella → Car › Trunk | “I moved the car umbrella to the mudroom” | Shouldn't need to ask | — | **umbrella** → Mudroom<br>**umbrella** → Entryway › Closet<br>count: umbrella × 2 | hard, change, umbrellas, control |
+| TI07 | tape measure → Garage › Workbench<br>tape measure → Kitchen › Junk drawer | “where's the tape measure” | Either is fine | The kitchen one. | reply names both: “garage / workbench” and “kitchen / junk drawer”<br>— or asks, then names “kitchen / junk drawer” | hard, lookup, tape |
+| TI08 | tape measure → Garage › Workbench<br>tape measure → Kitchen › Junk drawer | “I moved the tape measure to the hall closet” | **Must ask** | The one from the garage workbench. | **tape measure** → Hall closet<br>**tape measure** → Kitchen › Junk drawer<br>count: tape measure × 2 | hard, change, tape, ambiguous |
+| TI09 | tape measure → Garage › Workbench<br>tape measure → Kitchen › Junk drawer | “the kitchen tape measure is in the hall closet now” | Shouldn't need to ask | — | **tape measure** → Hall closet<br>**tape measure** → Garage › Workbench<br>count: tape measure × 2 | hard, change, tape, control |
 
 ## Set J — position words in what people say
 
@@ -227,3 +466,9 @@ People say “the top box” meaning whichever box is on top now — but a thing
 
 | # | Already in the house | What's said | Asking | The person knows | Expected | Tags |
 |---|---|---|---|---|---|---|
+| TJ01 | old photos → Basement › Closet › Box of old photos [top of the stack]<br>books → Basement › Closet › Box of books [middle of the stack]<br>winter clothes → Basement › Closet › Box of winter clothes [bottom of the stack] | “what's in the bottom box in the basement closet” | Either is fine | — | reply names both: “winter clothes”<br>— or asks, then names “winter clothes” | hard, lookup, resolve-position |
+| TJ02 | old photos → Basement › Closet › Box of old photos [top of the stack]<br>books → Basement › Closet › Box of books [middle of the stack]<br>winter clothes → Basement › Closet › Box of winter clothes [bottom of the stack] | “I put the scarves in the bottom box in the basement closet” | Shouldn't need to ask | — | **scarves** → Basement › Closet › Box of winter clothes<br>count: scarves × 1<br>new places: 0 | hard, change, resolve-position |
+| TJ03 | old photos → Basement › Closet › Box of old photos [top of the stack]<br>books → Basement › Closet › Box of books [middle of the stack]<br>winter clothes → Basement › Closet › Box of winter clothes [bottom of the stack]<br>ski boots → Car › Top box | “the tire chains are in the top box” | **Must ask** | The roof box on the car. | **tire chains** → Car › Top box / Roof box / Cargo box<br>count: tire chains × 1<br>new places: 0 | hard, change, name-vs-position |
+| TJ04 | old photos → Basement › Closet › Box of old photos [top of the stack]<br>books → Basement › Closet › Box of books [middle of the stack]<br>winter clothes → Basement › Closet › Box of winter clothes [bottom of the stack]<br>ski boots → Car › Top box | “the photo frames are in the top box” | **Must ask** | The box on top of the stack in the basement closet. | **photo frames** → Basement › Closet › Box of old photos<br>count: photo frames × 1<br>new places: 0 | hard, change, name-vs-position |
+| TJ05 | old photos → Basement › Closet › Box of old photos<br>books → Basement › Closet › Box of books<br>winter clothes → Basement › Closet › Box of winter clothes | “the old letters are in the middle box in the basement closet” | **Must ask** | The box with the books is the middle one. | **old letters** → Basement › Closet › Box of books<br>count: old letters × 1<br>new places: 0 | hard, change, unknown-positions |
+| TJ06 | old photos → Basement › Closet › Box of old photos [top of the stack]<br>books → Basement › Closet › Box of books [middle of the stack]<br>winter clothes → Basement › Closet › Box of winter clothes [bottom of the stack]<br>ski boots → Car › Top box | “what's in the top box” | Either is fine | The one in the basement closet stack. | reply names both: “photos” and “ski boots”<br>— or asks, then names “photos” | hard, lookup, name-vs-position |

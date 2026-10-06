@@ -14,7 +14,7 @@ that. Rules (see README.md):
 Fresh items and wording throughout, but the same case types (and graders) as
 dev, so the two scores are comparable. Ids are T + the dev set letter.
 """
-from build_cases import TIDY, dup_change, dup_lookup, group, item, journey, seed, update
+from build_cases import CAR_TOP_BOX, CLOSET, PHOTOS_BOX, TIDY, dup_change, dup_lookup, group, item, journey, seed, stack_house, update
 
 # ── TA: empty house ──
 EMPTY = [
@@ -131,6 +131,129 @@ SPATIAL = [
 ]
 
 
+# ══ HARD held-out cases (suite "test-hard") ═══════════════════════════════
+# The capability suite's kind of difficulty, in its proportions: stacks,
+# look-alike units (with terse answers), groups, position words, same-named
+# things, journeys through changes, and furniture described in a rambling way.
+
+H_S2 = "under the stairs there are two boxes stacked, the top one has the board games and the bottom one has puzzles"
+H_S3 = "in the attic there's a stack of three plastic tubs, the top one has the halloween decorations, the middle one has old toys, and the bottom one has baby clothes"
+H_S4 = "in the laundry room there are four crates stacked up, from the top: the white one has rags, the grey one has light bulbs, the black one has paint brushes and the brown one has sandpaper"
+HARD_STACKS = [
+ update([H_S2], "I swapped them", "no", {"stack": ["puzzles", "board games"]}, tags=["two-box", "determined"]),
+ update([H_S2], "the puzzles box is on top now", "no", {"stack": ["puzzles", "board games"]}, tags=["two-box", "determined"]),
+ update([H_S3], "I flipped the whole stack", "no", {"stack": ["baby clothes", "old toys", "halloween decorations"]}, tags=["three-box", "determined"]),
+ update([H_S3], "I moved the halloween tub to the bottom and the other two moved up one", "no", {"stack": ["old toys", "baby clothes", "halloween decorations"]}, tags=["three-box", "determined"]),
+ update([H_S3], "the baby clothes tub is on top now", "must", {"stack": ["baby clothes", "old toys", "halloween decorations"]},
+        knows="Old toys are in the middle and the halloween decorations are on the bottom.", tags=["three-box", "ambiguous"]),
+ update([H_S3], "the toys tub is on top now", "must", {"stack": ["old toys", "halloween decorations", "baby clothes"]},
+        knows="The halloween decorations are in the middle and the baby clothes are still on the bottom.", tags=["three-box", "ambiguous"]),
+ update([H_S3], "I restacked the tubs in the attic", "must", {"stack": ["baby clothes", "halloween decorations", "old toys"]},
+        knows="Baby clothes on top, then the halloween decorations, then old toys on the bottom.", tags=["three-box", "ambiguous"]),
+ update([H_S3], "I took the bottom tub out to grab some baby clothes and put it back on top", "either", {"stack": ["baby clothes", "halloween decorations", "old toys"]},
+        knows="Baby clothes on top, halloween decorations in the middle, old toys on the bottom.", tags=["three-box", "inferable"]),
+ update([H_S4], "I moved the brown crate to the top and left the rest in the same order", "no", {"stack": ["sandpaper", "rags", "light bulbs", "paint brushes"]}, tags=["four-box", "determined"]),
+ update([H_S4], "I swapped the bottom two crates", "no", {"stack": ["rags", "light bulbs", "sandpaper", "paint brushes"]}, tags=["four-box", "determined"]),
+ update([H_S4], "I reversed the order of the crates", "no", {"stack": ["sandpaper", "paint brushes", "light bulbs", "rags"]}, tags=["four-box", "determined"]),
+ update([H_S4], "the black crate is on top now and the white one is on the bottom", "must", {"stack": ["paint brushes", "light bulbs", "sandpaper", "rags"]},
+        knows="The grey crate is second and the brown one is third.", tags=["four-box", "ambiguous"]),
+]
+
+def _terse(c):
+    return dict(c, person="terse", tags=c["tags"] + ["terse-person", "needs-follow-up"])
+_JARS = update(["the shelving unit in the basement has the canning jars on the top shelf"], "the right one has the tool boxes", "must",
+        {"units": [{"holding": "canning jars", "position": "left"}, {"holding": "tool boxes", "position": "right"}], "different_unit": [["canning jars", "tool boxes"]]},
+        knows="There are two shelving units in the basement. The canning jars are on the left unit. The tool boxes are on the right unit, which is a different unit.", tags=["ambiguous", "answer-different"])
+_SEEDS = update(["in the shed there's a wire rack with the seed packets on it"], "the middle wire rack has the bird feeders", "must",
+        {"units": [{"holding": "seed packets", "position": "left"}, {"holding": "bird feeders", "position": "middle"}], "different_unit": [["seed packets", "bird feeders"]]},
+        knows="There are three wire racks in the shed. The seed packets are on the left rack. The bird feeders are on the middle rack, which is a different rack.", tags=["ambiguous", "answer-different"])
+_BLEACH = update(["the cabinet in the laundry room has the bleach"], "the left cabinet has the dryer sheets", "must",
+        {"units": [{"holding": "bleach", "position": "right"}, {"holding": "dryer sheets", "position": "left"}], "different_unit": [["bleach", "dryer sheets"]]},
+        knows="There are two cabinets in the laundry room. The bleach is in the right cabinet. The dryer sheets are in the left cabinet, which is a different cabinet.", tags=["ambiguous", "answer-different"])
+HARD_SHELVING = [
+ _JARS, _terse(_JARS), _SEEDS, _terse(_SEEDS), _terse(_BLEACH),
+ update(["the shelving unit in the garage has the car wax on it"], "the left shelving unit has the motor oil", "must",
+        {"units": [{"holding": "car wax", "position": "left"}, {"holding": "motor oil", "position": "left"}], "same_unit": [["car wax", "motor oil"]]},
+        knows="There are two shelving units in the garage. The car wax and the motor oil are both on the left unit.", tags=["ambiguous", "answer-same"]),
+ update(["the bookcase in the den has the cookbooks", "I bought two more bookcases and put them to the left of the first one"], "the novels are on the leftmost one", "no",
+        {"units": [{"holding": "cookbooks", "position": "right"}, {"holding": "novels", "position": "left"}], "different_unit": [["cookbooks", "novels"]]}, tags=["inferable"]),
+ update(["in the pantry there's a metal shelf with the cereal"], "there are two metal shelves in the pantry actually, the cereal is on the one by the door and the snacks are on the one by the window", "no",
+        {"units": [{"holding": "cereal", "position": "by the door|door"}, {"holding": "snacks", "position": "by the window|window"}], "different_unit": [["cereal", "snacks"]]}, tags=["explicit-link", "relative-marker"]),
+]
+
+GC = ["Garage", "Cabinet"]
+HC_TOP = ["Hall closet", "Top shelf"]
+ATTIC = ["Attic"]
+HARD_GROUPS = [
+ group("the camping cookware is in the garage cabinet", "must", [item("camp stove", GC), item("pot set|pots", GC), item("coffee percolator|percolator", GC)],
+       knows="It's a camp stove, a pot set and a coffee percolator. Yes, list them.", tags=["list-them"]),
+ group("the cleaning supplies are under the kitchen sink", "must", [item("cleaning supplies", ["Kitchen", "Sink|Under the sink|Under the kitchen sink|Sink cabinet"])],
+       knows="No need to list them; 'cleaning supplies' is fine.", tags=["keep-grouped"]),
+ group("my art stuff is in the hall closet on the top shelf", "must", [item("watercolors|watercolor paints", HC_TOP), item("sketchbooks", HC_TOP), item("brushes|paint brushes", HC_TOP)],
+       knows="The watercolors, the sketchbooks and the brushes. Please list them.", tags=["list-them"]),
+ group("the pool stuff is in the shed", "must", [item("pool stuff", ["Shed"])], knows="Just call it pool stuff, no need to list it.", tags=["keep-grouped"]),
+ group("the holiday decorations are in the attic", "must", [item("wreath", ATTIC), item("string lights", ATTIC), item("ornaments", ATTIC)],
+       knows="The wreath, the string lights and the ornaments. Yes, list them individually.", tags=["list-them"]),
+ group("the wreath, the string lights and the ornaments are in the attic", "no", [item("wreath", ATTIC), item("string lights", ATTIC), item("ornaments", ATTIC)], tags=["already-listed"]),
+ group("I moved the craft supplies to the dining room cabinet", "no", [item("glitter", ["Dining room", "Cabinet"]), item("glue", ["Dining room", "Cabinet"]), item("felt", ["Dining room", "Cabinet"])],
+       setup=["the craft supplies are in the playroom closet, that's the glitter, the glue and the felt"], tags=["move-listed-group"]),
+ group("the baby gear is in the nursery closet", "must", [item("baby gear", ["Nursery", "Closet"])], knows="Just 'baby gear' is fine.", tags=["keep-grouped"]),
+]
+
+HARD_POSITIONAL = [
+ dup_lookup(stack_house(), "what's in the bottom box in the basement closet", [["winter clothes"]], ["winter clothes"], None, tags=["resolve-position"]),
+ dup_change(stack_house(), "I put the scarves in the bottom box in the basement closet", "no",
+            [item("scarves", CLOSET + ["Box of winter clothes"])], {"scarves": 1}, new_locations=0, tags=["resolve-position"]),
+ dup_change(stack_house(with_car_box=True), "the tire chains are in the top box", "must",
+            [item("tire chains", CAR_TOP_BOX)], {"tire chains": 1}, knows="The roof box on the car.", new_locations=0, tags=["name-vs-position"]),
+ dup_change(stack_house(with_car_box=True), "the photo frames are in the top box", "must",
+            [item("photo frames", PHOTOS_BOX)], {"photo frames": 1}, knows="The box on top of the stack in the basement closet.", new_locations=0, tags=["name-vs-position"]),
+ dup_change(stack_house(with_positions=False), "the old letters are in the middle box in the basement closet", "must",
+            [item("old letters", CLOSET + ["Box of books"])], {"old letters": 1}, knows="The box with the books is the middle one.", new_locations=0, tags=["unknown-positions"]),
+ dup_lookup(stack_house(with_car_box=True), "what's in the top box", [["photos"], ["ski boots"]], ["photos"], "The one in the basement closet stack.", tags=["name-vs-position"]),
+]
+
+UMB = seed(("umbrella", ["Entryway", "Closet"]), ("umbrella", ["Car", "Trunk"]))
+TAPE = seed(("tape measure", ["Garage", "Workbench"]), ("tape measure", ["Kitchen", "Junk drawer"]))
+HARD_DUPLICATES = [
+ dup_lookup(UMB, "where's the umbrella", [["entryway|closet"], ["car|trunk"]], ["car|trunk"], "The one in the car.", tags=["umbrellas"]),
+ dup_change(UMB, "I put the umbrella in the mudroom", "must", [item("umbrella", ["Mudroom"]), item("umbrella", ["Car", "Trunk"])], {"umbrella": 2},
+            knows="The one from the entryway closet.", tags=["umbrellas", "ambiguous"]),
+ dup_change(UMB, "I moved the car umbrella to the mudroom", "no", [item("umbrella", ["Mudroom"]), item("umbrella", ["Entryway", "Closet"])], {"umbrella": 2}, tags=["umbrellas", "control"]),
+ dup_lookup(TAPE, "where's the tape measure", [["garage|workbench"], ["kitchen|junk drawer"]], ["kitchen|junk drawer"], "The kitchen one.", tags=["tape"]),
+ dup_change(TAPE, "I moved the tape measure to the hall closet", "must", [item("tape measure", ["Hall closet"]), item("tape measure", ["Kitchen", "Junk drawer"])], {"tape measure": 2},
+            knows="The one from the garage workbench.", tags=["tape", "ambiguous"]),
+ dup_change(TAPE, "the kitchen tape measure is in the hall closet now", "no", [item("tape measure", ["Hall closet"]), item("tape measure", ["Garage", "Workbench"])], {"tape measure": 2}, tags=["tape", "control"]),
+]
+
+HARD_JOURNEYS = [
+ journey([H_S3, TIDY, "I flipped the whole stack", TIDY], "which tub are the baby clothes in", ["top"], tags=["stack"]),
+ journey([H_S4, TIDY, "I moved the brown crate to the top and left the rest in the same order", TIDY], "where are the light bulbs",
+         ["grey|gray", "third|3rd|second from the bottom"], tags=["stack"]),
+ journey(["the shelving unit in the basement has the canning jars on the top shelf", TIDY, "the right shelving unit has the tool boxes", TIDY], "where are the canning jars", ["left"],
+         knows="There are two shelving units in the basement. The canning jars are on the left one; the tool boxes are on the right one.", tags=["look-alike"]),
+ journey(["the drill is in the red toolbox in the garage", TIDY, "I took the red toolbox down to the basement", TIDY, "actually I left the drill out on the workbench in the garage"],
+         "where's the drill", ["workbench"], ["basement"], tags=["correction", "not-yet-tidied"]),
+ journey(["the spare car key is in the kitchen junk drawer", TIDY, "I gave the spare car key to my sister Ana", TIDY, "Ana gave the spare car key back, it's on the hook by the door now", TIDY],
+         "where's the spare car key", ["hook"], ["Ana"], tags=["lend-and-return"]),
+]
+
+TV = ("ok so the tv cabinet in the living room, um, on the left side there's a tall door with the board games behind it, "
+      "and on the right there's two little drawers, the top one has the batteries and below that one has the remotes, and on top of the whole thing is the router")
+TV_KNOWS = ("The TV cabinet: the top surface has the router. Below it, the left side is one tall cupboard (as tall as both drawers) with the board games; "
+            "the right side has two small drawers stacked, the upper one with batteries and the lower one with remotes.")
+GUEST = ("the dresser in the guest room, the top drawer is socks, then the one below that has sweaters, then there's the next one over with scarves, and the bottom has blankets")
+GUEST_KNOWS = ("The guest room dresser has two columns of small drawers over one wide bottom drawer. Left column: socks in the top drawer, sweaters below it. "
+               "Right column: scarves in the top drawer (the right one below it is empty). The wide bottom drawer runs across both columns and has blankets.")
+HARD_SPATIAL = [
+ journey([TV, TIDY], "which drawer are the remotes in", ["lower|bottom|second"], knows=TV_KNOWS, tags=["row-from-top"]),
+ journey([TV, TIDY], "what's to the left of the batteries", ["board games"], knows=TV_KNOWS, tags=["adjacency"]),
+ journey([TV, TIDY], "what's on top of the tv cabinet", ["router"], knows=TV_KNOWS, tags=["top"]),
+ dict(journey([GUEST, TIDY], "describe how the guest room dresser is laid out", ["left", "right", "bottom|wide"], knows=GUEST_KNOWS, tags=["layout", "must-ask"]), ask="must"),
+ journey([GUEST, TIDY], "what's in the drawer to the right of the socks", ["scarves"], knows=GUEST_KNOWS, tags=["adjacency"]),
+]
+
+
 def test_cases():
     out = []
     def add(prefix, set_name, i, c):
@@ -153,4 +276,15 @@ def test_cases():
         add("I", "duplicates", i, {**c, "tags": [c["mode"]] + c["tags"]})
     for i, c in enumerate(SPATIAL, 1):
         add("K", "spatial", i, c)
+    # The hard cases continue each set's numbering and carry the "hard" tag.
+    def add_hard(prefix, set_name, cs, start):
+        for i, c in enumerate(cs, start):
+            add(prefix, set_name, i, {**c, "tags": ["hard"] + c.get("tags", [])})
+    add_hard("D", "stack", [{**{k: c[k] for k in ("setup", "update", "ask", "knows", "tags")}, "expect": dict(c["expect"], items_keep_their_box=True)} for c in HARD_STACKS], len(STACKS) + 1)
+    add_hard("C", "shelving", [{k: c[k] for k in ("setup", "update", "ask", "knows", "expect", "tags") if k in c} | ({"person": c["person"]} if c.get("person") else {}) for c in HARD_SHELVING], len(SHELVING) + 1)
+    add_hard("H", "groups", HARD_GROUPS, len(GROUPS) + 1)
+    add_hard("J", "positional", [{**c, "tags": [c["mode"]] + c["tags"]} for c in HARD_POSITIONAL], 1)
+    add_hard("I", "duplicates", [{**c, "tags": [c["mode"]] + c["tags"]} for c in HARD_DUPLICATES], len(DUPLICATES) + 1)
+    add_hard("G", "journey", HARD_JOURNEYS, len(JOURNEYS) + 1)
+    add_hard("K", "spatial", HARD_SPATIAL, len(SPATIAL) + 1)
     return out

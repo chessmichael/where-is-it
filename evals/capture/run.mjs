@@ -75,7 +75,7 @@ if (suitesText) {
     // Every dev case. Robustness copies (--suite robustness) and the held-out test set (--suite test) run only when asked for.
     env.EVAL_ONLY = JSON.parse(readFileSync('evals/capture/cases.json', 'utf8')).cases.filter((c) => !c.split).map((c) => c.id).join(',')
   } else if (suite) {
-    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, robustness, test, all`)
+    if (!suites[suite]) throw new Error(`--suite must be one of: regression, capability, robustness, test, test-hard, all`)
     env.EVAL_ONLY = suites[suite].join(',')
   }
 } else if (suite && suite !== 'all') throw new Error('no evals/capture/suites.json yet — run make_suites.py')
