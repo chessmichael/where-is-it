@@ -162,7 +162,7 @@ td.none{color:var(--muted)}
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
 <h2>Each model across versions</h2>
-<p class="sub">The same 50 capability cases for every point, so lines are comparable: a line is one model running each version of the agent’s code (prompts and tools as they were at that version). Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran.</p>
+<p class="sub">The same 50 capability cases for every point, so lines are comparable: a line is one model running each version of the agent’s code (prompts and tools as they were at that version). Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
 <div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg></div>
 <div class="wrap"><table id="mvTable"></table></div>
 <h2>Head to head</h2>
