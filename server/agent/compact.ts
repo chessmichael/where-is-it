@@ -357,44 +357,21 @@ const finish: AgentTool<RunState> = {
   },
   endsTurn: true,
   run: (input, state) => {
-    // Once per run, before finishing: the house check, and a review of what changed against what was said (v9).
+    // Once per run, before finishing: anything touched that a person couldn't tell apart or find.
+    // (v9 also showed a review of every change here; on gpt-5.4-mini it cost +67% for no measurable gain, so v11 dropped it.)
     if (!state.checked) {
       state.checked = true
       const findings = houseCheck(state.db, state.startedAt)
-      const review = reviewOfChanges(state)
-      if (findings.length || review)
+      if (findings.length)
         throw new Error(
-          'Not finished yet — check your work first.\n' +
-            (findings.length ? `The house check found:\n- ${findings.join('\n- ')}\n` : '') +
-            (review ? `${review}\n` : '') +
-            'Fix anything wrong (update_location / upsert_location / upsert_item / reorder_stack) or ask the person (ask_user) and leave those entries pending. Then call finish again; it will be accepted.',
+          `Not finished yet — the house check found:\n- ${findings.join('\n- ')}\n` +
+            'Fix each one (update_location / upsert_location / upsert_item / reorder_stack) or ask the person (ask_user) and leave the entries involved pending. Then call finish again; it will be accepted.',
         )
     }
     const filed = textList(input.compacted_inbox_ids).filter((id) => state.pendingIds.has(id))
     state.finished = { ids: filed, summary: String(input.summary) }
     return { compacted: filed.length }
   },
-}
-
-/**
- * What this run changed, set beside what was said, for the agent to compare before finishing:
- * every item and place touched, with its full address and position. Null when nothing changed.
- */
-function reviewOfChanges(state: RunState): string | null {
-  const { db, startedAt } = state
-  const touched = (r: { created_at: string; updated_at: string }) => r.created_at >= startedAt || r.updated_at >= startedAt
-  const places = db.locations.all().filter(touched)
-  const items = db.items.all().filter((it) => touched(it) && !it.place_id)
-  if (!places.length && !items.length) return null
-  const said = db.inbox.list().filter((e) => state.pendingIds.has(e.id)).map((e) => `- [${e.id}] "${e.said}"`)
-  return [
-    'Review — what was said:',
-    ...said,
-    'What the house now records for what you touched:',
-    ...items.map((it) => `- item ${it.name}${it.quantity ? ` ×${it.quantity}` : ''}: ${db.locations.describedPath(it.location_id) ?? it.location_note ?? 'no place'}`),
-    ...places.map((l) => `- place ${db.locations.describedPath(l.id)}${l.grid ? ` [${l.grid}]` : ''}`),
-    'Does every item sit where the words put it (inside its box, on the right shelf)? Does every position and order match? Is anything said missing?',
-  ].join('\n')
 }
 
 const TOOLS = [upsertLocation, updateLocation, moveLocation, fileStack, reorderStack, upsertItem, relate, mergeItems, mergeLocations, getItem, searchHouse, showLayoutTool<RunState>(), askUser, finish]
