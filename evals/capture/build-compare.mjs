@@ -43,15 +43,50 @@ const cases = JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'cases.json
 const suites = existsSync(join(ROOT, 'evals', 'capture', 'suites.json')) ? JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'suites.json'), 'utf8')) : null
 const suiteOf = (id) => (suites?.test?.includes(id) ? 'test' : suites?.robustness?.includes(id) ? 'robustness' : suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : '')
 
-// results[case][variant] = { passes, reps } — passes/reps over that case's runs
+// Why a run failed, from the grader's explanation. A run can have several causes.
+// failure-labels.json overrides by hand ("v6/C11/0": "simulated person") for the
+// causes no rule can see: the simulated person answered wrongly, or the grader was wrong.
+const CAUSES = [
+  ['Guessed instead of asking', /should have asked/],
+  ['Filed in the wrong place', /filed at /],
+  ['Item not filed', /no item/],
+  ['Duplicate or extra places', /item\(s\) named .* expected|created \d+ new place/],
+  ['Position not recorded', /isn.t marked/],
+  ['Look-alike units mixed up', /should be on (different|the same) unit/],
+  ['Stack order or box contents wrong', /reads as position|moved into a different box|isn.t in a box/],
+  ['Reply left something out', /reply doesn.t mention/],
+  ['Reply gave a stale place', /reply mentions stale/],
+]
+const labelsPath = join(ROOT, 'evals', 'capture', 'failure-labels.json')
+const labels = existsSync(labelsPath) ? JSON.parse(readFileSync(labelsPath, 'utf8')) : {}
+function causesOf(variant, r) {
+  const label = labels[`${variant}/${r.prompt_id}/${r.rep ?? 0}`]
+  if (label) return [label]
+  const why = String(r.explanation?.pass ?? '')
+  const found = CAUSES.filter(([, re]) => re.test(why)).map(([name]) => name)
+  return found.length ? found : ['Other']
+}
+
+// results[case][variant] = { passes, reps, causes } — over that case's runs; causes counts failing runs by cause
 const results = {}
 for (const v of variants) {
   for (const line of readFileSync(join(FLOW, v, 'results.jsonl'), 'utf8').split('\n')) {
     if (!line.trim()) continue
     const r = JSON.parse(line)
-    const cell = ((results[r.prompt_id] ??= {})[v] ??= { passes: 0, reps: 0 })
+    const cell = ((results[r.prompt_id] ??= {})[v] ??= { passes: 0, reps: 0, causes: {} })
     cell.reps++
     if (r.grade?.pass === 1) cell.passes++
+    else for (const cause of causesOf(v, r)) cell.causes[cause] = (cell.causes[cause] ?? 0) + 1
+  }
+  // Runs that crashed (API or harness errors) never reach results.jsonl; count the latest error per case/rep that has no result.
+  const errPath = join(FLOW, v, 'errors.jsonl')
+  if (existsSync(errPath)) {
+    const crashed = new Map()
+    for (const line of readFileSync(errPath, 'utf8').split('\n')) if (line.trim()) { const e = JSON.parse(line); crashed.set(`${e.prompt_id}/${e.rep}`, e) }
+    for (const e of crashed.values()) {
+      const cell = results[e.prompt_id]?.[v]
+      if (!cell) ((results[e.prompt_id] ??= {})[v] ??= { passes: 0, reps: 0, causes: {} }).crashed = ((results[e.prompt_id][v].crashed ?? 0) + 1)
+    }
   }
 }
 
@@ -105,6 +140,7 @@ td.text{white-space:normal;min-width:260px;color:var(--muted);font-size:14px}
 .mark.up{color:var(--up)}.mark.down{color:var(--down)}
 a{color:inherit}
 tr.total td{font-weight:600;border-top:2px solid var(--line)}
+td.none{color:var(--muted)}
 .legend{font-size:13px;color:var(--muted);margin:8px 0 0}
 .bar{height:6px;width:120px;max-width:100%;background:var(--line);border-radius:3px;overflow:hidden;margin:4px 0 2px}
 .bar div{height:100%;background:var(--up);border-radius:3px}
@@ -126,6 +162,9 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
 <h2>Robustness gap</h2>
 <p class="sub">Each robustness case is a dev case said worse — speech-to-text noise, filler words, unrelated chit-chat — with the same facts. The gap is how much the pass rate drops from the clean case to its noisy copy, over pairs where both were run. “Broken by noise” counts clean cases that passed every run while their noisy copy failed at least once.</p>
 <div class="wrap"><table id="robust"></table></div>
+<h2>Why cases fail</h2>
+<p class="sub">Failing runs sorted by cause, from the grader’s explanation (a run can count under more than one). Read this before changing a prompt: the biggest row is usually the next thing to fix — and rows that are really the simulated person’s or the grader’s fault belong in <code>evals/capture/failure-labels.json</code>, not in a prompt change.</p>
+<div class="wrap"><table id="causes"></table></div>
 <h2>Reliability</h2>
 <p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
 <div class="wrap"><table id="reliability"></table></div>
@@ -247,6 +286,27 @@ function renderRobustness() {
   if (!any) { var none = el('tr'); none.appendChild(el('td', '', 'No version has run the robustness suite yet (npm run eval:capture -- --variant vN --suite robustness).')); body.appendChild(none); }
   table.appendChild(body);
 }
+function renderCauses() {
+  var table = document.getElementById('causes'); table.textContent = '';
+  header(table, 'Cause', null, true);
+  var cs = visibleCases(), totals = {}, names = [];
+  DATA.versions.forEach(function (v) {
+    cs.forEach(function (c) {
+      var r = c.results[v.id]; if (!r) return;
+      Object.keys(r.causes || {}).forEach(function (k) { if (names.indexOf(k) < 0) names.push(k); (totals[k] = totals[k] || {})[v.id] = ((totals[k] || {})[v.id] || 0) + r.causes[k]; });
+      if (r.crashed) { var k = 'Run crashed (API or harness)'; if (names.indexOf(k) < 0) names.push(k); (totals[k] = totals[k] || {})[v.id] = ((totals[k] || {})[v.id] || 0) + r.crashed; }
+    });
+  });
+  var body = el('tbody');
+  if (!names.length) { var none = el('tr'); none.appendChild(el('td', '', 'No failures under this filter.')); body.appendChild(none); }
+  names.sort(function (a, b) { var sa = 0, sb = 0; DATA.versions.forEach(function (v) { sa += (totals[a][v.id] || 0); sb += (totals[b][v.id] || 0); }); return sb - sa; });
+  names.forEach(function (k) {
+    var tr = el('tr'); tr.appendChild(el('td', '', k));
+    DATA.versions.forEach(function (v) { var n = totals[k][v.id]; tr.appendChild(el('td', n ? 'rate' : 'none', n ? String(n) : '·')); });
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+}
 function renderReliability() {
   var table = document.getElementById('reliability'); table.textContent = '';
   var head = el('tr'); ['Version', 'pass@1 (all cases)', '95% interval', 'pass^3', 'Cases with 3+ runs'].forEach(function (h) { head.appendChild(el('th', '', h)); });
@@ -267,9 +327,9 @@ function renderReliability() {
   });
   table.appendChild(body);
 }
-function header(table, first, extra) {
+function header(table, first, extra, compact) {
   var tr = el('tr'); tr.appendChild(el('th', '', first)); if (extra) tr.appendChild(el('th', '', extra));
-  DATA.versions.forEach(function (v) { var th = el('th', '', v.id); th.appendChild(el('span', 'commit', (v.commit ? v.commit + ' · ' : '') + v.subject)); tr.appendChild(th); });
+  DATA.versions.forEach(function (v) { var th = el('th', '', v.id); if (compact) th.title = (v.commit ? v.commit + ' · ' : '') + v.subject; else th.appendChild(el('span', 'commit', (v.commit ? v.commit + ' · ' : '') + v.subject)); tr.appendChild(th); });
   var thead = el('thead'); thead.appendChild(tr); table.appendChild(thead);
 }
 function deltaBadge(prev, cur) {
@@ -332,7 +392,7 @@ function renderCases() {
   table.appendChild(body);
 }
 function render() {
-  renderPairs(); renderRobustness(); renderReliability(); renderSets();
+  renderPairs(); renderRobustness(); renderCauses(); renderReliability(); renderSets();
   var held = suite === 'test';
   document.getElementById('heldNote').hidden = !held;
   document.getElementById('byCaseWrap').hidden = held;
