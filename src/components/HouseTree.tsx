@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
+import { shownDetails } from '../lib/details'
 import LayoutDrawing from './LayoutDrawing'
 
 // Read-only view of the compacted house (layer 2), plus what's still waiting
@@ -9,7 +10,7 @@ function ItemRow({ item }: { item: HouseItem & { location_note?: string } }) {
   const extra = [
     item.quantity && item.quantity > 1 ? `×${item.quantity}` : '',
     item.status !== 'present' ? `${item.status}${item.lent_to ? ` to ${item.lent_to}` : ''}` : '',
-    ...(item.details ?? []).map((d) => d.value),
+    ...shownDetails(item.details),
   ].filter(Boolean)
   return (
     <li className="tree-item">
@@ -41,7 +42,7 @@ function loadOpen(): Set<string> {
   }
 }
 
-function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; open: Set<string>; toggle: (id: string) => void }) {
+export function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; open: Set<string>; toggle: (id: string) => void }) {
   const isOpen = open.has(node.id)
   const items = visibleItems(node)
   const count = countInside(node)
@@ -57,8 +58,11 @@ function Place({ node, depth, open, toggle }: { node: HouseNode; depth: number; 
           onClick={() => toggle(node.id)}
         >
           <span className={`chevron${hasInside ? ' has' : ''}${isOpen ? ' open' : ''}`} aria-hidden />
-          <span className="place-name">{node.name}</span>
-          {node.position && <span className="tree-node-type position">{node.position}</span>}
+          {/* Name with its position underneath, so a long position wraps instead of widening the page. */}
+          <span className="place-label">
+            <span className="place-name">{node.name}</span>
+            {node.position && <span className="place-position">{node.position}</span>}
+          </span>
           <span className="place-count">{count === 0 ? 'empty' : `${count} ${count === 1 ? 'thing' : 'things'}`}</span>
         </button>
       </Heading>
