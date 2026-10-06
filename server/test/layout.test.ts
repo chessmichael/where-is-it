@@ -240,3 +240,18 @@ describe('house check — no room (v13)', () => {
     expect(findings[0]).toMatch(/“Nightstand”.*top level as if it were a room/)
   })
 })
+
+describe('position nudge during a conversation (v14)', () => {
+  it('nudges when a position-picked unit may be an existing unit with no position', async () => {
+    const { positionNudge } = await import('../db/check')
+    const { db } = memoryDb()
+    db.locations.ensurePath([{ name: 'Basement' }, { name: 'Shelving unit', kind: 'furniture' }])
+    expect(positionNudge(db, [['Basement', 'Middle shelving unit']])).toMatch(/“Middle shelving unit”.*already has “Shelving unit”/)
+    // Named exactly as said, or the look-alike already has a position: no question needed.
+    db.locations.ensurePath([{ name: 'Basement' }, { name: 'Middle shelving unit', kind: 'furniture' }])
+    expect(positionNudge(db, [['Basement', 'Middle shelving unit']])).toBeNull()
+    db.locations.update('basement/shelving-unit', { position: 'left' })
+    expect(positionNudge(db, [['Basement', 'Right shelving unit']])).toBeNull()
+    expect(positionNudge(db, [['Garage', 'Left bin']])).toBeNull()
+  })
+})

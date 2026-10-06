@@ -83,3 +83,27 @@ function headNoun(name: string): string {
   const last = words.at(-1) ?? ''
   return ['unit', 'units', 'rack', 'case', 'chest', 'stand', 'bin', 'box', 'tote', 'cabinet'].includes(last) && words.length > 1 ? words.slice(-2).join(' ') : last
 }
+
+/**
+ * During a conversation turn (v14): something was filed under a place picked out by position — "the
+ * middle shelving unit" — while that room already has a place of the same kind with no position. Is it
+ * that one, or another? Returns one nudge for the agent, or null. Places named exactly as said, or
+ * look-alikes that already have positions, need no question.
+ */
+export function positionNudge(db: HouseDb, locations: string[][]): string | null {
+  for (const path of locations) {
+    for (let k = 1; k < path.length; k++) {
+      const said = path[k]
+      if (!TELLS_APART.test(normalize(said))) continue
+      const parent = db.locations.resolve(path.slice(0, k).join(' › '))
+      if (!parent) continue
+      const siblings = db.locations.childrenOf(parent.id)
+      if (siblings.some((l) => normalize(l.name) === normalize(said))) continue
+      const unmarked = siblings.filter((l) => headNoun(l.name) === headNoun(said) && !l.position && !l.grid && !TELLS_APART.test(normalize(l.name)))
+      if (!unmarked.length) continue
+      const names = unmarked.map((l) => `“${l.name}”`).join(' and ')
+      return `You recorded “${said}” in ${db.locations.describedPath(parent.id)}, but the house already has ${names} there with no position. Is “${said}” ${unmarked.length === 1 ? 'that one' : 'one of those'}, or a different one? Unless what they said already settles it, ask (ask_user) before replying — and if it's a different one, also which side the existing one is on.`
+    }
+  }
+  return null
+}

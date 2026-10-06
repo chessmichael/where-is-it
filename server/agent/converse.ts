@@ -1,5 +1,6 @@
 import type { HouseDb, InboxEntry, Question } from '../db/house'
 import type { LLMProvider, Msg } from '../llm/types'
+import { positionNudge } from '../db/check'
 import { diagramField, showLayoutTool } from './layout-tools'
 import { runLoop, type AgentTool, type TraceStep } from './loop'
 import { OBSERVATION_SCHEMA, type Observation } from './observations'
@@ -117,7 +118,7 @@ export interface ConverseResult {
 export async function converse(llm: LLMProvider, db: HouseDb, entry: InboxEntry): Promise<ConverseResult> {
   const turn: TurnState = { db, entry, observations: [], asked: null }
 
-  const result = await runLoop({
+  let result = await runLoop({
     llm,
     system: CONVERSE_SYSTEM,
     messages: [{ role: 'user', content: describeTurn(db, entry) }],
@@ -126,6 +127,23 @@ export async function converse(llm: LLMProvider, db: HouseDb, entry: InboxEntry)
     effort: 'low',
     maxSteps: 8,
   })
+
+  // v14: if it filed something under a position-picked place that may be an existing look-alike, and
+  // didn't ask, give it one nudge to ask before replying. Code notices; the model still decides.
+  const nudge = turn.asked ? null : positionNudge(db, turn.observations.flatMap((o) => (o.location ? [o.location] : [])))
+  if (nudge) {
+    const first = result
+    result = await runLoop({
+      llm,
+      system: CONVERSE_SYSTEM,
+      messages: [...first.messages, { role: 'user', content: `<check>${nudge}</check>` }],
+      tools: TOOLS,
+      ctx: turn,
+      effort: 'low',
+      maxSteps: 4,
+    })
+    result = { ...result, steps: [...first.steps, ...result.steps] }
+  }
 
   return {
     reply: chooseReply(result.text, result.stop, turn),
