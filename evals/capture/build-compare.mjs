@@ -110,9 +110,9 @@ const html = `<!doctype html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
 <title>Version Comparison</title>
 <style>
-:root{--m1:#1d4ed8;--m2:#c2410c;--m3:#6b7280;--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--up:#15803d;--up-bg:#dcfce7;--down:#b42318;--down-bg:#fdecea;--cell:#eef2ff;--cell-fg:#1e3a8a}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}}
-:root[data-theme="dark"]{--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}
+:root{--m1:#1d4ed8;--m2:#c2410c;--m3:#6b7280;--c3:#0f766e;--c4:#7c3aed;--c5:#be185d;--c6:#4d7c0f;--c7:#92400e;--c8:#0369a1;--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--up:#15803d;--up-bg:#dcfce7;--down:#b42318;--down-bg:#fdecea;--cell:#eef2ff;--cell-fg:#1e3a8a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--c3:#2dd4bf;--c4:#a78bfa;--c5:#f472b6;--c6:#a3e635;--c7:#fbbf24;--c8:#38bdf8;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}}
+:root[data-theme="dark"]{--m1:#7aa2ff;--m2:#fb923c;--m3:#9ca3af;--c3:#2dd4bf;--c4:#a78bfa;--c5:#f472b6;--c6:#a3e635;--c7:#fbbf24;--c8:#38bdf8;--bg:#121214;--card:#1c1c1f;--fg:#ececee;--muted:#9a9aa2;--line:#2c2c31;--up:#4ade80;--up-bg:#14301f;--down:#f97066;--down-bg:#2f1714;--cell:#1e2440;--cell-fg:#c7d2fe}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 main{max-width:1200px;margin:0 auto;padding:24px 16px 80px}
@@ -147,6 +147,9 @@ td.none{color:var(--muted)}
 #mv .axis{stroke:var(--line)}
 #mv .muted{fill:var(--muted)}
 .rate.partial{opacity:.55}
+.mvlegend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 10px 0;font-size:13px}
+.mvlegend span{display:inline-flex;align-items:center;gap:6px}
+.mvlegend i{display:inline-block;width:12px;height:12px;border-radius:50%}
 .key{display:flex;flex-wrap:wrap;gap:6px 18px;padding:4px 10px 8px;font-size:13px;color:var(--muted)}
 .key span{display:inline-flex;align-items:center;gap:6px}
 .modelpick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
@@ -168,9 +171,10 @@ td.none{color:var(--muted)}
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
 <h2>Each model across versions</h2>
-<p class="sub">A line is one model running each version of the agent’s code (prompts and tools as they were at that version). It follows the filter above; pick <strong>Capability suite</strong> to compare every model on the same 50 cases. Whiskers are 95% intervals over cases. Other models appear as single points at the version they ran. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
+<p class="sub">A line is one model running each version of the agent’s code (prompts and tools as they were at that version). It follows the filter above; pick <strong>Capability suite</strong> to compare every model on the same 50 cases. Whiskers are 95% intervals over cases. Models run on only one version appear as dots at that version; the colors are in the key under the chart, and hovering any dot shows its number. The gpt-5.4-mini line was run in one go under today’s harness; gpt-5.5’s points were run as each version was made, its early ones (baseline–v2) with an older, terser simulated person, so its early climb is partly harness changes.</p>
 <p class="legend" id="mvNote"></p>
 <div class="wrap chartwrap"><svg id="mv" role="img" aria-label="Pass rate by version for each model"></svg>
+<div class="mvlegend" id="mvLegend"></div>
 <div class="key">
   <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="var(--muted)"/></svg> Ran (nearly) all the cases in this filter</span>
   <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="var(--card)" stroke="var(--muted)" stroke-width="2"/></svg> Ran noticeably fewer, a different mix — not directly comparable</span>
@@ -276,7 +280,11 @@ function renderModelVersion() {
     : 'No cases in this filter.';
   // Lines for models with 2+ versions; the rest are points.
   var lineModels = models.filter(function (m) { return versions.filter(function (v) { return cell[v + '|' + m]; }).length > 1; });
-  var colors = ['var(--m1)', 'var(--m2)'];
+  // Each model keeps one color whatever the filter shows (color follows the model, never its rank).
+  var ORDER = [MAIN_MODEL, 'mini', 'glm5', 'kimi3', 'kimi25', 'deepseek', 'minihigh', 'route'];
+  var PALETTE = ['var(--m1)', 'var(--m2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
+  var colorOf = function (m) { var i = ORDER.indexOf(m); return i >= 0 ? PALETTE[i] : 'var(--m3)'; };
+  var endLabels = [];
   var W = 860, H = 300, L = 44, R = 150, T = 14, B = 34;
   var x = function (i) { return L + (versions.length < 2 ? 0 : i * (W - L - R) / (versions.length - 1)); };
   var y = function (p) { return T + (1 - p) * (H - T - B); };
@@ -285,8 +293,8 @@ function renderModelVersion() {
   function s(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; svg.appendChild(e); return e; }
   [0, 0.25, 0.5, 0.75, 1].forEach(function (p) { s('line', { x1: L, x2: W - R, y1: y(p), y2: y(p), class: 'axis' }); s('text', { x: L - 8, y: y(p) + 4, 'text-anchor': 'end', class: 'muted' }, Math.round(p * 100) + '%'); });
   versions.forEach(function (v, i) { s('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', class: 'muted' }, v); });
-  lineModels.forEach(function (m, k) {
-    var color = colors[k] || 'var(--m3)', pts = [];
+  lineModels.forEach(function (m) {
+    var color = colorOf(m), pts = [];
     versions.forEach(function (v, i) { var c = cell[v + '|' + m]; if (c) pts.push([x(i), y(c.mean), c, v]); });
     // Solid between comparable points; dashed where either end covers far fewer cases (not a like-for-like change).
     for (var j = 1; j < pts.length; j++) {
@@ -298,15 +306,27 @@ function renderModelVersion() {
       var dot = p[2].partial ? s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: p[0], cy: p[1], r: 4.5, fill: color, stroke: 'var(--card)', 'stroke-width': 2 });
       var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + p[3] + ': ' + Math.round(p[2].mean * 100) + '% (' + (p[2].ci ? Math.round(p[2].ci[0] * 100) + '–' + Math.round(p[2].ci[1] * 100) + '%, ' : '') + p[2].n + ' cases' + (p[2].partial ? ' — fewer cases than the rest of this line' : '') + ')'; dot.appendChild(tip);
     });
-    var last = pts[pts.length - 1]; if (last) s('text', { x: W - R + 10, y: last[1] + 4, fill: color, style: 'fill:' + color + ';font-weight:600' }, modelName(m));
+    var last = pts[pts.length - 1]; if (last) endLabels.push({ y: last[1], text: modelName(m), color: color });
   });
-  models.filter(function (m) { return lineModels.indexOf(m) < 0; }).forEach(function (m) {
-    versions.forEach(function (v, i) {
-      var c = cell[v + '|' + m]; if (!c) return;
-      var dot = c.partial ? s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--card)', stroke: 'var(--m3)', 'stroke-width': 1.5 }) : s('circle', { cx: x(i) + 10, cy: y(c.mean), r: 3.5, fill: 'var(--m3)' });
+  // Line-end labels, nudged apart so they never overlap.
+  endLabels.sort(function (a, b) { return a.y - b.y; });
+  for (var q = 1; q < endLabels.length; q++) if (endLabels[q].y - endLabels[q - 1].y < 15) endLabels[q].y = endLabels[q - 1].y + 15;
+  endLabels.forEach(function (lb) { s('text', { x: W - R + 10, y: lb.y + 4, style: 'fill:' + lb.color + ';font-weight:600' }, lb.text); });
+  // Single-run models: colored dots, spread a little sideways at their version so they don't sit on each other.
+  var singles = models.filter(function (m) { return lineModels.indexOf(m) < 0; });
+  versions.forEach(function (v, i) {
+    var here = singles.filter(function (m) { return cell[v + '|' + m]; });
+    here.forEach(function (m, k) {
+      var c = cell[v + '|' + m], color = colorOf(m), cx = x(i) + 12 + k * 9;
+      var dot = c.partial ? s('circle', { cx: cx, cy: y(c.mean), r: 4, fill: 'var(--card)', stroke: color, 'stroke-width': 2 }) : s('circle', { cx: cx, cy: y(c.mean), r: 4, fill: color, stroke: 'var(--card)', 'stroke-width': 1.5 });
       var tip = document.createElementNS(NS, 'title'); tip.textContent = modelName(m) + ' · ' + v + ': ' + Math.round(c.mean * 100) + '% (' + c.n + ' cases)'; dot.appendChild(tip);
-      s('text', { x: x(i) + 17, y: y(c.mean) + 4, class: 'muted' }, modelName(m));
     });
+  });
+  var legend = document.getElementById('mvLegend'); legend.textContent = '';
+  models.forEach(function (m) {
+    var item = el('span'); var sw = el('i'); sw.style.background = colorOf(m); item.appendChild(sw);
+    item.appendChild(document.createTextNode(modelName(m) + (lineModels.indexOf(m) < 0 ? ' (single run)' : '')));
+    legend.appendChild(item);
   });
   // The same numbers as a table.
   var table = document.getElementById('mvTable'); table.textContent = '';
