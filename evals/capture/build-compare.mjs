@@ -41,9 +41,9 @@ const versions = variants.map((v) => {
 
 const cases = JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'cases.json'), 'utf8')).cases
 const suites = existsSync(join(ROOT, 'evals', 'capture', 'suites.json')) ? JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'suites.json'), 'utf8')) : null
-const suiteOf = (id) => (suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : '')
+const suiteOf = (id) => (suites?.test?.includes(id) ? 'test' : suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : '')
 
-// results[case][variant] = { passes, reps }
+// results[case][variant] = { passes, reps } — passes/reps over that case's runs
 const results = {}
 for (const v of variants) {
   for (const line of readFileSync(join(FLOW, v, 'results.jsonl'), 'utf8').split('\n')) {
@@ -113,16 +113,24 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
 <h1>Version by version</h1>
 <p class="sub">Each version of the agent on the same cases. The number is the share of runs that passed (higher is better); the badge is the change from the previous version. Changes are coloured only when they’re bigger than run-to-run noise for that many runs — grey means “could be noise”.</p>
 <div class="filters" id="suites">
-  <button data-s="all" class="on">All cases</button>
+  <button data-s="all" class="on">All dev cases</button>
   <button data-s="capability">Capability suite</button>
   <button data-s="regression">Regression suite</button>
+  <button data-s="test" title="The held-out set: totals only, never individual cases">Test (held out)</button>
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
+<h2>Head to head</h2>
+<p class="sub">Each version against the one before it (a model variant like v4-kimi3 against its own version, v4), on the cases <em>both</em> ran — a paired comparison, which is far more sensitive than comparing two percentages. “Better/worse” counts cases whose pass rate went up or down. The interval is a 95% bootstrap over cases (cases resampled, not runs, since runs of one case aren’t independent); the sign test asks whether that many more cases got better than worse could be chance.</p>
+<div class="wrap"><table id="pairs"></table></div>
+<h2>Reliability</h2>
+<p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
+<div class="wrap"><table id="reliability"></table></div>
 <h2>By set</h2>
 <div class="wrap"><table id="bySet"></table></div>
 <p class="legend">Hover a number for the exact runs. A set only shows a version once that version has run its cases.</p>
 <h2>By case</h2>
-<div class="wrap"><table id="byCase"></table></div>
+<p class="legend" id="heldNote" hidden>The held-out test set shows totals only. Looking at individual test cases while changing prompts turns them into dev cases — see evals/capture/test_cases.py.</p>
+<div class="wrap" id="byCaseWrap"><table id="byCase"></table></div>
 </main>
 <script>
 var DATA = ${json};
@@ -143,7 +151,86 @@ function changed(c) {
 }
 function visibleCases() {
   var onlyChanged = document.getElementById('changed').checked;
-  return DATA.cases.filter(function (c) { return (suite === 'all' || c.suite === suite) && (!onlyChanged || changed(c)); });
+  return DATA.cases.filter(function (c) {
+    var inSuite = suite === 'all' ? c.suite !== 'test' : c.suite === suite; // "all" = every dev case
+    return inSuite && (!onlyChanged || changed(c));
+  });
+}
+// ── statistics ──
+// A seeded random generator, so the page shows the same intervals every time it's built.
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// 95% interval for the mean of xs, resampling the xs (one per case).
+function bootstrap(xs, iters) {
+  if (!xs.length) return null;
+  var r = rng(12345), means = [];
+  for (var i = 0; i < (iters || 2000); i++) { var s = 0; for (var j = 0; j < xs.length; j++) s += xs[Math.floor(r() * xs.length)]; means.push(s / xs.length); }
+  means.sort(function (a, b) { return a - b; });
+  return [means[Math.floor(0.025 * means.length)], means[Math.floor(0.975 * means.length)]];
+}
+// Two-sided exact sign test: with w wins and l losses (ties dropped), how likely is a split at least this lopsided by chance?
+function signTest(w, l) {
+  var n = w + l; if (!n) return 1;
+  var k = Math.min(w, l), p = 0, c = 1;
+  for (var i = 0; i <= n; i++) { if (i > 0) c = c * (n - i + 1) / i; if (i <= k) p += c; }
+  return Math.min(1, 2 * p / Math.pow(2, n));
+}
+// pass^k for one case from c passes in n runs: the chance k runs drawn from these all pass (tau-bench's estimator).
+function passHatK(c, n, k) { if (n < k) return null; var p = 1; for (var i = 0; i < k; i++) p *= (c - i) / (n - i); return Math.max(0, p); }
+function pts(x) { return (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(Math.round(x * 1000) / 10) + ' pts'; }
+function renderPairs() {
+  var table = document.getElementById('pairs'); table.textContent = '';
+  var head = el('tr'); ['Change', 'Cases both ran', 'Difference', '95% interval', 'Better / worse / same', 'Sign test', 'Verdict'].forEach(function (h) { head.appendChild(el('th', '', h)); });
+  var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
+  var body = el('tbody'); var cs = visibleCases(); var any = false;
+  // Each version against the version before it; a model variant (v4-kimi3) against its own version (v4).
+  var ids = DATA.versions.map(function (v) { return v.id; });
+  var pairs = [];
+  ids.forEach(function (b, i) {
+    if (i === 0) return;
+    var dash = b.indexOf('-');
+    var a = dash > 0 ? b.slice(0, dash) : ids.slice(0, i).filter(function (x) { return x.indexOf('-') < 0; }).pop();
+    if (a && ids.indexOf(a) >= 0) pairs.push([a, b]);
+  });
+  for (var i = 0; i < pairs.length; i++) {
+    var a = pairs[i][0], b = pairs[i][1];
+    var diffs = [], w = 0, l = 0, t = 0;
+    cs.forEach(function (c) { var ra = c.results[a], rb = c.results[b]; if (!ra || !rb) return; var d = rb.passes / rb.reps - ra.passes / ra.reps; diffs.push(d); if (d > 0) w++; else if (d < 0) l++; else t++; });
+    if (!diffs.length) continue;
+    any = true;
+    var mean = diffs.reduce(function (s, x) { return s + x; }, 0) / diffs.length, ci = bootstrap(diffs), p = signTest(w, l);
+    var real = ci && (ci[0] > 0 || ci[1] < 0);
+    var tr = el('tr');
+    tr.appendChild(el('td', '', a + ' → ' + b));
+    tr.appendChild(el('td', '', String(diffs.length)));
+    var d = el('td'); d.appendChild(el('span', 'delta ' + (!real ? 'flat' : mean > 0 ? 'up' : 'down'), pts(mean))); tr.appendChild(d);
+    tr.appendChild(el('td', '', ci ? pts(ci[0]) + ' to ' + pts(ci[1]) : '—'));
+    tr.appendChild(el('td', '', w + ' / ' + l + ' / ' + t));
+    tr.appendChild(el('td', '', p < 0.001 ? 'p < 0.001' : 'p = ' + p.toFixed(3)));
+    tr.appendChild(el('td', '', real ? (mean > 0 ? 'Better — beyond noise' : 'Worse — beyond noise') : 'Could be noise'));
+    body.appendChild(tr);
+  }
+  if (!any) { var none = el('tr'); none.appendChild(el('td', '', 'No two consecutive versions share cases under this filter.')); body.appendChild(none); }
+  table.appendChild(body);
+}
+function renderReliability() {
+  var table = document.getElementById('reliability'); table.textContent = '';
+  var head = el('tr'); ['Version', 'pass@1 (all cases)', '95% interval', 'pass^3', 'Cases with 3+ runs'].forEach(function (h) { head.appendChild(el('th', '', h)); });
+  var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
+  var body = el('tbody'); var cs = visibleCases();
+  DATA.versions.forEach(function (v) {
+    var rates = [], hats = [];
+    cs.forEach(function (c) { var r = c.results[v.id]; if (!r) return; rates.push(r.passes / r.reps); var h = passHatK(r.passes, r.reps, 3); if (h !== null) hats.push(h); });
+    if (!rates.length) return;
+    var mean = rates.reduce(function (s, x) { return s + x; }, 0) / rates.length, ci = bootstrap(rates);
+    var tr = el('tr');
+    tr.appendChild(el('td', '', v.id));
+    tr.appendChild(el('td', 'rate', Math.round(mean * 100) + '%'));
+    tr.appendChild(el('td', '', ci ? Math.round(ci[0] * 100) + '–' + Math.round(ci[1] * 100) + '%' : '—'));
+    tr.appendChild(el('td', 'rate', hats.length ? Math.round(100 * hats.reduce(function (s, x) { return s + x; }, 0) / hats.length) + '%' : '—'));
+    tr.appendChild(el('td', '', hats.length + ' of ' + rates.length));
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
 }
 function header(table, first, extra) {
   var tr = el('tr'); tr.appendChild(el('th', '', first)); if (extra) tr.appendChild(el('th', '', extra));
@@ -209,7 +296,13 @@ function renderCases() {
   });
   table.appendChild(body);
 }
-function render() { renderSets(); renderCases(); }
+function render() {
+  renderPairs(); renderReliability(); renderSets();
+  var held = suite === 'test';
+  document.getElementById('heldNote').hidden = !held;
+  document.getElementById('byCaseWrap').hidden = held;
+  if (!held) renderCases();
+}
 document.getElementById('suites').addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;
   suite = b.getAttribute('data-s');
