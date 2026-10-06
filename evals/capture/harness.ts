@@ -8,7 +8,7 @@
 // Bundled with esbuild and called from run-eval.mjs (see `npm run eval:capture`).
 
 import { createProvider } from '../../server/llm'
-import type { ChatRequest, ChatResponse, LLMProvider, Usage } from '../../server/llm/types'
+import type { ChatRequest, ChatResponse, Effort, LLMProvider, Usage } from '../../server/llm/types'
 import { hearUtterance, tidyUp, type Heard } from '../../server/agent/pipeline'
 import { CONVERSE_SYSTEM } from '../../server/agent/prompts'
 import type { Observation } from '../../server/agent/observations'
@@ -89,10 +89,12 @@ export async function runCase(c: Case, file: CaseFile, opts: { model: string; pe
   // "bedrock:<model id>" runs the agent on AWS Bedrock; anything else is an OpenAI model.
   const spec = (m: string) => (m.startsWith('bedrock:') ? ['bedrock', m.slice(8)] : ['openai', m])
   const [provider, model] = spec(opts.model)
-  const agent = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: provider, LLM_MODEL: model }))
+  // EVAL_EFFORT (low/medium/high) overrides the reasoning effort the agents ask for, to see what thinking harder buys.
+  const effort = opts.env.EVAL_EFFORT as Effort | undefined
+  const agent = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: provider, LLM_MODEL: model }), effort)
   // EVAL_FAST_MODEL: route short, plain turns to a cheaper model, as the app does with LLM_FAST_MODEL.
   const fastSpec = opts.env.EVAL_FAST_MODEL ? spec(opts.env.EVAL_FAST_MODEL) : null
-  const fast = fastSpec ? new Metered(createProvider({ ...opts.env, LLM_PROVIDER: fastSpec[0], LLM_MODEL: fastSpec[1] })) : null
+  const fast = fastSpec ? new Metered(createProvider({ ...opts.env, LLM_PROVIDER: fastSpec[0], LLM_MODEL: fastSpec[1] }), effort) : null
   const person = new Metered(createProvider({ ...opts.env, LLM_PROVIDER: 'openai', LLM_MODEL: opts.personModel }))
   const { db } = memoryDb()
   const session = new Session(c, db, agent, person, fast)
@@ -186,7 +188,10 @@ class Metered implements LLMProvider {
   usage: Usage = { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 }
   calls = 0
   servedModel: string | null = null
-  constructor(private inner: LLMProvider) {}
+  constructor(
+    private inner: LLMProvider,
+    private effort?: Effort,
+  ) {}
   get provider() {
     return this.inner.provider
   }
@@ -194,7 +199,7 @@ class Metered implements LLMProvider {
     return this.inner.model
   }
   async chat(req: ChatRequest): Promise<ChatResponse> {
-    const res = await this.inner.chat(req)
+    const res = await this.inner.chat(this.effort ? { ...req, effort: this.effort } : req)
     this.calls++
     this.servedModel = res.model
     this.usage.inputTokens += res.usage.inputTokens

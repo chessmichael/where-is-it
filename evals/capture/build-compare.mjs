@@ -247,7 +247,7 @@ function pts(x) { return (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(Math.ro
 // ── model × version ──
 var MAIN_MODEL = 'gpt-5.5';
 function split(id) { var i = id.indexOf('-'); return i < 0 ? { version: id, model: MAIN_MODEL } : { version: id.slice(0, i), model: id.slice(i + 1) }; }
-function modelName(m) { return m === 'mini' ? 'gpt-5.4-mini' : m === 'kimi3' ? 'Kimi K3' : m === 'kimi25' ? 'Kimi K2.5' : m === 'glm5' ? 'GLM-5' : m === 'deepseek' ? 'DeepSeek V3.2' : m; }
+function modelName(m) { return m === 'mini' ? 'gpt-5.4-mini' : m === 'minihigh' ? 'gpt-5.4-mini, high effort' : m === 'route' ? 'mini + GLM-5 for hard turns' : m === 'kimi3' ? 'Kimi K3' : m === 'kimi25' ? 'Kimi K2.5' : m === 'glm5' ? 'GLM-5' : m === 'deepseek' ? 'DeepSeek V3.2' : m; }
 function renderModelVersion() {
   // The filter's cases. Each model's line uses only the cases that EVERY version on that line ran, so its points are comparable.
   var pool = visibleCases();

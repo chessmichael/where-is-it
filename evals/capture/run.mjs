@@ -17,6 +17,7 @@
 //                                version (or that were flaky or unrun there) get the other N-1
 //   --against <variant>          the reference for --reps (default: the latest earlier variant)
 //   --full-reps                  run all N repeats for every case (no adaptive skipping)
+//   --effort low|medium|high     override the reasoning effort the agents ask for (EVAL_EFFORT)
 //   --concurrency N              cases at a time (default 10 on OpenAI, 3 on Bedrock's lower quotas)
 //   --fast-model <model>         route short, plain turns to this cheaper model (as LLM_FAST_MODEL does in
 //                                the app); everything else, and all of tidy-up, uses --model
@@ -42,7 +43,7 @@ const reps = Number(flag('--reps') ?? 1)
 const only = flag('--only')
 const passThrough = []
 for (let i = 0; i < extra.length; i++) {
-  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against', '--fast-model', '--concurrency'].includes(extra[i])) { i++; continue }
+  if (['--model', '--code', '--rerun', '--reason', '--suite', '--only', '--reps', '--against', '--fast-model', '--concurrency', '--effort'].includes(extra[i])) { i++; continue }
   if (['--no-open', '--full-reps'].includes(extra[i])) continue
   passThrough.push(extra[i])
 }
@@ -53,6 +54,7 @@ const shaBefore = harnessSha()
 const env = { ...process.env, EVAL_DB_DIR: join(FLOW, variant, 'dbs') }
 const fastModel = flag('--fast-model')
 if (fastModel) env.EVAL_FAST_MODEL = fastModel
+if (flag('--effort')) env.EVAL_EFFORT = flag('--effort')
 // --model bedrock:<id>: borrow the AWS CLI's credentials (kept in memory only) unless a Bedrock key is set.
 if ([model, fastModel ?? ''].some((m) => m.startsWith('bedrock:')) && !env.AWS_BEARER_TOKEN_BEDROCK && !env.AWS_ACCESS_KEY_ID) {
   const c = JSON.parse(execFileSync('aws', ['configure', 'export-credentials', '--format', 'process'], { encoding: 'utf8' }))
@@ -187,6 +189,7 @@ append({
   variant,
   requested_model: model,
   ...(fastModel ? { fast_model: fastModel } : {}),
+  ...(flag('--effort') ? { effort: flag('--effort') } : {}),
   git_commit: agentCommit,
   ...(codeCommit ? { agent_code_from: agentCommit, harness_from: code.commit } : {}),
   git_dirty: code.dirty,
