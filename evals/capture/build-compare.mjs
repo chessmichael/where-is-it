@@ -30,11 +30,19 @@ const variants = readdirSync(FLOW)
   .filter((d) => /^(baseline|v[1-9]\d*)(-[a-z0-9.]+)?$/.test(d) && existsSync(join(FLOW, d, 'results.jsonl'))) // v4-mini: v4 on another model
   .sort((a, b) => versionNumber(a) - versionNumber(b) || a.length - b.length || a.localeCompare(b))
 
+// Commit ids changed in the 6 Oct 2026 history rewrite; the ledger keeps the originals (see commit-map.txt).
+const commitMap = new Map(
+  existsSync(join(ROOT, 'evals', 'capture', 'commit-map.txt'))
+    ? readFileSync(join(ROOT, 'evals', 'capture', 'commit-map.txt'), 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => l.split(' '))
+    : [],
+)
+const renamed = (sha) => (sha ? commitMap.get(sha) ?? [...commitMap].find(([old]) => old.startsWith(sha))?.[1] ?? sha : sha)
+
 // What each version was: the agent code commit from its latest run in the ledger.
 const ledger = readFileSync(join(ROOT, 'evals', 'capture', 'ledger.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l))
 const versions = variants.map((v) => {
   const run = ledger.filter((e) => e.event === 'run' && e.variant === v).at(-1)
-  const tested = run?.agent_code_from ?? run?.git_commit ?? ''
+  const tested = renamed(run?.agent_code_from ?? run?.git_commit ?? '')
   // Name the version by the latest change to the agent's code as of that commit (not the eval-run commit).
   const [commit = '', subject = ''] = tested ? git('log', '-1', '--format=%h%x09%s', tested, '--', 'server/agent', 'server/db', 'server/llm').split('\t') : []
   // How often the simulated person's answer contradicted its facts and was redone (fact-checked runs only).
