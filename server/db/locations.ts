@@ -59,7 +59,7 @@ export class Locations {
    */
   describedPath(id: string | null): string | null {
     const chain: Location[] = []
-    for (let loc = id ? this.get(id) : null; loc; loc = loc.parent_id ? this.get(loc.parent_id) : null) chain.unshift(loc)
+    for (const loc of this.ancestry(id)) chain.unshift(loc)
     if (!chain.length) return null
     return chain.map((loc) => (loc.position ? `${loc.name} (${loc.position})` : loc.name)).join(' › ')
   }
@@ -114,8 +114,18 @@ export class Locations {
 
   /** Is `id` the place `ancestorId` or somewhere inside it? */
   isWithin(id: string, ancestorId: string): boolean {
-    for (let loc = this.get(id); loc; loc = loc.parent_id ? this.get(loc.parent_id) : null) if (loc.id === ancestorId) return true
-    return false
+    return this.ancestry(id).some((loc) => loc.id === ancestorId)
+  }
+
+  /** A place and its parents up to the room, innermost first. Stops at a cycle rather than looping forever. */
+  ancestry(id: string | null): Location[] {
+    const chain: Location[] = []
+    const seen = new Set<string>()
+    for (let loc = id ? this.get(id) : null; loc && !seen.has(loc.id); loc = loc.parent_id ? this.get(loc.parent_id) : null) {
+      seen.add(loc.id)
+      chain.push(loc)
+    }
+    return chain
   }
 
   history(id: string) {
@@ -130,8 +140,11 @@ export class Locations {
     const removed = this.get(removeId)
     if (!this.get(keepId) || !removed) throw new Error('both locations must exist')
     if (keepId === removeId) return
+    // Keeping a place that sits inside the one being removed: lift it into the removed place's spot
+    // first, or re-parenting the removed place's children would make it its own parent (a cycle).
+    if (this.isWithin(keepId, removeId)) this.sql.run('UPDATE locations SET parent_id = ? WHERE id = ?', removed.parent_id, keepId)
 
-    this.sql.run('UPDATE locations SET parent_id = ? WHERE parent_id = ?', keepId, removeId)
+    this.sql.run('UPDATE locations SET parent_id = ? WHERE parent_id = ? AND id != ?', keepId, removeId, keepId)
     this.sql.run('UPDATE items SET location_id = ? WHERE location_id = ?', keepId, removeId)
     this.sql.run('UPDATE item_history SET to_location_id = ? WHERE to_location_id = ?', keepId, removeId)
     this.sql.run('UPDATE item_history SET from_location_id = ? WHERE from_location_id = ?', keepId, removeId)

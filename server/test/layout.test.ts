@@ -164,6 +164,8 @@ describe('container feedback (v7)', () => {
         expect(last?.role === 'tool' && last.results[0].content).toMatch(/is an item .*not a place.*upsert_location/)
         return { calls: [{ name: 'finish', input: { compacted_inbox_ids: [], summary: 'stopped' } }] }
       },
+      // The house check may flag the box on the first finish (it can count as touched this run); finishing again is accepted.
+      () => ({ calls: [{ name: 'finish', input: { compacted_inbox_ids: [], summary: 'stopped' } }] }),
     ])
     await compact(llm, db, db.inbox.list('pending_compaction'))
   })
