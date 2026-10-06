@@ -151,7 +151,7 @@ const against =
     .filter((d) => existsSync(join(FLOW, d, 'results.jsonl')) && d !== variant && d !== 'archive')
     .filter((d) => /^(baseline|v\d+)$/.test(d))
     .sort((a, b) => (a === 'baseline' ? -1 : b === 'baseline' ? 1 : Number(a.slice(1)) - Number(b.slice(1))))
-    .filter((d) => variant === 'baseline' || d === 'baseline' || Number(d.slice(1)) < parseInt(variant.slice(1)))
+    .filter((d) => variant.startsWith('baseline') ? false : d === 'baseline' || Number(d.slice(1)) < parseInt(variant.slice(1)))
     .at(-1)
 let run = runEval(1)
 let adaptive

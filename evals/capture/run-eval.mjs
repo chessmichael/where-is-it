@@ -212,7 +212,7 @@ function parseArgs(argv) {
     else if (k === '-h' || k === '--help') { usage(); process.exit(0); }
     else { eprint(`unknown argument: ${k}`); usage(); process.exit(2); }
   }
-  if (!/^(baseline|v[1-9]\d*(-[a-z0-9.]+)?)$/.test(a.variant)) {
+  if (!/^(baseline|v[1-9]\d*)(-[a-z0-9.]+)?$/.test(a.variant)) {
     // The pages only read directories named 'baseline', 'v<N>', or 'v<N>-<suffix>'
     // (a version on another model, e.g. v4-mini) - any other name runs to
     // completion but spends the pass into a directory nothing reads.
