@@ -215,7 +215,7 @@ function describeItemEvent(h: Record<string, any>, pathOf: (id: string | null) =
 
 function ancestorsOf(db: HouseDb, id: string | null): Location[] {
   const chain: Location[] = []
-  for (let loc = id ? db.locations.get(id) : null; loc; loc = loc.parent_id ? db.locations.get(loc.parent_id) : null) chain.push(loc)
+  for (let loc = id ? db.locations.get(id) : null; loc && !chain.some((c) => c.id === loc!.id); loc = loc.parent_id ? db.locations.get(loc.parent_id) : null) chain.push(loc) // stops at a cycle
   return chain
 }
 

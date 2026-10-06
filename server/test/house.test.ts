@@ -394,3 +394,13 @@ describe('merging a place into one inside it', () => {
     expect(db.locations.isWithin(a, 'garage')).toBe(false)
   })
 })
+
+describe('a container filed inside itself', () => {
+  it('is refused instead of making its place its own parent', () => {
+    const { db } = memoryDb()
+    const box = db.locations.ensurePath([{ name: 'Attic' }, { name: 'Box of toys', kind: 'container' }])
+    const item = db.items.save(null, { name: 'Box of toys', location_id: 'attic', place_id: box })
+    expect(() => db.items.save(item, { name: 'Box of toys', location_id: box })).toThrow(/can't be filed inside itself/)
+    expect(db.locations.get(box)?.parent_id).toBe('attic')
+  })
+})

@@ -527,7 +527,7 @@ function markerText(db: HouseDb, loc: Location): string {
 
 function ancestors(db: HouseDb, id: string | null): Location[] {
   const chain: Location[] = []
-  for (let loc = id ? db.locations.get(id) : null; loc; loc = loc.parent_id ? db.locations.get(loc.parent_id) : null) chain.unshift(loc)
+  for (let loc = id ? db.locations.get(id) : null; loc && !chain.some((c) => c.id === loc!.id); loc = loc.parent_id ? db.locations.get(loc.parent_id) : null) chain.unshift(loc) // stops at a cycle
   return chain
 }
 

@@ -104,6 +104,12 @@ export class Items {
       lent_to: status === 'lent' ? changes.lent_to ?? before.lent_to : null,
     }
 
+    // A container can't go inside itself: its place would become its own ancestor (a cycle in the tree).
+    const ownPlace = changes.place_id ?? before.place_id
+    if (ownPlace && after.location_id && this.placeIsWithin(after.location_id, ownPlace)) {
+      throw new Error(`“${after.name}” is a place too, so it can't be filed inside itself — file its contents inside it instead`)
+    }
+
     this.sql.run(
       `UPDATE items
        SET name = ?, category = ?, description = ?, quantity = ?,
@@ -192,6 +198,17 @@ export class Items {
     let id = base
     for (let n = 2; this.get(id); n++) id = `${base}-${n}`
     return id
+  }
+
+  /** Is location `id` the place `ancestorId` or inside it? (Stops at a cycle.) */
+  private placeIsWithin(id: string, ancestorId: string): boolean {
+    const seen = new Set<string>()
+    for (let cur: string | null = id; cur && !seen.has(cur); ) {
+      if (cur === ancestorId) return true
+      seen.add(cur)
+      cur = this.sql.first<{ parent_id: string | null }>('SELECT parent_id FROM locations WHERE id = ?', cur)?.parent_id ?? null
+    }
+    return false
   }
 }
 
