@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import HelpPage from './components/HelpPage'
 import { acceptHandoff } from './lib/legacy'
 import './styles.css'
 
@@ -9,6 +10,7 @@ acceptHandoff()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* /help is public (shareable); everything else is the app, behind sign-in. */}
+    {location.pathname.replace(/\/$/, '') === '/help' ? <HelpPage /> : <App />}
   </StrictMode>,
 )

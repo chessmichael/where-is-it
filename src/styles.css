@@ -1264,3 +1264,28 @@ button.layout-cell:focus-visible {
   display: block;
   margin-top: 10px;
 }
+
+/* The public /help page. */
+.help-page {
+  max-width: 62ch;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.help-title {
+  font-size: 24px;
+  margin: 0 0 12px;
+}
+.help-join {
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.help-join h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.help-join p {
+  margin: 0 0 14px;
+}
