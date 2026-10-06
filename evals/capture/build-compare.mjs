@@ -286,7 +286,7 @@ function renderModelVersion() {
   var PALETTE = ['var(--m1)', 'var(--m2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
   var colorOf = function (m) { var i = ORDER.indexOf(m); return i >= 0 ? PALETTE[i] : 'var(--m3)'; };
   var endLabels = [];
-  var W = 860, H = 300, L = 44, R = 150, T = 14, B = 34;
+  var W = 900, H = 300, L = 44, R = 200, T = 14, B = 34;
   var x = function (i) { return L + (versions.length < 2 ? 0 : i * (W - L - R) / (versions.length - 1)); };
   var y = function (p) { return T + (1 - p) * (H - T - B); };
   var svg = document.getElementById('mv'); svg.textContent = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);

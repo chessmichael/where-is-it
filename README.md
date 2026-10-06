@@ -57,6 +57,14 @@ Phone (PWA: speech → text)  ──▶  Cloudflare Worker  /api/*
 - **Offline.** Utterances made without a connection are queued on the phone and
   sent when it reconnects.
 
+## Evals
+
+The agent is tested by a capture eval: scripted conversations run against the real agents with a simulated
+person answering their questions, graded by code. **[Results, charts and what we've learned →](evals/RESULTS.md)**
+(how it works: [`evals/capture/README.md`](evals/capture/README.md)).
+
+![Pass rate by version for each model](evals/img/capability-by-version.png)
+
 ## Develop
 
 ```bash
