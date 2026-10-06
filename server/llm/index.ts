@@ -17,6 +17,7 @@ export interface LLMEnv {
   AWS_SECRET_ACCESS_KEY?: string
   AWS_SESSION_TOKEN?: string
   AWS_REGION?: string
+  BEDROCK_TIMEOUT_MS?: string
 }
 
 const DEFAULT_MODEL: Record<string, string> = {
@@ -58,9 +59,10 @@ export function createProvider(env: LLMEnv): LLMProvider {
     case 'bedrock': {
       const key = env.LLM_API_KEY || env.AWS_BEARER_TOKEN_BEDROCK
       const region = env.AWS_REGION || 'us-east-1'
-      if (key) return new BedrockProvider({ apiKey: key }, model, region)
+      const timeout = Number(env.BEDROCK_TIMEOUT_MS) || undefined
+      if (key) return new BedrockProvider({ apiKey: key }, model, region, timeout)
       if (env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY)
-        return new BedrockProvider({ accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY, sessionToken: env.AWS_SESSION_TOKEN }, model, region)
+        return new BedrockProvider({ accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY, sessionToken: env.AWS_SESSION_TOKEN }, model, region, timeout)
       throw new Error('Bedrock needs AWS_BEARER_TOKEN_BEDROCK or AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY')
     }
     default:

@@ -39,6 +39,7 @@ export class BedrockProvider implements LLMProvider {
     auth: BedrockAuth,
     readonly model: string,
     private region = 'us-east-1',
+    private timeoutMs = 120_000, // per request; slow reasoning models (Kimi K3) can need longer
   ) {
     if ('apiKey' in auth) {
       this.send = (url, init) => fetch(url, { ...init, headers: { ...(init.headers as Record<string, string>), authorization: `Bearer ${auth.apiKey}` } })
@@ -67,7 +68,7 @@ export class BedrockProvider implements LLMProvider {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(120_000),
+        signal: AbortSignal.timeout(this.timeoutMs),
       })
       if (![429, 500, 502, 503].includes(res.status) || attempt >= 7) break
       await new Promise((r) => setTimeout(r, Math.min(30_000, 1000 * 2 ** attempt) * (0.5 + Math.random())))
