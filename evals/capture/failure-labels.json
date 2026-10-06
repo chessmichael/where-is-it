@@ -1,3 +1,6 @@
 {
-  "_how": "Hand labels for failing runs whose cause no rule can see. Key: variant/case/rep. Value: a cause, usually 'Simulated person answered wrongly' or 'Grader was wrong'. compare.html counts these instead of the rule-based cause."
+  "_how": "Hand labels for failing runs whose cause no rule can see. Key: variant/case/rep. Value: a cause, usually 'Simulated person answered wrongly' or 'Grader was wrong'. compare.html counts these instead of the rule-based cause.",
+  "v11/TC05/0": "Simulated person answered wrongly",
+  "v11/TD08/0": "Simulated person answered wrongly",
+  "v11/TK07/0": "Simulated person answered wrongly"
 }
