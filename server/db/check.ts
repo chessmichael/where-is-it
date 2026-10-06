@@ -11,6 +11,7 @@ const TELLS_APART = /\b(left|right|middle|center|top|bottom|upper|lower|front|ba
 const RELATIVE_NAME = /\b(below|above|beneath|under(neath)?|next to|beside|behind|in front of|to the (left|right))\b/
 const CATCH_ALL_ITEM = /^(the )?(other|another|second|2nd|extra) /i
 const CONTAINER = /\b(box|boxes|bin|bins|tote|totes|tub|tubs|crate|crates|basket|baskets|bucket|chest|carton|bag)\b/i
+const NOT_A_ROOM = /\b(nightstand|dresser|desk|shelf|shelves|shelving|cabinet|cupboard|drawer|bin|box|tote|tub|crate|bookcase|bookshelf|table|counter|hook|rack|chest|trunk|basket|bag|stand|workbench|pegboard|safe)\b/
 const LOOKALIKE_KINDS = new Set(['furniture', 'storage', 'container', 'shelf'])
 
 export function houseCheck(db: HouseDb, since: string): string[] {
@@ -18,6 +19,12 @@ export function houseCheck(db: HouseDb, since: string): string[] {
   const locations = db.locations.all()
   const touched = (l: { created_at: string; updated_at: string }) => l.created_at >= since || l.updated_at >= since
   const label = (l: Location) => `“${l.name}” (${l.id})`
+
+  // Things filed with no room: a top-level place that is really furniture or a container ("Nightstand").
+  for (const l of locations) {
+    if (l.parent_id || !touched(l) || !NOT_A_ROOM.test(normalize(l.name))) continue
+    findings.push(`${label(l)} is filed at the top level as if it were a room. Ask which room it's in (ask_user) rather than guessing, then move it there (move_location).`)
+  }
 
   // Look-alike places side by side, at least one with nothing telling it apart.
   // "Look-alike" = same kind of thing: "Holiday decorations shelving unit" and

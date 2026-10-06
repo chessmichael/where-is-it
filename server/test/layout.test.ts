@@ -229,3 +229,14 @@ describe('stack tools (v8)', () => {
   })
 })
 
+
+describe('house check — no room (v13)', () => {
+  it('flags furniture filed at the top level as if it were a room', () => {
+    const { db } = memoryDb()
+    db.locations.ensurePath([{ name: 'Nightstand' }])
+    db.locations.ensurePath([{ name: 'Garage' }, { name: 'Workbench', kind: 'furniture' }])
+    const findings = houseCheck(db, '2000-01-01')
+    expect(findings).toHaveLength(1)
+    expect(findings[0]).toMatch(/“Nightstand”.*top level as if it were a room/)
+  })
+})
