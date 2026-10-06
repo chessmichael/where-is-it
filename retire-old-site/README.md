@@ -1,5 +1,8 @@
 # Retiring the old address
 
+> The addresses here are placeholders (`where-is-it-OLD.pages.dev`, `where-is-it.YOUR-SUBDOMAIN.workers.dev`). Put in your own before deploying this page.
+
+
 `where-is-it-OLD.pages.dev` (Cloudflare Pages project `where-is-it`) served the old, phone-only
 app. It now serves only this folder: a page that removes the old app's offline copy and forwards
 to https://where-is-it.YOUR-SUBDOMAIN.workers.dev, passing any data the old version saved on
