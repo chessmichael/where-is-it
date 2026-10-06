@@ -858,11 +858,27 @@ button.danger {
     transition: none;
   }
 }
-.place-toggle .position {
-  white-space: nowrap;
-}
-.place-toggle .place-name {
+.place-label {
+  flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.place-name,
+.place-position {
+  overflow-wrap: anywhere;
+}
+.place-position {
+  font-size: 13px;
+  color: var(--accent);
+  line-height: 1.3;
+}
+.tree-item {
+  gap: 8px;
+}
+.tree-item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* ── computer layout (≥ 900px): sidebar + wide panes ──────────────────────── */

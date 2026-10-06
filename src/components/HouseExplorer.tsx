@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type House, type HouseItem, type HouseNode } from '../lib/api'
+import { shownDetails } from '../lib/details'
 
 // The house on a computer: the tree on the left, the selected place on the
 // right, and "Find anything" across every item. Reads the same /api/house
@@ -38,7 +39,7 @@ function itemExtras(item: HouseItem & { location_note?: string }): string[] {
   return [
     item.quantity && item.quantity > 1 ? `×${item.quantity}` : '',
     item.status !== 'present' ? `${item.status}${item.lent_to ? ` to ${item.lent_to}` : ''}` : '',
-    ...(item.details ?? []).map((d) => `${d.key}: ${d.value}`),
+    ...shownDetails(item.details),
     item.location_note ?? '',
   ].filter(Boolean)
 }
