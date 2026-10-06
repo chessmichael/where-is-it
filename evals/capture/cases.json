@@ -7451,6 +7451,4011 @@
       ]
     },
     {
+      "id": "PA01",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "simple"
+      ],
+      "said": "the tv so remote so is so on you know the you know coffee table so in living room",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "TV remote|remote",
+            "path": [
+              "Living room",
+              "Coffee table"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A01"
+    },
+    {
+      "id": "PA02",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "nested"
+      ],
+      "said": "my passport is in the top drawer of the desk in the office anyway that's it",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "passport",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A02"
+    },
+    {
+      "id": "PA03",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "simple"
+      ],
+      "said": "sorry I was just thinking i put I mean the spare house key in the so junk drawer in the uh kitchen",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "spare house key|spare key",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A03"
+    },
+    {
+      "id": "PA04",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "deep"
+      ],
+      "said": "the extension cords are in a blue bin on the top shelf of metal shelving in the the garage",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "extension cords",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A04"
+    },
+    {
+      "id": "PA05",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "filler"
+      ],
+      "said": "um so the christmas lights are up in the attic in a big red tote that's all for now",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "christmas lights",
+            "path": [
+              "Attic",
+              "Red tote|Big red tote"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A05"
+    },
+    {
+      "id": "PA06",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "quantity"
+      ],
+      "said": "there's four rolls of um paper towels in the laundry room cabinet okay cool",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "paper towels",
+            "path": [
+              "Laundry room",
+              "Cabinet"
+            ],
+            "quantity": 4
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A06"
+    },
+    {
+      "id": "PA07",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "preposition"
+      ],
+      "said": "the first aid kit is you know under the bathroom sink um",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "first aid kit",
+            "path": [
+              "Bathroom",
+              "Sink|Under the sink|Sink cabinet"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A07"
+    },
+    {
+      "id": "PA08",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "simple"
+      ],
+      "said": "sorry I was just thinking the vacuum lives in the hall closet on the floor",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "vacuum",
+            "path": [
+              "Hall closet",
+              "Floor"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A08"
+    },
+    {
+      "id": "PA09",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "implied-room"
+      ],
+      "said": "okay so before I forget my um winter coats are hanging in the coat closet by the front door",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "winter coats",
+            "path": [
+              "Entryway|Front hall?",
+              "Coat closet"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A09"
+    },
+    {
+      "id": "PA10",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "detail"
+      ],
+      "said": "the drill is on you know the workbench in garage it's a dewalt",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "drill",
+            "path": [
+              "Garage",
+              "Workbench"
+            ],
+            "details": {
+              "brand": "DeWalt"
+            }
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A10"
+    },
+    {
+      "id": "PA11",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "deep"
+      ],
+      "said": "I keep the batteries in a shoebox on the top shelf of the hall closet that's all for now",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "batteries",
+            "path": [
+              "Hall closet",
+              "Top shelf",
+              "Shoebox"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A11"
+    },
+    {
+      "id": "PA12",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "preposition"
+      ],
+      "said": "hey quick one the wrapping paper is under the bed okay in the guest room",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "wrapping paper",
+            "path": [
+              "Guest room",
+              "Bed|Under the bed"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A12"
+    },
+    {
+      "id": "PA13",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "word-order"
+      ],
+      "said": "my wedding album so is um on the bookshelf uh in the living room bottom shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "wedding album",
+            "path": [
+              "Living room",
+              "Bookshelf",
+              "Bottom shelf"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A13"
+    },
+    {
+      "id": "PA14",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "quantity",
+        "deep"
+      ],
+      "said": "okay so before I forget two sleeping bags are in the basement in the storage room on the metal rack",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "sleeping bags",
+            "path": [
+              "Basement",
+              "Storage room",
+              "Metal rack"
+            ],
+            "quantity": 2
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A14"
+    },
+    {
+      "id": "PA15",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "multi-item",
+        "deep"
+      ],
+      "said": "alright um car title and the birth certificates are in the fireproof safe in the I mean master bedroom closet",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "car title",
+            "path": [
+              "Master bedroom",
+              "Closet",
+              "Fireproof safe|Safe"
+            ]
+          },
+          {
+            "name": "birth certificates",
+            "path": [
+              "Master bedroom",
+              "Closet",
+              "Fireproof safe|Safe"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A15"
+    },
+    {
+      "id": "PA16",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "simple"
+      ],
+      "said": "the phone charger is next to um my bed on the nightstand in the bedroom um",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "phone charger",
+            "path": [
+              "Bedroom",
+              "Nightstand"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A16"
+    },
+    {
+      "id": "PA17",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "nested",
+        "casual-verb"
+      ],
+      "said": "I stuck the tape measure in the second drawer of the tool chest in the garage thanks",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "tape measure",
+            "path": [
+              "Garage",
+              "Tool chest",
+              "Second drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A17"
+    },
+    {
+      "id": "PA18",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "word-order"
+      ],
+      "said": "the good scissors are in the craft room in white cabinet top drawer thanks",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "scissors|good scissors",
+            "path": [
+              "Craft room",
+              "White cabinet|Cabinet",
+              "Top drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A18"
+    },
+    {
+      "id": "PA19",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "relative-position"
+      ],
+      "said": "the snow shovel is leaning I mean against the wall in the garage by the door",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "snow shovel",
+            "path": [
+              "Garage",
+              "Wall?"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A19"
+    },
+    {
+      "id": "PA20",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "simple"
+      ],
+      "said": "oh and also the dog's leash hangs on a hook by the back door in the mudroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "dog leash|leash",
+            "path": [
+              "Mudroom",
+              "Hook"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A20"
+    },
+    {
+      "id": "PA21",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "implied-room"
+      ],
+      "said": "hey quick one the spare light bulbs are in pantry on the top shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "light bulbs|spare light bulbs",
+            "path": [
+              "Kitchen?",
+              "Pantry",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A21"
+    },
+    {
+      "id": "PA22",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "outside-house"
+      ],
+      "said": "the tent is in the trunk of my car um",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "tent",
+            "path": [
+              "Car",
+              "Trunk"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A22"
+    },
+    {
+      "id": "PA23",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "lend"
+      ],
+      "said": "I lent my ladder to my neighbor Dave that's all for now",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "ladder",
+            "status": "lent",
+            "lent_to": "Dave"
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A23"
+    },
+    {
+      "id": "PA24",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "simple"
+      ],
+      "said": "the baby monitor is on top of dresser uh in the nursery I think that's right",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "baby monitor",
+            "path": [
+              "Nursery",
+              "Dresser"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A24"
+    },
+    {
+      "id": "PA25",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "nested"
+      ],
+      "said": "my running shoes are so in the bedroom closet on I mean the floor um",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "running shoes",
+            "path": [
+              "Bedroom",
+              "Closet",
+              "Floor"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A25"
+    },
+    {
+      "id": "PA26",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "deep"
+      ],
+      "said": "alright um the HDMI cables are in a ziploc bag in the TV stand drawer in the living room",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "HDMI cables",
+            "path": [
+              "Living room",
+              "TV stand",
+              "Drawer",
+              "Ziploc bag|Bag"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A26"
+    },
+    {
+      "id": "PA27",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "simple"
+      ],
+      "said": "sorry I was just thinking grill cover is in the shed",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "grill cover",
+            "path": [
+              "Shed"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A27"
+    },
+    {
+      "id": "PA28",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "long-name"
+      ],
+      "said": "the fondue set is in um the cabinet above the fridge in the kitchen",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "fondue set",
+            "path": [
+              "Kitchen",
+              "Cabinet above the fridge|Cabinet above the refrigerator|Cabinet over the fridge"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A28"
+    },
+    {
+      "id": "PA29",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "filler",
+        "implied-room"
+      ],
+      "said": "okay the kids winter boots are in the big bin under the stairs I think that's right",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "kids winter boots|winter boots",
+            "path": [
+              "Under the stairs|Stairs|Staircase",
+              "Bin|Big bin"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A29"
+    },
+    {
+      "id": "PA30",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "preposition"
+      ],
+      "said": "the toolbox I mean is in the the basement under the the workbench thanks",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "toolbox",
+            "path": [
+              "Basement",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A30"
+    },
+    {
+      "id": "PA31",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "quantity",
+        "transcription"
+      ],
+      "said": "the three spare tooth brushes are in the the so medicine cabinet in the I mean up stairs bathroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "toothbrushes|spare toothbrushes",
+            "path": [
+              "Upstairs bathroom",
+              "Medicine cabinet"
+            ],
+            "quantity": 3
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A31"
+    },
+    {
+      "id": "PA32",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "deep"
+      ],
+      "said": "the camping lantern is in the green plastic tub on the garage shelf okay cool",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "camping lantern|lantern",
+            "path": [
+              "Garage",
+              "Shelf",
+              "Green plastic tub|Green tub"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A32"
+    },
+    {
+      "id": "PA33",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "outside-house"
+      ],
+      "said": "the jumper cables are in the trunk of honda okay cool",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "jumper cables",
+            "path": [
+              "Honda|Car",
+              "Trunk"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A33"
+    },
+    {
+      "id": "PA34",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "relative-position"
+      ],
+      "said": "the photo albums are in the hope chest at the foot of the the bed in the like master bedroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "photo albums",
+            "path": [
+              "Master bedroom",
+              "Hope chest"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A34"
+    },
+    {
+      "id": "PA35",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "filler"
+      ],
+      "said": "uh the iPad is charging on the kitchen counter thanks",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "iPad",
+            "path": [
+              "Kitchen",
+              "Counter"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A35"
+    },
+    {
+      "id": "PA36",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "word-order"
+      ],
+      "said": "the the like backup hard drive is so in the office in the filing cabinet bottom drawer thanks",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "backup hard drive|hard drive",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Bottom drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A36"
+    },
+    {
+      "id": "PA37",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "simple"
+      ],
+      "said": "kids' art supplies are in the cubbies in the playroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "art supplies",
+            "path": [
+              "Playroom",
+              "Cubbies"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A37"
+    },
+    {
+      "id": "PA38",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "preposition"
+      ],
+      "said": "okay so before I forget the folding chairs are behind the furnace in the basement",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "folding chairs",
+            "path": [
+              "Basement",
+              "Furnace"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A38"
+    },
+    {
+      "id": "PA39",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "detail",
+        "missing-level"
+      ],
+      "said": "okay so before I forget leaf blower it's um a ryobi is on bottom shelf in the okay garage",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "leaf blower",
+            "path": [
+              "Garage",
+              "Shelf|Shelves|Shelving?",
+              "Bottom shelf"
+            ],
+            "details": {
+              "brand": "Ryobi"
+            }
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A39"
+    },
+    {
+      "id": "PA40",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "deep"
+      ],
+      "said": "my grandmother's ring is in the jewelry box on my okay dresser in okay the bedroom",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "grandmother's ring|ring",
+            "path": [
+              "Bedroom",
+              "Dresser",
+              "Jewelry box"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A40"
+    },
+    {
+      "id": "PA41",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "container-label"
+      ],
+      "said": "hey quick one the halloween decorations are in the attic in the boxes marked halloween",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "halloween decorations",
+            "path": [
+              "Attic",
+              "Boxes marked halloween|Halloween boxes|Boxes"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A41"
+    },
+    {
+      "id": "PA42",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "detail"
+      ],
+      "said": "oh and also the stand mixer is in the uh corner cabinet in the kitchen its a red kitchenaid",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "stand mixer",
+            "path": [
+              "Kitchen",
+              "Corner cabinet"
+            ],
+            "details": {
+              "brand": "KitchenAid",
+              "color": "red"
+            }
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A42"
+    },
+    {
+      "id": "PA43",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "simple"
+      ],
+      "said": "bike pump is hanging on um the pegboard in garage",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "bike pump",
+            "path": [
+              "Garage",
+              "Pegboard"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A43"
+    },
+    {
+      "id": "PA44",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "preposition"
+      ],
+      "said": "there's a fire extinguisher under the kitchen sink anyway that's it",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "fire extinguisher",
+            "path": [
+              "Kitchen",
+              "Sink|Under the sink"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A44"
+    },
+    {
+      "id": "PA45",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "implied-room"
+      ],
+      "said": "sorry I was just thinking the spare sheets for for guest bed are in I mean the linen closet on okay the middle shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "spare sheets|sheets",
+            "path": [
+              "Hallway?",
+              "Linen closet",
+              "Middle shelf"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A45"
+    },
+    {
+      "id": "PA46",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "quantity",
+        "relative-position"
+      ],
+      "said": "paint cans two of okay them are on the floor of the garage next okay to the water heater",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "paint cans",
+            "path": [
+              "Garage",
+              "Floor"
+            ],
+            "quantity": 2
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A46"
+    },
+    {
+      "id": "PA47",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "nested"
+      ],
+      "said": "oh and also the label maker is in the left drawer of the desk in the office",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "label maker",
+            "path": [
+              "Office",
+              "Desk",
+              "Left drawer"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A47"
+    },
+    {
+      "id": "PA48",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "both",
+        "empty-house",
+        "nested"
+      ],
+      "said": "alright um the sewing machine is in the guest room closet on the top shelf",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "sewing machine",
+            "path": [
+              "Guest room",
+              "Closet",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A48"
+    },
+    {
+      "id": "PA49",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "asr",
+        "empty-house",
+        "implied-room"
+      ],
+      "said": "the umbrellas are in umbrella stand by the front door",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "umbrellas",
+            "path": [
+              "Entryway|Front hall?",
+              "Umbrella stand"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A49"
+    },
+    {
+      "id": "PA50",
+      "set": "empty",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "empty-house",
+        "deep"
+      ],
+      "said": "alright um last year's tax returns are in a manila folder in the top drawer of the filing cabinet in the office",
+      "seed": null,
+      "expect": {
+        "items": [
+          {
+            "name": "tax returns",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Top drawer",
+              "Manila folder|Folder"
+            ]
+          }
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "A50"
+    },
+    {
+      "id": "PB01",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "by-name",
+        "item-reference"
+      ],
+      "said": "okay so before I forget i put the duct tape in uh the blue bin with the extension cords",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "duct tape",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B01"
+    },
+    {
+      "id": "PB02",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "alias"
+      ],
+      "said": "the work gloves are on bottom shelf of the garage shelves",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "work gloves",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B02"
+    },
+    {
+      "id": "PB03",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "the hammer is hanging on the pegboard anyway that's it",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "hammer",
+            "path": [
+              "Garage",
+              "Workbench",
+              "Pegboard"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B03"
+    },
+    {
+      "id": "PB04",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "stud finder is okay on the workbench anyway that's it",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "stud finder",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B04"
+    },
+    {
+      "id": "PB05",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "cookie cutters are on so the second shelf of the pantry",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "cookie cutters",
+            "path": [
+              "Kitchen",
+              "Pantry",
+              "Second shelf"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B05"
+    },
+    {
+      "id": "PB06",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "oh and also rubber bands are in the junk drawer",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "rubber bands",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B06"
+    },
+    {
+      "id": "PB07",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "synonym"
+      ],
+      "said": "okay so before I forget the waffle maker is in you know the cabinet over uh the refrigerator",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "waffle maker",
+            "path": [
+              "Kitchen",
+              "Cabinet above the fridge"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B07"
+    },
+    {
+      "id": "PB08",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "item-reference"
+      ],
+      "said": "my social security card is in like the top drawer of my desk next to the passport",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "social security card",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B08"
+    },
+    {
+      "id": "PB09",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "oh and also the insurance papers are in the bottom drawer of the filing cabinet",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "insurance papers",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Bottom drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B09"
+    },
+    {
+      "id": "PB10",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "item-reference"
+      ],
+      "said": "okay so before I forget the puzzle is um on the you know top shelf of the uh hall closet with the the board games",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "puzzle",
+            "path": [
+              "Hall closet",
+              "Top shelf"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B10"
+    },
+    {
+      "id": "PB11",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "no-room",
+        "ambiguous-name"
+      ],
+      "said": "my um watch is in top drawer of the dresser",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "watch",
+            "path": [
+              "Master bedroom",
+              "Dresser",
+              "Top drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B11"
+    },
+    {
+      "id": "PB12",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "oh and also the reading glasses are on the nightstand",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "reading glasses",
+            "path": [
+              "Master bedroom",
+              "Nightstand"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B12"
+    },
+    {
+      "id": "PB13",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "by-name"
+      ],
+      "said": "the camp stove is in the camping tub in the uh basement that's all for now",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "camp stove",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Camping tub"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B13"
+    },
+    {
+      "id": "PB14",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "alias"
+      ],
+      "said": "the bug spray is in the I mean green tub too",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "bug spray",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Camping tub"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B14"
+    },
+    {
+      "id": "PB15",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "no-room"
+      ],
+      "said": "the thermometer is in the medicine cabinet anyway that's it",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "thermometer",
+            "path": [
+              "Bathroom",
+              "Medicine cabinet"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B15"
+    },
+    {
+      "id": "PB16",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "by-name"
+      ],
+      "said": "the tylenol is in the bathroom medicine cabinet I think that's right",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "Tylenol",
+            "path": [
+              "Bathroom",
+              "Medicine cabinet"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B16"
+    },
+    {
+      "id": "PB17",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "no-room",
+        "partial-path"
+      ],
+      "said": "the zip ties are in uh the blue bin on the top shelf",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "zip ties",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B17"
+    },
+    {
+      "id": "PB18",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "by-name"
+      ],
+      "said": "okay so before I forget I put the measuring tape on the garage workbench",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "measuring tape",
+            "path": [
+              "Garage",
+              "Workbench"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B18"
+    },
+    {
+      "id": "PB19",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "new-container"
+      ],
+      "said": "alright um the um paint brushes are in a coffee can on the bottom shelf of the metal shelving",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "paint brushes",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Bottom shelf",
+              "Coffee can"
+            ]
+          }
+        ],
+        "new_locations": 1
+      },
+      "split": "robustness",
+      "perturbs": "B19"
+    },
+    {
+      "id": "PB20",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "new-container"
+      ],
+      "said": "the receipts are in like an envelope so in my desk's top drawer um",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "receipts",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer",
+              "Envelope"
+            ]
+          }
+        ],
+        "new_locations": 1
+      },
+      "split": "robustness",
+      "perturbs": "B20"
+    },
+    {
+      "id": "PB21",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "by-name"
+      ],
+      "said": "the flashlight is in the kitchen junk drawer okay cool",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "flashlight",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B21"
+    },
+    {
+      "id": "PB22",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "word-order"
+      ],
+      "said": "alright um the spare car key okay is in the dresser top drawer in the master bedroom",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "spare car key|car key",
+            "path": [
+              "Master bedroom",
+              "Dresser",
+              "Top drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B22"
+    },
+    {
+      "id": "PB23",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "item-reference"
+      ],
+      "said": "the playing cards um are with board games in the hall closet",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "playing cards",
+            "path": [
+              "Hall closet",
+              "Top shelf"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B23"
+    },
+    {
+      "id": "PB24",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "item-reference"
+      ],
+      "said": "the tire pressure gauge is in the same bin as the extension cords I think that's right",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "tire pressure gauge",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B24"
+    },
+    {
+      "id": "PB25",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "synonym"
+      ],
+      "said": "hey quick one the canned tomatoes I mean are on pantry shelf two",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "canned tomatoes",
+            "path": [
+              "Kitchen",
+              "Pantry",
+              "Second shelf"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B25"
+    },
+    {
+      "id": "PB26",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "by-name"
+      ],
+      "said": "the screwdrivers are on pegboard over workbench in the garage",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "screwdrivers",
+            "path": [
+              "Garage",
+              "Workbench",
+              "Pegboard"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B26"
+    },
+    {
+      "id": "PB27",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "partial-name"
+      ],
+      "said": "the headlamp is in the camping tub on the basement shelves anyway that's it",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "headlamp",
+            "path": [
+              "Basement",
+              "Storage shelves",
+              "Camping tub"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B27"
+    },
+    {
+      "id": "PB28",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "both",
+        "existing-container",
+        "synonym"
+      ],
+      "said": "sorry I was just thinking the old phone is in you know the bottom drawer of file cabinet in the office",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "old phone|phone",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Bottom drawer"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B28"
+    },
+    {
+      "id": "PB29",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "asr",
+        "existing-container",
+        "new-container"
+      ],
+      "said": "the band aids are on so the bottom shelf of the medicine cabinet in the bathroom",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "band-aids|bandaids",
+            "path": [
+              "Bathroom",
+              "Medicine cabinet",
+              "Bottom shelf"
+            ]
+          }
+        ],
+        "new_locations": 1
+      },
+      "split": "robustness",
+      "perturbs": "B29"
+    },
+    {
+      "id": "PB30",
+      "set": "existing",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "existing-container",
+        "room-synonym"
+      ],
+      "said": "sorry I was just thinking the earplugs are on my nightstand in the bedroom",
+      "seed": "SEED",
+      "expect": {
+        "items": [
+          {
+            "name": "earplugs",
+            "path": [
+              "Master bedroom",
+              "Nightstand"
+            ]
+          }
+        ],
+        "new_locations": 0
+      },
+      "split": "robustness",
+      "perturbs": "B30"
+    },
+    {
+      "id": "PF01",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Living room",
+            "Coffee table"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "TV remote",
+            "path": [
+              "Living room",
+              "Coffee table"
+            ]
+          }
+        ]
+      },
+      "question": "hey quick one wheres wheres the remote",
+      "expect": {
+        "answer_mentions": [
+          "coffee table",
+          "living room"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F01"
+    },
+    {
+      "id": "PF02",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "nested"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Desk",
+            "Top drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "passport",
+            "path": [
+              "Office",
+              "Desk",
+              "Top drawer"
+            ]
+          }
+        ]
+      },
+      "question": "have have you seen I mean my passport um",
+      "expect": {
+        "answer_mentions": [
+          "top drawer",
+          "desk",
+          "office"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F02"
+    },
+    {
+      "id": "PF03",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Junk drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "spare house key",
+            "path": [
+              "Kitchen",
+              "Junk drawer"
+            ]
+          }
+        ]
+      },
+      "question": "where did I put the spare house key thanks",
+      "expect": {
+        "answer_mentions": [
+          "junk drawer",
+          "kitchen"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F03"
+    },
+    {
+      "id": "PF04",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Metal shelving",
+            "Top shelf",
+            "Blue bin"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "extension cords",
+            "path": [
+              "Garage",
+              "Metal shelving",
+              "Top shelf",
+              "Blue bin"
+            ]
+          }
+        ]
+      },
+      "question": "where where so are the extension cords thanks",
+      "expect": {
+        "answer_mentions": [
+          "blue bin",
+          "top shelf",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F04"
+    },
+    {
+      "id": "PF05",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "filler"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Attic",
+            "Red tote"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "christmas lights",
+            "path": [
+              "Attic",
+              "Red tote"
+            ]
+          }
+        ]
+      },
+      "question": "where are uh the christmas lights um",
+      "expect": {
+        "answer_mentions": [
+          "red tote",
+          "attic"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F05"
+    },
+    {
+      "id": "PF06",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "quantity"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Laundry room",
+            "Cabinet"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "paper towels",
+            "path": [
+              "Laundry room",
+              "Cabinet"
+            ],
+            "quantity": 4
+          }
+        ]
+      },
+      "question": "how many rolls of paper towels do I have and where are they I think that's right",
+      "expect": {
+        "answer_mentions": [
+          "4|four",
+          "laundry"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F06"
+    },
+    {
+      "id": "PF07",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "preposition"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Bathroom",
+            "Sink"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "first aid kit",
+            "path": [
+              "Bathroom",
+              "Sink"
+            ]
+          }
+        ]
+      },
+      "question": "alright um wheres the first aid kit",
+      "expect": {
+        "answer_mentions": [
+          "sink",
+          "bathroom"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F07"
+    },
+    {
+      "id": "PF08",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Hall closet",
+            "Floor"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "vacuum",
+            "path": [
+              "Hall closet",
+              "Floor"
+            ]
+          }
+        ]
+      },
+      "question": "where do we keep the I mean vacuum",
+      "expect": {
+        "answer_mentions": [
+          "hall closet"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F08"
+    },
+    {
+      "id": "PF09",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "implied-room"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Entryway",
+            "Coat closet"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "winter coats",
+            "path": [
+              "Entryway",
+              "Coat closet"
+            ]
+          }
+        ]
+      },
+      "question": "sorry I was just thinking where are my winter coats",
+      "expect": {
+        "answer_mentions": [
+          "coat closet"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F09"
+    },
+    {
+      "id": "PF10",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "detail"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "drill",
+            "path": [
+              "Garage",
+              "Workbench"
+            ],
+            "details": {
+              "brand": "DeWalt"
+            }
+          }
+        ]
+      },
+      "question": "alright um where's the dewalt",
+      "expect": {
+        "answer_mentions": [
+          "workbench",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F10"
+    },
+    {
+      "id": "PF11",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Hall closet",
+            "Top shelf",
+            "Shoebox"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "batteries",
+            "path": [
+              "Hall closet",
+              "Top shelf",
+              "Shoebox"
+            ]
+          }
+        ]
+      },
+      "question": "do we have batteries batteries like somewhere",
+      "expect": {
+        "answer_mentions": [
+          "shoebox",
+          "hall closet"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F11"
+    },
+    {
+      "id": "PF12",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "preposition"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Guest room",
+            "Bed"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "wrapping paper",
+            "path": [
+              "Guest room",
+              "Bed"
+            ]
+          }
+        ]
+      },
+      "question": "where's the wrapping paper that's all for now",
+      "expect": {
+        "answer_mentions": [
+          "bed",
+          "guest room"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F12"
+    },
+    {
+      "id": "PF13",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "word-order"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Living room",
+            "Bookshelf",
+            "Bottom shelf"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "wedding album",
+            "path": [
+              "Living room",
+              "Bookshelf",
+              "Bottom shelf"
+            ]
+          }
+        ]
+      },
+      "question": "hey quick one wheres our wedding album",
+      "expect": {
+        "answer_mentions": [
+          "bookshelf|bookcase",
+          "bottom shelf"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F13"
+    },
+    {
+      "id": "PF14",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "quantity",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Storage room",
+            "Metal rack"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "sleeping bags",
+            "path": [
+              "Basement",
+              "Storage room",
+              "Metal rack"
+            ],
+            "quantity": 2
+          }
+        ]
+      },
+      "question": "how uh many sleeping bags bags are their and where",
+      "expect": {
+        "answer_mentions": [
+          "2|two",
+          "basement"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F14"
+    },
+    {
+      "id": "PF15",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "multi-item",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Master bedroom",
+            "Closet",
+            "Fireproof safe"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "car title",
+            "path": [
+              "Master bedroom",
+              "Closet",
+              "Fireproof safe"
+            ]
+          }
+        ]
+      },
+      "question": "sorry I was just thinking where's the car title",
+      "expect": {
+        "answer_mentions": [
+          "safe",
+          "closet"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F15"
+    },
+    {
+      "id": "PF16",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Bedroom",
+            "Nightstand"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "phone charger",
+            "path": [
+              "Bedroom",
+              "Nightstand"
+            ]
+          }
+        ]
+      },
+      "question": "oh and also wheres my phone charger",
+      "expect": {
+        "answer_mentions": [
+          "nightstand"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F16"
+    },
+    {
+      "id": "PF17",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "nested",
+        "casual-verb"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Tool chest",
+            "Second drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "tape measure",
+            "path": [
+              "Garage",
+              "Tool chest",
+              "Second drawer"
+            ]
+          }
+        ]
+      },
+      "question": "i need the tape measure measure where is I mean it",
+      "expect": {
+        "answer_mentions": [
+          "tool chest",
+          "second drawer"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F17"
+    },
+    {
+      "id": "PF18",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "word-order"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Craft room",
+            "White cabinet",
+            "Top drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "scissors",
+            "path": [
+              "Craft room",
+              "White cabinet",
+              "Top drawer"
+            ]
+          }
+        ]
+      },
+      "question": "oh and also where are the good scissors",
+      "expect": {
+        "answer_mentions": [
+          "white cabinet|cabinet",
+          "craft room"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F18"
+    },
+    {
+      "id": "PF19",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "relative-position"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Wall"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "snow shovel",
+            "path": [
+              "Garage",
+              "Wall"
+            ]
+          }
+        ]
+      },
+      "question": "wheres the snow shovel I think that's right",
+      "expect": {
+        "answer_mentions": [
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F19"
+    },
+    {
+      "id": "PF20",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Mudroom",
+            "Hook"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "dog leash",
+            "path": [
+              "Mudroom",
+              "Hook"
+            ]
+          }
+        ]
+      },
+      "question": "wheres dog leash um",
+      "expect": {
+        "answer_mentions": [
+          "hook",
+          "mudroom"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F20"
+    },
+    {
+      "id": "PF21",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "implied-room"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Pantry",
+            "Top shelf"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "light bulbs",
+            "path": [
+              "Kitchen",
+              "Pantry",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "question": "are there any spare light bulbs I think that's right",
+      "expect": {
+        "answer_mentions": [
+          "pantry",
+          "top shelf"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F21"
+    },
+    {
+      "id": "PF22",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "outside-house"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Car",
+            "Trunk"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "tent",
+            "path": [
+              "Car",
+              "Trunk"
+            ]
+          }
+        ]
+      },
+      "question": "wheres the tent that's all for now",
+      "expect": {
+        "answer_mentions": [
+          "trunk"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F22"
+    },
+    {
+      "id": "PF23",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "lend"
+      ],
+      "seed_inline": {
+        "locations": [],
+        "aliases": {},
+        "items": [
+          {
+            "name": "ladder",
+            "path": null,
+            "status": "lent",
+            "lent_to": "Dave"
+          }
+        ]
+      },
+      "question": "wheres the ladder",
+      "expect": {
+        "answer_mentions": [
+          "Dave"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F23"
+    },
+    {
+      "id": "PF24",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Nursery",
+            "Dresser"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "baby monitor",
+            "path": [
+              "Nursery",
+              "Dresser"
+            ]
+          }
+        ]
+      },
+      "question": "hey quick one where's the baby monitor",
+      "expect": {
+        "answer_mentions": [
+          "dresser",
+          "nursery"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F24"
+    },
+    {
+      "id": "PF25",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "nested"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Bedroom",
+            "Closet",
+            "Floor"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "running shoes",
+            "path": [
+              "Bedroom",
+              "Closet",
+              "Floor"
+            ]
+          }
+        ]
+      },
+      "question": "okay so before I forget where are my um running shoes",
+      "expect": {
+        "answer_mentions": [
+          "closet",
+          "floor"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F25"
+    },
+    {
+      "id": "PF26",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Living room",
+            "TV stand",
+            "Drawer",
+            "Ziploc bag"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "HDMI cables",
+            "path": [
+              "Living room",
+              "TV stand",
+              "Drawer",
+              "Ziploc bag"
+            ]
+          }
+        ]
+      },
+      "question": "where where are um hdmi cables",
+      "expect": {
+        "answer_mentions": [
+          "TV stand",
+          "drawer|bag"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F26"
+    },
+    {
+      "id": "PF27",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Shed"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "grill cover",
+            "path": [
+              "Shed"
+            ]
+          }
+        ]
+      },
+      "question": "where's the grill cover that's all for now",
+      "expect": {
+        "answer_mentions": [
+          "shed"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F27"
+    },
+    {
+      "id": "PF28",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "long-name"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Cabinet above the fridge"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "fondue set",
+            "path": [
+              "Kitchen",
+              "Cabinet above the fridge"
+            ]
+          }
+        ]
+      },
+      "question": "where's the uh fondue I mean set anyway that's it",
+      "expect": {
+        "answer_mentions": [
+          "cabinet",
+          "fridge|refrigerator"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F28"
+    },
+    {
+      "id": "PF29",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "filler",
+        "implied-room"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Under the stairs",
+            "Bin"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "kids winter boots",
+            "path": [
+              "Under the stairs",
+              "Bin"
+            ]
+          }
+        ]
+      },
+      "question": "where did I mean kids' winter boots go",
+      "expect": {
+        "answer_mentions": [
+          "stairs",
+          "bin"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F29"
+    },
+    {
+      "id": "PF30",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "preposition"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Workbench"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "toolbox",
+            "path": [
+              "Basement",
+              "Workbench"
+            ]
+          }
+        ]
+      },
+      "question": "alright um where's the toolbox",
+      "expect": {
+        "answer_mentions": [
+          "workbench",
+          "basement"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F30"
+    },
+    {
+      "id": "PF31",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "quantity",
+        "transcription"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Upstairs bathroom",
+            "Medicine cabinet"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "toothbrushes",
+            "path": [
+              "Upstairs bathroom",
+              "Medicine cabinet"
+            ],
+            "quantity": 3
+          }
+        ]
+      },
+      "question": "sorry I was just thinking do we have spare toothbrushes",
+      "expect": {
+        "answer_mentions": [
+          "medicine cabinet",
+          "upstairs"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F31"
+    },
+    {
+      "id": "PF32",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Shelf",
+            "Green plastic tub"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "camping lantern",
+            "path": [
+              "Garage",
+              "Shelf",
+              "Green plastic tub"
+            ]
+          }
+        ]
+      },
+      "question": "wheres the the camping lantern um",
+      "expect": {
+        "answer_mentions": [
+          "green",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F32"
+    },
+    {
+      "id": "PF33",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "outside-house"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Honda",
+            "Trunk"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "jumper cables",
+            "path": [
+              "Honda",
+              "Trunk"
+            ]
+          }
+        ]
+      },
+      "question": "alright um where are the jumper cables",
+      "expect": {
+        "answer_mentions": [
+          "trunk",
+          "Honda|car"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F33"
+    },
+    {
+      "id": "PF34",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "relative-position"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Master bedroom",
+            "Hope chest"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "photo albums",
+            "path": [
+              "Master bedroom",
+              "Hope chest"
+            ]
+          }
+        ]
+      },
+      "question": "sorry I was just thinking where are the photo albums",
+      "expect": {
+        "answer_mentions": [
+          "hope chest"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F34"
+    },
+    {
+      "id": "PF35",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "filler"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Counter"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "iPad",
+            "path": [
+              "Kitchen",
+              "Counter"
+            ]
+          }
+        ]
+      },
+      "question": "where's the ipad",
+      "expect": {
+        "answer_mentions": [
+          "counter",
+          "kitchen"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F35"
+    },
+    {
+      "id": "PF36",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "word-order"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Filing cabinet",
+            "Bottom drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "backup hard drive",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Bottom drawer"
+            ]
+          }
+        ]
+      },
+      "question": "where's the backup hard drive anyway that's it",
+      "expect": {
+        "answer_mentions": [
+          "filing cabinet",
+          "bottom drawer"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F36"
+    },
+    {
+      "id": "PF37",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Playroom",
+            "Cubbies"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "art supplies",
+            "path": [
+              "Playroom",
+              "Cubbies"
+            ]
+          }
+        ]
+      },
+      "question": "where are the art supplies that's all for now",
+      "expect": {
+        "answer_mentions": [
+          "cubbies",
+          "playroom"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F37"
+    },
+    {
+      "id": "PF38",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "preposition"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Basement",
+            "Furnace"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "folding chairs",
+            "path": [
+              "Basement",
+              "Furnace"
+            ]
+          }
+        ]
+      },
+      "question": "where are the folding chairs um",
+      "expect": {
+        "answer_mentions": [
+          "furnace",
+          "basement"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F38"
+    },
+    {
+      "id": "PF39",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "detail",
+        "missing-level"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Shelf",
+            "Bottom shelf"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "leaf blower",
+            "path": [
+              "Garage",
+              "Shelf",
+              "Bottom shelf"
+            ],
+            "details": {
+              "brand": "Ryobi"
+            }
+          }
+        ]
+      },
+      "question": "hey quick one where's the leaf blower",
+      "expect": {
+        "answer_mentions": [
+          "bottom shelf",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F39"
+    },
+    {
+      "id": "PF40",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Bedroom",
+            "Dresser",
+            "Jewelry box"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "grandmother's ring",
+            "path": [
+              "Bedroom",
+              "Dresser",
+              "Jewelry box"
+            ]
+          }
+        ]
+      },
+      "question": "where is grandma's ring anyway that's it",
+      "expect": {
+        "answer_mentions": [
+          "jewelry box",
+          "dresser"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F40"
+    },
+    {
+      "id": "PF41",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "container-label"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Attic",
+            "Boxes marked halloween"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "halloween decorations",
+            "path": [
+              "Attic",
+              "Boxes marked halloween"
+            ]
+          }
+        ]
+      },
+      "question": "where are the halloween um decorations",
+      "expect": {
+        "answer_mentions": [
+          "attic",
+          "box"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F41"
+    },
+    {
+      "id": "PF42",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "detail"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Corner cabinet"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "stand mixer",
+            "path": [
+              "Kitchen",
+              "Corner cabinet"
+            ],
+            "details": {
+              "brand": "KitchenAid",
+              "color": "red"
+            }
+          }
+        ]
+      },
+      "question": "where's the KitchenAid okay cool",
+      "expect": {
+        "answer_mentions": [
+          "corner cabinet",
+          "kitchen"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F42"
+    },
+    {
+      "id": "PF43",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "simple"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Pegboard"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "bike pump",
+            "path": [
+              "Garage",
+              "Pegboard"
+            ]
+          }
+        ]
+      },
+      "question": "hey quick one wheres the bike pump",
+      "expect": {
+        "answer_mentions": [
+          "pegboard",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F43"
+    },
+    {
+      "id": "PF44",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "preposition"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Kitchen",
+            "Sink"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "fire extinguisher",
+            "path": [
+              "Kitchen",
+              "Sink"
+            ]
+          }
+        ]
+      },
+      "question": "is you know there a fire extinguisher extinguisher in the house um",
+      "expect": {
+        "answer_mentions": [
+          "sink",
+          "kitchen"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F44"
+    },
+    {
+      "id": "PF45",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "implied-room"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Hallway",
+            "Linen closet",
+            "Middle shelf"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "spare sheets",
+            "path": [
+              "Hallway",
+              "Linen closet",
+              "Middle shelf"
+            ]
+          }
+        ]
+      },
+      "question": "oh and also where are the sheets for the guest bed",
+      "expect": {
+        "answer_mentions": [
+          "linen closet",
+          "middle shelf"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F45"
+    },
+    {
+      "id": "PF46",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "quantity",
+        "relative-position"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Garage",
+            "Floor"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "paint cans",
+            "path": [
+              "Garage",
+              "Floor"
+            ],
+            "quantity": 2
+          }
+        ]
+      },
+      "question": "sorry I was just thinking where's the paint",
+      "expect": {
+        "answer_mentions": [
+          "floor",
+          "garage"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F46"
+    },
+    {
+      "id": "PF47",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "nested"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Desk",
+            "Left drawer"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "label maker",
+            "path": [
+              "Office",
+              "Desk",
+              "Left drawer"
+            ]
+          }
+        ]
+      },
+      "question": "wheres I mean the label maker",
+      "expect": {
+        "answer_mentions": [
+          "left drawer",
+          "desk"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F47"
+    },
+    {
+      "id": "PF48",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "chitchat",
+        "lookup",
+        "nested"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Guest room",
+            "Closet",
+            "Top shelf"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "sewing machine",
+            "path": [
+              "Guest room",
+              "Closet",
+              "Top shelf"
+            ]
+          }
+        ]
+      },
+      "question": "where's the sewing machine okay cool",
+      "expect": {
+        "answer_mentions": [
+          "guest room",
+          "top shelf"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F48"
+    },
+    {
+      "id": "PF49",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "both",
+        "lookup",
+        "implied-room"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Entryway",
+            "Umbrella stand"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "umbrellas",
+            "path": [
+              "Entryway",
+              "Umbrella stand"
+            ]
+          }
+        ]
+      },
+      "question": "oh and also where are the umbrellas",
+      "expect": {
+        "answer_mentions": [
+          "umbrella stand"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F49"
+    },
+    {
+      "id": "PF50",
+      "set": "lookup",
+      "tags": [
+        "perturbed",
+        "asr",
+        "lookup",
+        "deep"
+      ],
+      "seed_inline": {
+        "locations": [
+          [
+            "Office",
+            "Filing cabinet",
+            "Top drawer",
+            "Manila folder"
+          ]
+        ],
+        "aliases": {},
+        "items": [
+          {
+            "name": "tax returns",
+            "path": [
+              "Office",
+              "Filing cabinet",
+              "Top drawer",
+              "Manila folder"
+            ]
+          }
+        ]
+      },
+      "question": "where are like last year's taxes",
+      "expect": {
+        "answer_mentions": [
+          "manila folder|folder",
+          "filing cabinet"
+        ]
+      },
+      "split": "robustness",
+      "perturbs": "F50"
+    },
+    {
       "id": "TA01",
       "set": "empty",
       "split": "test",

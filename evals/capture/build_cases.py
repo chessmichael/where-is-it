@@ -686,15 +686,20 @@ def build():
     for i, c in enumerate(POSITIONAL, 1):
         cases.append({"id": f"J{i:02d}", "set": "positional", **c, "tags": ["positional", c["mode"]] + c["tags"]})
     from test_cases import test_cases  # the held-out set (test_cases.py)
+    from perturb import perturbed  # noisy copies of dev cases (perturb.py)
     tests = test_cases()
+    robust = perturbed(cases)
     with open(os.path.join(HERE, "cases.json"), "w") as f:
-        json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases + tests}, f, indent=2)
+        json.dump({"seed_houses": {"SEED": SEED, "PANTRY": PANTRY_SEED}, "cases": cases + robust + tests}, f, indent=2)
         f.write("\n")
     with open(os.path.join(HERE, "cases.md"), "w") as f:
         f.write(markdown(cases))
     with open(os.path.join(HERE, "test-cases.md"), "w") as f:
         f.write(markdown(tests).replace("# Capture eval cases", "# Capture eval — held-out TEST cases\n\nNot for iterating against: see test_cases.py.", 1))
-    return cases + tests
+    with open(os.path.join(HERE, "robustness-cases.md"), "w") as f:
+        f.write("# Robustness cases\n\nNoisy copies of dev cases (perturb.py): same facts, said worse. Each is graded like its source.\n\n"
+                + "\n".join(f"- **{c['id']}** ({c['tags'][1]}) of {c['perturbs']}: “{c.get('said') or c.get('question')}”" for c in robust) + "\n")
+    return cases + robust + tests
 
 def fmt_path(p):
     return " › ".join(s.replace("|", " / ") for s in p)
@@ -907,5 +912,6 @@ def update_markdown(cases, letter, title, intro):
 if __name__ == "__main__":
     cs = build()
     from collections import Counter
-    print("dev ", dict(Counter(c["set"] for c in cs if c.get("split") != "test")))
+    print("dev ", dict(Counter(c["set"] for c in cs if not c.get("split"))))
+    print("robust", dict(Counter(c["set"] for c in cs if c.get("split") == "robustness")))
     print("test", dict(Counter(c["set"] for c in cs if c.get("split") == "test")))

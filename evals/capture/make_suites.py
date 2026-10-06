@@ -30,7 +30,8 @@ for v in VARIANTS:
 
 regression, capability, why = [], [], {}
 test = [c["id"] for c in cases if c.get("split") == "test"]  # held out: its own suite, never capability/regression
-for c in [c for c in cases if c.get("split") != "test"]:
+robustness = [c["id"] for c in cases if c.get("split") == "robustness"]  # noisy copies (perturb.py): their own suite
+for c in [c for c in cases if not c.get("split")]:
     seen = [results[v][c["id"]] for v in results if c["id"] in results[v]]
     if len(seen) >= 2 and all(x == 1 for x in seen):
         regression.append(c["id"])
@@ -48,6 +49,7 @@ suites = {
     "regression": regression,
     "capability": capability,
     "test": test,
+    "robustness": robustness,
     "capability_reasons": why,
     "by_set": {"regression": dict(Counter(set_of[i] for i in regression)), "capability": dict(Counter(set_of[i] for i in capability))},
 }

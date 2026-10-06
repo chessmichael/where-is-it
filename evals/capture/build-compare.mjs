@@ -41,7 +41,7 @@ const versions = variants.map((v) => {
 
 const cases = JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'cases.json'), 'utf8')).cases
 const suites = existsSync(join(ROOT, 'evals', 'capture', 'suites.json')) ? JSON.parse(readFileSync(join(ROOT, 'evals', 'capture', 'suites.json'), 'utf8')) : null
-const suiteOf = (id) => (suites?.test?.includes(id) ? 'test' : suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : '')
+const suiteOf = (id) => (suites?.test?.includes(id) ? 'test' : suites?.robustness?.includes(id) ? 'robustness' : suites?.capability.includes(id) ? 'capability' : suites?.regression.includes(id) ? 'regression' : '')
 
 // results[case][variant] = { passes, reps } — passes/reps over that case's runs
 const results = {}
@@ -65,7 +65,7 @@ const data = {
   sets: SET_NAMES,
   cases: cases
     .filter((c) => results[c.id])
-    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] })),
+    .map((c) => ({ id: c.id, set: c.set, suite: suiteOf(c.id), perturbs: c.perturbs, text: c.question ?? c.update ?? c.said ?? '', results: results[c.id] })),
 }
 const json = JSON.stringify(data).replace(/</g, '\\u003c')
 
@@ -116,12 +116,16 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
   <button data-s="all" class="on">All dev cases</button>
   <button data-s="capability">Capability suite</button>
   <button data-s="regression">Regression suite</button>
+  <button data-s="robustness" title="Noisy copies of dev cases (perturb.py)">Robustness</button>
   <button data-s="test" title="The held-out set: totals only, never individual cases">Test (held out)</button>
   <label><input type="checkbox" id="changed"> Only cases that changed</label>
 </div>
 <h2>Head to head</h2>
 <p class="sub">Each version against the one before it (a model variant like v4-kimi3 against its own version, v4), on the cases <em>both</em> ran — a paired comparison, which is far more sensitive than comparing two percentages. “Better/worse” counts cases whose pass rate went up or down. The interval is a 95% bootstrap over cases (cases resampled, not runs, since runs of one case aren’t independent); the sign test asks whether that many more cases got better than worse could be chance.</p>
 <div class="wrap"><table id="pairs"></table></div>
+<h2>Robustness gap</h2>
+<p class="sub">Each robustness case is a dev case said worse — speech-to-text noise, filler words, unrelated chit-chat — with the same facts. The gap is how much the pass rate drops from the clean case to its noisy copy, over pairs where both were run. “Broken by noise” counts clean cases that passed every run while their noisy copy failed at least once.</p>
+<div class="wrap"><table id="robust"></table></div>
 <h2>Reliability</h2>
 <p class="sub">pass@1 is the average share of runs that pass. pass^3 is the chance that <em>three</em> runs of the same case all pass — what matters for an app you rely on. It’s estimated only from cases with at least 3 runs (with adaptive repeats, those are mostly the cases that changed, so it skews toward the hard ones).</p>
 <div class="wrap"><table id="reliability"></table></div>
@@ -212,6 +216,37 @@ function renderPairs() {
   if (!any) { var none = el('tr'); none.appendChild(el('td', '', 'No two consecutive versions share cases under this filter.')); body.appendChild(none); }
   table.appendChild(body);
 }
+function renderRobustness() {
+  var table = document.getElementById('robust'); table.textContent = '';
+  var head = el('tr'); ['Version', 'Pairs run', 'Clean', 'Noisy', 'Gap', '95% interval', 'Broken by noise'].forEach(function (h) { head.appendChild(el('th', '', h)); });
+  var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
+  var byId = {}; DATA.cases.forEach(function (c) { byId[c.id] = c; });
+  var body = el('tbody'), any = false;
+  DATA.versions.forEach(function (v) {
+    var gaps = [], clean = 0, noisy = 0, broken = [];
+    DATA.cases.forEach(function (c) {
+      if (!c.perturbs) return;
+      var src = byId[c.perturbs], rn = c.results[v.id], rs = src && src.results[v.id];
+      if (!rn || !rs) return;
+      var a = rs.passes / rs.reps, b = rn.passes / rn.reps;
+      gaps.push(a - b); clean += a; noisy += b;
+      if (a === 1 && b < 1) broken.push(c.id);
+    });
+    if (!gaps.length) return;
+    any = true;
+    var n = gaps.length, mean = gaps.reduce(function (s, x) { return s + x; }, 0) / n, ci = bootstrap(gaps);
+    var tr = el('tr');
+    tr.appendChild(el('td', '', v.id)); tr.appendChild(el('td', '', String(n)));
+    tr.appendChild(el('td', 'rate', Math.round(100 * clean / n) + '%')); tr.appendChild(el('td', 'rate', Math.round(100 * noisy / n) + '%'));
+    var real = ci && (ci[0] > 0 || ci[1] < 0);
+    var g = el('td'); g.appendChild(el('span', 'delta ' + (!real ? 'flat' : mean > 0 ? 'down' : 'up'), (mean > 0 ? '−' : '+') + Math.abs(Math.round(mean * 1000) / 10) + ' pts')); tr.appendChild(g);
+    tr.appendChild(el('td', '', ci ? pts(-ci[1]) + ' to ' + pts(-ci[0]) : '—'));
+    var b = el('td', 'text', broken.length ? broken.length + ': ' + broken.join(', ') : 'none'); tr.appendChild(b);
+    body.appendChild(tr);
+  });
+  if (!any) { var none = el('tr'); none.appendChild(el('td', '', 'No version has run the robustness suite yet (npm run eval:capture -- --variant vN --suite robustness).')); body.appendChild(none); }
+  table.appendChild(body);
+}
 function renderReliability() {
   var table = document.getElementById('reliability'); table.textContent = '';
   var head = el('tr'); ['Version', 'pass@1 (all cases)', '95% interval', 'pass^3', 'Cases with 3+ runs'].forEach(function (h) { head.appendChild(el('th', '', h)); });
@@ -297,7 +332,7 @@ function renderCases() {
   table.appendChild(body);
 }
 function render() {
-  renderPairs(); renderReliability(); renderSets();
+  renderPairs(); renderRobustness(); renderReliability(); renderSets();
   var held = suite === 'test';
   document.getElementById('heldNote').hidden = !held;
   document.getElementById('byCaseWrap').hidden = held;

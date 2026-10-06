@@ -1,0 +1,134 @@
+# Robustness cases
+
+Noisy copies of dev cases (perturb.py): same facts, said worse. Each is graded like its source.
+
+- **PA01** (asr) of A01: “the tv so remote so is so on you know the you know coffee table so in living room”
+- **PA02** (chitchat) of A02: “my passport is in the top drawer of the desk in the office anyway that's it”
+- **PA03** (both) of A03: “sorry I was just thinking i put I mean the spare house key in the so junk drawer in the uh kitchen”
+- **PA04** (asr) of A04: “the extension cords are in a blue bin on the top shelf of metal shelving in the the garage”
+- **PA05** (chitchat) of A05: “um so the christmas lights are up in the attic in a big red tote that's all for now”
+- **PA06** (both) of A06: “there's four rolls of um paper towels in the laundry room cabinet okay cool”
+- **PA07** (asr) of A07: “the first aid kit is you know under the bathroom sink um”
+- **PA08** (chitchat) of A08: “sorry I was just thinking the vacuum lives in the hall closet on the floor”
+- **PA09** (both) of A09: “okay so before I forget my um winter coats are hanging in the coat closet by the front door”
+- **PA10** (asr) of A10: “the drill is on you know the workbench in garage it's a dewalt”
+- **PA11** (chitchat) of A11: “I keep the batteries in a shoebox on the top shelf of the hall closet that's all for now”
+- **PA12** (both) of A12: “hey quick one the wrapping paper is under the bed okay in the guest room”
+- **PA13** (asr) of A13: “my wedding album so is um on the bookshelf uh in the living room bottom shelf”
+- **PA14** (chitchat) of A14: “okay so before I forget two sleeping bags are in the basement in the storage room on the metal rack”
+- **PA15** (both) of A15: “alright um car title and the birth certificates are in the fireproof safe in the I mean master bedroom closet”
+- **PA16** (asr) of A16: “the phone charger is next to um my bed on the nightstand in the bedroom um”
+- **PA17** (chitchat) of A17: “I stuck the tape measure in the second drawer of the tool chest in the garage thanks”
+- **PA18** (both) of A18: “the good scissors are in the craft room in white cabinet top drawer thanks”
+- **PA19** (asr) of A19: “the snow shovel is leaning I mean against the wall in the garage by the door”
+- **PA20** (chitchat) of A20: “oh and also the dog's leash hangs on a hook by the back door in the mudroom”
+- **PA21** (both) of A21: “hey quick one the spare light bulbs are in pantry on the top shelf”
+- **PA22** (asr) of A22: “the tent is in the trunk of my car um”
+- **PA23** (chitchat) of A23: “I lent my ladder to my neighbor Dave that's all for now”
+- **PA24** (both) of A24: “the baby monitor is on top of dresser uh in the nursery I think that's right”
+- **PA25** (asr) of A25: “my running shoes are so in the bedroom closet on I mean the floor um”
+- **PA26** (chitchat) of A26: “alright um the HDMI cables are in a ziploc bag in the TV stand drawer in the living room”
+- **PA27** (both) of A27: “sorry I was just thinking grill cover is in the shed”
+- **PA28** (asr) of A28: “the fondue set is in um the cabinet above the fridge in the kitchen”
+- **PA29** (chitchat) of A29: “okay the kids winter boots are in the big bin under the stairs I think that's right”
+- **PA30** (both) of A30: “the toolbox I mean is in the the basement under the the workbench thanks”
+- **PA31** (asr) of A31: “the three spare tooth brushes are in the the so medicine cabinet in the I mean up stairs bathroom”
+- **PA32** (chitchat) of A32: “the camping lantern is in the green plastic tub on the garage shelf okay cool”
+- **PA33** (both) of A33: “the jumper cables are in the trunk of honda okay cool”
+- **PA34** (asr) of A34: “the photo albums are in the hope chest at the foot of the the bed in the like master bedroom”
+- **PA35** (chitchat) of A35: “uh the iPad is charging on the kitchen counter thanks”
+- **PA36** (both) of A36: “the the like backup hard drive is so in the office in the filing cabinet bottom drawer thanks”
+- **PA37** (asr) of A37: “kids' art supplies are in the cubbies in the playroom”
+- **PA38** (chitchat) of A38: “okay so before I forget the folding chairs are behind the furnace in the basement”
+- **PA39** (both) of A39: “okay so before I forget leaf blower it's um a ryobi is on bottom shelf in the okay garage”
+- **PA40** (asr) of A40: “my grandmother's ring is in the jewelry box on my okay dresser in okay the bedroom”
+- **PA41** (chitchat) of A41: “hey quick one the halloween decorations are in the attic in the boxes marked halloween”
+- **PA42** (both) of A42: “oh and also the stand mixer is in the uh corner cabinet in the kitchen its a red kitchenaid”
+- **PA43** (asr) of A43: “bike pump is hanging on um the pegboard in garage”
+- **PA44** (chitchat) of A44: “there's a fire extinguisher under the kitchen sink anyway that's it”
+- **PA45** (both) of A45: “sorry I was just thinking the spare sheets for for guest bed are in I mean the linen closet on okay the middle shelf”
+- **PA46** (asr) of A46: “paint cans two of okay them are on the floor of the garage next okay to the water heater”
+- **PA47** (chitchat) of A47: “oh and also the label maker is in the left drawer of the desk in the office”
+- **PA48** (both) of A48: “alright um the sewing machine is in the guest room closet on the top shelf”
+- **PA49** (asr) of A49: “the umbrellas are in umbrella stand by the front door”
+- **PA50** (chitchat) of A50: “alright um last year's tax returns are in a manila folder in the top drawer of the filing cabinet in the office”
+- **PB01** (both) of B01: “okay so before I forget i put the duct tape in uh the blue bin with the extension cords”
+- **PB02** (asr) of B02: “the work gloves are on bottom shelf of the garage shelves”
+- **PB03** (chitchat) of B03: “the hammer is hanging on the pegboard anyway that's it”
+- **PB04** (both) of B04: “stud finder is okay on the workbench anyway that's it”
+- **PB05** (asr) of B05: “cookie cutters are on so the second shelf of the pantry”
+- **PB06** (chitchat) of B06: “oh and also rubber bands are in the junk drawer”
+- **PB07** (both) of B07: “okay so before I forget the waffle maker is in you know the cabinet over uh the refrigerator”
+- **PB08** (asr) of B08: “my social security card is in like the top drawer of my desk next to the passport”
+- **PB09** (chitchat) of B09: “oh and also the insurance papers are in the bottom drawer of the filing cabinet”
+- **PB10** (both) of B10: “okay so before I forget the puzzle is um on the you know top shelf of the uh hall closet with the the board games”
+- **PB11** (asr) of B11: “my um watch is in top drawer of the dresser”
+- **PB12** (chitchat) of B12: “oh and also the reading glasses are on the nightstand”
+- **PB13** (both) of B13: “the camp stove is in the camping tub in the uh basement that's all for now”
+- **PB14** (asr) of B14: “the bug spray is in the I mean green tub too”
+- **PB15** (chitchat) of B15: “the thermometer is in the medicine cabinet anyway that's it”
+- **PB16** (both) of B16: “the tylenol is in the bathroom medicine cabinet I think that's right”
+- **PB17** (asr) of B17: “the zip ties are in uh the blue bin on the top shelf”
+- **PB18** (chitchat) of B18: “okay so before I forget I put the measuring tape on the garage workbench”
+- **PB19** (both) of B19: “alright um the um paint brushes are in a coffee can on the bottom shelf of the metal shelving”
+- **PB20** (asr) of B20: “the receipts are in like an envelope so in my desk's top drawer um”
+- **PB21** (chitchat) of B21: “the flashlight is in the kitchen junk drawer okay cool”
+- **PB22** (both) of B22: “alright um the spare car key okay is in the dresser top drawer in the master bedroom”
+- **PB23** (asr) of B23: “the playing cards um are with board games in the hall closet”
+- **PB24** (chitchat) of B24: “the tire pressure gauge is in the same bin as the extension cords I think that's right”
+- **PB25** (both) of B25: “hey quick one the canned tomatoes I mean are on pantry shelf two”
+- **PB26** (asr) of B26: “the screwdrivers are on pegboard over workbench in the garage”
+- **PB27** (chitchat) of B27: “the headlamp is in the camping tub on the basement shelves anyway that's it”
+- **PB28** (both) of B28: “sorry I was just thinking the old phone is in you know the bottom drawer of file cabinet in the office”
+- **PB29** (asr) of B29: “the band aids are on so the bottom shelf of the medicine cabinet in the bathroom”
+- **PB30** (chitchat) of B30: “sorry I was just thinking the earplugs are on my nightstand in the bedroom”
+- **PF01** (both) of F01: “hey quick one wheres wheres the remote”
+- **PF02** (asr) of F02: “have have you seen I mean my passport um”
+- **PF03** (chitchat) of F03: “where did I put the spare house key thanks”
+- **PF04** (both) of F04: “where where so are the extension cords thanks”
+- **PF05** (asr) of F05: “where are uh the christmas lights um”
+- **PF06** (chitchat) of F06: “how many rolls of paper towels do I have and where are they I think that's right”
+- **PF07** (both) of F07: “alright um wheres the first aid kit”
+- **PF08** (asr) of F08: “where do we keep the I mean vacuum”
+- **PF09** (chitchat) of F09: “sorry I was just thinking where are my winter coats”
+- **PF10** (both) of F10: “alright um where's the dewalt”
+- **PF11** (asr) of F11: “do we have batteries batteries like somewhere”
+- **PF12** (chitchat) of F12: “where's the wrapping paper that's all for now”
+- **PF13** (both) of F13: “hey quick one wheres our wedding album”
+- **PF14** (asr) of F14: “how uh many sleeping bags bags are their and where”
+- **PF15** (chitchat) of F15: “sorry I was just thinking where's the car title”
+- **PF16** (both) of F16: “oh and also wheres my phone charger”
+- **PF17** (asr) of F17: “i need the tape measure measure where is I mean it”
+- **PF18** (chitchat) of F18: “oh and also where are the good scissors”
+- **PF19** (both) of F19: “wheres the snow shovel I think that's right”
+- **PF20** (asr) of F20: “wheres dog leash um”
+- **PF21** (chitchat) of F21: “are there any spare light bulbs I think that's right”
+- **PF22** (both) of F22: “wheres the tent that's all for now”
+- **PF23** (asr) of F23: “wheres the ladder”
+- **PF24** (chitchat) of F24: “hey quick one where's the baby monitor”
+- **PF25** (both) of F25: “okay so before I forget where are my um running shoes”
+- **PF26** (asr) of F26: “where where are um hdmi cables”
+- **PF27** (chitchat) of F27: “where's the grill cover that's all for now”
+- **PF28** (both) of F28: “where's the uh fondue I mean set anyway that's it”
+- **PF29** (asr) of F29: “where did I mean kids' winter boots go”
+- **PF30** (chitchat) of F30: “alright um where's the toolbox”
+- **PF31** (both) of F31: “sorry I was just thinking do we have spare toothbrushes”
+- **PF32** (asr) of F32: “wheres the the camping lantern um”
+- **PF33** (chitchat) of F33: “alright um where are the jumper cables”
+- **PF34** (both) of F34: “sorry I was just thinking where are the photo albums”
+- **PF35** (asr) of F35: “where's the ipad”
+- **PF36** (chitchat) of F36: “where's the backup hard drive anyway that's it”
+- **PF37** (both) of F37: “where are the art supplies that's all for now”
+- **PF38** (asr) of F38: “where are the folding chairs um”
+- **PF39** (chitchat) of F39: “hey quick one where's the leaf blower”
+- **PF40** (both) of F40: “where is grandma's ring anyway that's it”
+- **PF41** (asr) of F41: “where are the halloween um decorations”
+- **PF42** (chitchat) of F42: “where's the KitchenAid okay cool”
+- **PF43** (both) of F43: “hey quick one wheres the bike pump”
+- **PF44** (asr) of F44: “is you know there a fire extinguisher extinguisher in the house um”
+- **PF45** (chitchat) of F45: “oh and also where are the sheets for the guest bed”
+- **PF46** (both) of F46: “sorry I was just thinking where's the paint”
+- **PF47** (asr) of F47: “wheres I mean the label maker”
+- **PF48** (chitchat) of F48: “where's the sewing machine okay cool”
+- **PF49** (both) of F49: “oh and also where are the umbrellas”
+- **PF50** (asr) of F50: “where are like last year's taxes”
